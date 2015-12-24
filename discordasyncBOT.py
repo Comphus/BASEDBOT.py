@@ -53,8 +53,6 @@ unicodeResponses = {'/lenny':'( ͡° ͜ʖ ͡°)','!gardenintool':'(  ′︵‵  
 
 # all types of functions are here
 def dueling(msg):
-
-
 	duelingInfo = {}#from this line to the end of the 'with open'
 	with open('duel.txt') as f:
 		a = []
@@ -94,7 +92,6 @@ def dueling(msg):
 				z.append(attack.format(n[p1],n[p2],n[p2]) + '\n\n')
 				people[n[p1]][0] += int(duelingInfo[attack][1])
 				people[n[p2]][0] += int(duelingInfo[attack][0])
-		
 		#applying the status stuns
 		if people[n[p1]][1] != 0:
 			people[n[p1]][1] -= 1
@@ -106,8 +103,6 @@ def dueling(msg):
 			people[n[p1]][1] += abs(status)        
 		if people[n[p2]][1] == 0:
 			p1, p2 = p2, p1
-
-
 	#checks to see who wins by seeing whoever has 0 or less HP, if both have 0 or less, first if is saved
 	endZ = ''            
 	if people[n[0]][0] < 1 and people[n[1]][0] < 1:
@@ -116,11 +111,10 @@ def dueling(msg):
 		endZ += str('\n' + n[1] + ' has beaten ' + n[0] + ' with ' + str(people[n[1]][0]) + ' HP left.')
 	elif people[n[1]][0] < 1:
 		endZ += str('\n' + n[0] + ' has beaten ' + n[1] + ' with ' + str(people[n[0]][0]) + ' HP left.')
-		
 	newZ = []
 	funC = 1
 	contentZ = ('**Battle '+str(funC)+':**\n\n')
-	for line in z:
+	for line in z:#this for loop goes through the battle results to make sure it doesnt exceed the 2k char limit
 		contentZ += line
 		if len(contentZ) > 1850:
 			newZ.append(contentZ)
@@ -128,10 +122,7 @@ def dueling(msg):
 			contentZ = ('**Battle '+str(funC)+':**\n\n')
 	newZ.append(contentZ)
 	funC = 0
-
-	return [newZ,x,endZ]
-
-
+	return [newZ,x,endZ]#returns the starting test, dueling content, end text
 
 
 @client.async_event
@@ -144,11 +135,8 @@ def on_member_join(member):
 			with io.open('joinLog.txt','a',encoding='utf-8') as f:
 				retS = ('Name: ' +str(member.name)+ ' ID:' + str(member.id)+ ' Time joined:' + str(t) + ' EST\n')
 				f.write(retS)
-
-
 @client.async_event
 def on_message(message):
-
 	global timeoutStore
 	global powerTimeout
 	global voice
