@@ -236,7 +236,7 @@ def on_message(message):
 			if guess and answer in guess.content.lower():
 				yield from client.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
-	if True: #message.channel.server.id == '106293726271246336':
+	if message.channel.server.id == '106293726271246336':
 		if message.content.startswith("!yt") and len(message.content.split()) == 2:
 			if voice == None:
 				voice = yield from client.join_voice_channel(message.author.voice_channel)
@@ -254,7 +254,6 @@ def on_message(message):
 			if 'next' in message.content and player != None and len(musicQue) >0:
 				if voice.is_connected():
 					player.stop()
-					#musicQue.pop()
 			def playmusicque(voice, queurl):
 				global player
 				try:
@@ -278,22 +277,27 @@ def on_message(message):
 					yield from playmusicque(voice, musicQue[0])
 			while len(musicQue) >= 0:
 				yield from asyncio.sleep(2)
+				print("hello1")
 				try:	
 					if player.is_done():
+						print("hello2")
 						if len(musicQue) == 0:
+							print("hello3")
 							player = None
 							yield from voice.disconnect()
 							voice = None
 							break
 						else:
+							print("hello4")
 							yield from playmusicque(voice, musicQue[0])
 							break
 				except:
 					pass
 
+
 		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
 			yield from client.send_message(message.channel, 'You must have a youtube url to show, has to be the last part after v=')
-	elif message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!t5skillbuilds'):
+	if message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!t5skillbuilds'):
 			if message.content.lower().startswith('!skillbuilds'):
 				dnClass = message.content.lower().replace('!skillbuilds ', '')
 			elif message.content.lower().startswith('!t5skillbuilds'):
@@ -311,9 +315,174 @@ def on_message(message):
 				except:
 					yield from client.send_message(message.channel, '2nd argument not recognised')
 
-	elif message.content.startswith("!voiceid"):
-		yield from client.send_message(message.channel, message.author.voice_channel.id)
+	# discord help commands to get information from user
 
+
+	if message.content.startswith("!voiceid"):
+		yield from client.send_message(message.channel, message.author.voice_channel.id)
+	if message.content.startswith('!id'):
+		newR = message.content[4:]
+		if len(message.content.split()) == 1:
+			p = message.author.id
+			yield from client.send_message(message.channel, p)
+		else:
+			if discord.utils.find(lambda m: m.name == newR, message.channel.server.members) == None:
+				yield from client.send_message(message.channel, 'Person does not exist, or you tried to mention them')
+			else:
+				p = discord.utils.find(lambda m: m.name == newR, message.channel.server.members).id
+				yield from client.send_message(message.channel, p)
+	if message.content.startswith('!myinfo'):
+		dRol = ''
+		dCol = -1
+		dCol1 = message.author.roles[0]
+		dJoin = message.author.joined_at
+		for i in message.author.roles:
+			dRol += i.name + ', '
+			if i.position > dCol:
+				dCol1 = i
+				dCol = i.position
+		dCol2 = hex(dCol1.colour.value)
+		dRol = dRol[0:-2].replace('@everyone', '@-everyone')
+		if dRol.startswith(', '):
+			dRol = dRol[2:]
+		p = message.author
+		yield from client.send_message(message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
+
+
+
+	# DN related ! commands to make the discord more integrated with dn
+	#!pugs,trade,and mention will be put into 1 function since theyre practically the same thing, just different names and file names
+
+
+	if message.content.startswith('!pugs') and str(message.channel.id) == '106300530548039680' and len(message.content.split()) > 1 and str(message.channel.server.id) == '106293726271246336' and message.mention_everyone == False:
+		pugM = 'Topic is:\n'
+		pugM += message.content[6:]
+		if len(message.mentions) != 0:
+			for i in message.mentions:
+				pugM = pugM.replace(i.mention, '-No mentions-')
+		if 'http' in pugM.lower():
+			pugM = pugM.replace('http', '')
+		with open('puglist.txt','r') as s:
+			overC = 0
+			pugMentions = []
+			tempL = ''
+			for line in s:
+				tempL += line.replace('\n', ' ')
+				if len(tempL) > 1900:
+					pugMentions.append(tempL)
+					tempL = ''
+			pugMentions.append(tempL)
+			for i in pugMentions:
+				yield from client.send_message(message.channel, pugM + '\n\n' + i)
+	elif message.content.startswith('!pugs') and str(message.channel.id) != '106300530548039680' and str(message.channel.server.id) == '106293726271246336':
+		yield from client.send_message(message.channel, 'You can only call for pugs in the <#106300530548039680> channel.')
+	elif message.content.startswith('!pugs') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
+		yield from client.send_message(message.channel, 'You must have a topic to tell the people about what you are recruiting them for. It is BANNABLE if you do not have a legitamate topic on purpose.')
+	elif message.content.lower().startswith('!pug') and str(message.channel.server.id) == '106293726271246336':
+		pugL = ''
+		with open('puglist.txt','r') as s:
+			pugL = s.read()
+		if message.author.mention not in pugL:
+			with open('puglist.txt','a') as s:
+				s.write(message.author.mention)
+				s.write('\n')
+				yield from client.send_message(message.channel, 'You have successfully signed up for pug mentions.')
+		if message.author.mention in pugL:
+			newL = []
+			with open('puglist.txt','r') as s:
+				for line in s:
+					if message.author.mention not in line:
+						newL.append(line)
+			with open('puglist.txt','w') as s:
+				for line in newL:    
+					s.write(line)
+			yield from client.send_message(message.channel, 'You have successfully removed yourself for pug mentions.')
+	if message.content.startswith('!trades') and str(message.channel.id) == '106301265817931776' and len(message.content.split()) > 1 and str(message.channel.server.id) == '106293726271246336' and message.mention_everyone == False:
+		tradeM = 'Topic is:\n'
+		tradeM += message.content[8:]
+		if len(message.mentions) != 0:
+			for i in message.mentions:
+				tradeM = tradeM.replace(i.mention, '-No mentions-')
+		if 'http' in tradeM.lower():
+			tradeM = tradeM.replace('http', '')
+		with open('tradelist.txt','r') as s:
+			overC = 0
+			tradeMentions = []
+			tempL = ''
+			for line in s:
+				tempL += line.replace('\n', ' ')
+				if len(tempL) > 1900:
+					pugMentions.append(tempL)
+					tempL = ''
+			tradeMentions.append(tempL)
+			for i in tradeMentions:
+				yield from client.send_message(message.channel, tradeM + '\n\n' + i)
+	elif message.content.startswith('!trades') and str(message.channel.id) != '106301265817931776' and str(message.channel.server.id) == '106293726271246336':
+		yield from client.send_message(message.channel, 'You can only call for trades in the <#106301265817931776> channel.')
+	elif message.content.startswith('!trades') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
+		yield from client.send_message(message.channel, 'You must have a topic to tell the people about what you want to trade. It is BANNABLE if you do not have a legitamate topic on purpose.')
+	elif message.content.lower().startswith('!trade') and str(message.channel.server.id) == '106293726271246336':
+		tradeL = ''
+		with open('tradelist.txt','r') as s:
+			tradeL = s.read()
+		if message.author.mention not in tradeL:
+			with open('tradelist.txt','a') as s:
+				s.write(message.author.mention)
+				s.write('\n')
+				yield from client.send_message(message.channel, 'You have successfully signed up for trade mentions.')
+		if message.author.mention in tradeL:
+			newL = []
+			with open('tradelist.txt','r') as s:
+				for line in s:
+					if message.author.mention not in line:
+						newL.append(line)
+			with open('tradelist.txt','w') as s:
+				for line in newL:    
+					s.write(line)
+			yield from client.send_message(message.channel, 'You have successfully removed yourself for trade mentions.')
+	if message.content.startswith('!pvping') and str(message.channel.id) == '106300621459628032' and len(message.content.split()) > 1 and str(message.channel.server.id) == '106293726271246336' and message.mention_everyone == False:
+		pvpM = 'Topic is:\n'
+		pvpM += message.content[8:]
+		if len(message.mentions) != 0:
+			for i in message.mentions:
+				pvpM = pvpM.replace(i.mention, '-No mentions-')
+		if 'http' in pvpM.lower():
+			pvpM = pvpM.replace('http', '')
+		with open('pvplist.txt','r') as s:
+			overC = 0
+			pvpMentions = []
+			tempL = ''
+			for line in s:
+				tempL += line.replace('\n', ' ')
+				if len(tempL) > 1900:
+					pvpMentions.append(tempL)
+					tempL = ''
+			pvpMentions.append(tempL)
+			for i in pvpMentions:
+				yield from client.send_message(message.channel, pvpM + '\n\n' + i)
+	elif message.content.startswith('!pvping') and str(message.channel.id) != '106300621459628032' and str(message.channel.server.id) == '106293726271246336':
+		yield from client.send_message(message.channel, 'You can only call for pvp in the <#106300621459628032> channel.')
+	elif message.content.startswith('!pvping') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
+		yield from client.send_message(message.channel, 'You must have a topic to tell the people about your pvp request. It is BANNABLE if you do not have a legitamate topic on purpose.')
+	elif message.content.lower().startswith('!pvp') and str(message.channel.server.id) == '106293726271246336':
+		pvpL = ''
+		with open('pvplist.txt','r') as s:
+			pvpL = s.read()
+		if message.author.mention not in pvpL:
+			with open('pvplist.txt','a') as s:
+				s.write(message.author.mention)
+				s.write('\n')
+				yield from client.send_message(message.channel, 'You have successfully signed up for pvp mentions.')
+		if message.author.mention in pvpL:
+			newL = []
+			with open('pvplist.txt','r') as s:
+				for line in s:
+					if message.author.mention not in line:
+						newL.append(line)
+			with open('pvplist.txt','w') as s:
+				for line in newL:    
+					s.write(line)
+			yield from client.send_message(message.channel, 'You have successfully removed yourself for pvp mentions.')
 
 @client.async_event
 def on_ready():
@@ -321,7 +490,7 @@ def on_ready():
 	print(client.user.name)
 	print(client.user.id)
 	print('------')
-	yield from client.change_status(game=discord.Game(name='as hitler'))
+	yield from client.change_status(game=discord.Game(name='you like a fiddle'))
 
 def main_task():
 	yield from client.login(dLogin['username'], dLogin['password'])
@@ -335,3 +504,5 @@ except Exception:
 	loop.run_until_complete(client.close())
 finally:
 	loop.close()
+
+
