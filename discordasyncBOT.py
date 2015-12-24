@@ -16,11 +16,13 @@ if not discord.opus.is_loaded():
 logging.basicConfig()
 client = discord.Client()
 
+
 twitchEmotes = []
 MainResponses = {}
 dLogin={}
 voice = None
 player = None
+musicQue = []
 timeoutStore = 0
 powerTimeout = {}
 with open('twitch.txt') as inputF:
@@ -130,12 +132,7 @@ def dueling(msg):
 	return [newZ,x,endZ]
 
 
-@client.async_event
-def on_ready():
-	print('Logged in as')
-	print(client.user.name)
-	print(client.user.id)
-	print('------')
+
 
 @client.async_event
 def on_member_join(member):
@@ -151,10 +148,12 @@ def on_member_join(member):
 
 @client.async_event
 def on_message(message):
+
 	global timeoutStore
 	global powerTimeout
 	global voice
 	global player
+	global musicQue
 	cTime = datetime.now()
 
 	if timeoutStore > 0:
@@ -220,14 +219,12 @@ def on_message(message):
 	elif message.content.startswith('!trivia'):
 		TriviaQuestions = MainResponses['Trivia']
 		TriviaQuestion = random.choice(list(TriviaQuestions.keys()))
-		print(TriviaQuestion)
 		yield from client.send_message(message.channel, 'You have started DN Trivia!\n')
 		yield from asyncio.sleep(1)
 		yield from client.send_message(message.channel, 'You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
 		yield from asyncio.sleep(3)
 		yield from client.send_message(message.channel, TriviaQuestion)
 		answer = MainResponses['Trivia'][TriviaQuestion]
-		print(answer)
 		end_time = time.time() + 15
 		while True:
 			time_remaining = end_time - time.time()
@@ -239,41 +236,63 @@ def on_message(message):
 			if guess and answer in guess.content.lower():
 				yield from client.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
-	elif message.content.startswith("!yt") and len(message.content.split()) == 2:
-		if voice == None:
-			voice = yield from client.join_voice_channel(message.author.voice_channel)
-			#voice = yield from client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352')) to make it only go to voice channel for bot in dn discord
-		if 'stop' in message.content.lower():
-			if voice.is_connected():
-				yield from voice.disconnect()
-				return
-		endurl = message.content.split()[1]
-		if 'https://www.youtube.com/watch?v=' in endurl:
-			endurl = endurl.replace('https://www.youtube.com/watch?v=', '')
-		try:
-			if player != None:
-				if player.is_playing():
-					player.stop()
-					voice.disconnect()
-					player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+endurl)
-					player.start()
-			else:
-				player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+endurl)
-				player.start()
-		except Exception as e:
-			yield from client.send_message(message.channel, e)
-			return
-		while True:
-			yield from asyncio.sleep(1)
-			try:
-				if player.is_done():
-					print('so i stopped')
-					player = None
+	if True: #message.channel.server.id == '106293726271246336':
+		if message.content.startswith("!yt") and len(message.content.split()) == 2:
+			if voice == None:
+				voice = yield from client.join_voice_channel(message.author.voice_channel)
+				#voice = yield from client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352')) to make it only go to voice channel for bot in dn discord
+			if 'stop' in message.content:
+				if voice.is_connected():
 					yield from voice.disconnect()
-					voice = None
-					break
-			except:
-				pass
+					musicQue = []
+					return
+
+			endurl = message.content.split()[1]
+			if 'https://www.youtube.com/watch?v=' in endurl:
+				endurl = endurl.replace('https://www.youtube.com/watch?v=', '')
+			musicQue.append(endurl)
+			if 'next' in message.content and player != None and len(musicQue) >0:
+				if voice.is_connected():
+					player.stop()
+					#musicQue.pop()
+			def playmusicque(voice, queurl):
+				global player
+				try:
+					if queurl == "next":
+						musicQue.pop(0)
+						pass
+					elif player != None:
+						player.stop()
+						player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+queurl)
+						player.start()
+						musicQue.pop(0)
+					else:
+						player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+queurl)
+						player.start()
+						musicQue.pop(0)
+				except Exception as e:
+					musicQue.pop(0)
+					yield from client.send_message(message.channel, e)
+			if player == None:
+				if len(musicQue) == 1:
+					yield from playmusicque(voice, musicQue[0])
+			while len(musicQue) >= 0:
+				yield from asyncio.sleep(2)
+				try:	
+					if player.is_done():
+						if len(musicQue) == 0:
+							player = None
+							yield from voice.disconnect()
+							voice = None
+							break
+						else:
+							yield from playmusicque(voice, musicQue[0])
+							break
+				except:
+					pass
+
+		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
+			yield from client.send_message(message.channel, 'You must have a youtube url to show, has to be the last part after v=')
 	elif message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!t5skillbuilds'):
 			if message.content.lower().startswith('!skillbuilds'):
 				dnClass = message.content.lower().replace('!skillbuilds ', '')
@@ -292,15 +311,22 @@ def on_message(message):
 				except:
 					yield from client.send_message(message.channel, '2nd argument not recognised')
 
-	elif message.content.startswith("!yt") and len(message.content.split()) != 2:
-		yield from client.send_message(message.channel, 'You must have a youtube url to show, has to be the last part after v=')
-
 	elif message.content.startswith("!voiceid"):
 		yield from client.send_message(message.channel, message.author.voice_channel.id)
+
+
+@client.async_event
+def on_ready():
+	print('Logged in as')
+	print(client.user.name)
+	print(client.user.id)
+	print('------')
+	yield from client.change_status(game=discord.Game(name='as hitler'))
 
 def main_task():
 	yield from client.login(dLogin['username'], dLogin['password'])
 	yield from client.connect()
+
 
 loop = asyncio.get_event_loop()
 try:
@@ -309,4 +335,3 @@ except Exception:
 	loop.run_until_complete(client.close())
 finally:
 	loop.close()
-client.change_status(587)
