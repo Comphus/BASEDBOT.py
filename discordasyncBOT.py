@@ -5,6 +5,7 @@ import requests
 import json
 import fileinput
 import io
+import os
 from math import *
 import time
 import random
@@ -23,8 +24,13 @@ dLogin={}
 voice = None
 player = None
 musicQue = []
+currentsong = ''
 timeoutStore = 0
 powerTimeout = {}
+dTimeout = {}
+counts1 = 0
+countsBNS = 0
+tCounter = False
 with open('twitch.txt') as inputF:
 	twitchEmotes = inputF.read().splitlines()
 with open("MainResponses.json") as j:
@@ -53,6 +59,8 @@ unicodeResponses = {'/lenny':'( ͡° ͜ʖ ͡°)','!gardenintool':'(  ′︵‵  
 
 # all types of functions are here
 def dueling(msg):
+
+
 	duelingInfo = {}#from this line to the end of the 'with open'
 	with open('duel.txt') as f:
 		a = []
@@ -92,6 +100,7 @@ def dueling(msg):
 				z.append(attack.format(n[p1],n[p2],n[p2]) + '\n\n')
 				people[n[p1]][0] += int(duelingInfo[attack][1])
 				people[n[p2]][0] += int(duelingInfo[attack][0])
+		
 		#applying the status stuns
 		if people[n[p1]][1] != 0:
 			people[n[p1]][1] -= 1
@@ -103,6 +112,8 @@ def dueling(msg):
 			people[n[p1]][1] += abs(status)        
 		if people[n[p2]][1] == 0:
 			p1, p2 = p2, p1
+
+
 	#checks to see who wins by seeing whoever has 0 or less HP, if both have 0 or less, first if is saved
 	endZ = ''            
 	if people[n[0]][0] < 1 and people[n[1]][0] < 1:
@@ -111,10 +122,11 @@ def dueling(msg):
 		endZ += str('\n' + n[1] + ' has beaten ' + n[0] + ' with ' + str(people[n[1]][0]) + ' HP left.')
 	elif people[n[1]][0] < 1:
 		endZ += str('\n' + n[0] + ' has beaten ' + n[1] + ' with ' + str(people[n[0]][0]) + ' HP left.')
+		
 	newZ = []
 	funC = 1
 	contentZ = ('**Battle '+str(funC)+':**\n\n')
-	for line in z:#this for loop goes through the battle results to make sure it doesnt exceed the 2k char limit
+	for line in z:
 		contentZ += line
 		if len(contentZ) > 1850:
 			newZ.append(contentZ)
@@ -122,7 +134,10 @@ def dueling(msg):
 			contentZ = ('**Battle '+str(funC)+':**\n\n')
 	newZ.append(contentZ)
 	funC = 0
-	return [newZ,x,endZ]#returns the starting test, dueling content, end text
+
+	return [newZ,x,endZ]
+
+
 
 
 @client.async_event
@@ -135,6 +150,14 @@ def on_member_join(member):
 			with io.open('joinLog.txt','a',encoding='utf-8') as f:
 				retS = ('Name: ' +str(member.name)+ ' ID:' + str(member.id)+ ' Time joined:' + str(t) + ' EST\n')
 				f.write(retS)
+
+"""
+@client.async_event
+def on_member_remove:
+	128685366935945217
+	"""
+
+
 @client.async_event
 def on_message(message):
 	global timeoutStore
@@ -142,8 +165,19 @@ def on_message(message):
 	global voice
 	global player
 	global musicQue
+	global currentsong
+	global counts1
+	global dTimeout
+	global countsBNS
+	global tCounter
 	cTime = datetime.now()
+	wtfyousay = """
+	What the fuck did you just fucking say about me, you little bitch? I’ll have you know I graduated top of my class in the Navy Seals, and I've been involved in numerous secret raids on Al-Quaeda, and I have over 300 confirmed kills. I am trained in gorilla warfare and I’m the top sniper in the entire US armed forces. You are nothing to me but just another target. I will wipe you the fuck out with precision the likes of which has never been seen before on this Earth, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of spies across the USA and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You’re fucking dead, kid. I can be anywhere, anytime, and I can kill you in over seven hundred ways, and that’s just with my bare hands. Not only am I extensively trained in unarmed combat, but I have access to the entire arsenal of the United States Marine Corps and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clever” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn’t, you didn’t, and now you’re paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You’re fucking dead, kiddo.
+	"""
 
+	if client.user == message.author:
+		return
+	
 	if timeoutStore > 0:
 		for i in powerTimeout:
 			timeDiff = cTime - powerTimeout[i][1]
@@ -172,8 +206,49 @@ def on_message(message):
 			yield from client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
 		else:
 			yield from client.send_message(message.channel, 'That person has not been manually timed out.')
+			"""
+	if message.content.startswith('!timeout') and str(message.author.id) in dAdmins and len(message.content.split()) == 3 and type(int(message.content.split()[2])) == type(1):
+		newM = message.content.split()
+		powerTimeout[newM[1]] = [int(newM[2]),0,message.mentions[0]]
+		yield from client.add_roles(message.mentions[0], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+		yield from client.send_message(message.channel, newM[1]+' has been timed out for '+newM[2]+' seconds.')
+		yield from asyncio.sleep(powerTimeout[newM[1]][0])
+		try:
+			client.remove_roles(powerTimeout[i][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+		except:
+			pass
+		try:
+			powerTimeout.pop(i)
+		except:
+			pass
+	elif message.content.startswith('!timeout') and str(message.author.id) in dAdmins:
+		yield from client.send_message(message.channel, 'The format for timing someone out is !timeout @ mention (timeinseconds)')
+	if message.content.startswith('!stoptimeout') and str(message.author.id) in dAdmins and len(message.content.split()) == 2:
+		newM = message.content.split()
+		if newM[1] in powerTimeout:
+			yield from client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+			powerTimeout.pop(newM[1])
+			yield from client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
+		elif 'Jail' in discord.utils.find(lambda m: m.name == 'Jail', message.channel.server.members).roles:
+			yield from client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+			yield from client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
+		else:
+			yield from client.send_message(message.channel, 'That person has not been manually timed out.')
 	elif message.content.startswith('!stoptimeout') and str(message.author.id) in dAdmins:
 		yield from client.send_message(message.channel, 'The format for timing someone out is !timeout @ mention')
+		
+	if len(message.content) > 0 and message.channel.is_private == False and message.author.mention() not in powerTimeout.keys() and str(message.author.id) != '106469383206883328':
+		mId = str(message.author.id)
+		if mId in dTimeout:
+
+
+
+
+
+
+	if str(message.author.id) not in dTimeout:
+		dTimeout[str(message.author.id)] = [0,0,0]
+		"""
 
 	if message.content.startswith('!') == False:
 		for t in twitchEmotes:
@@ -183,22 +258,27 @@ def on_message(message):
 	elif message.content.lower().split()[0] in MainResponses['all!commands']:
 		yield from client.send_message(message.channel, MainResponses['all!commands'][message.content.lower().split()[0]])
 
-	if message.content.startswith('!test'):
-		logs = yield from client.logs_from(message.channel, limit=100)
-		counter = 0
-		tmp = yield from client.send_message(message.channel, 'Calculating messages...')
+
+		
+	if message.content.startswith('!vanish') and len(message.content.split()) == 3 and message.author.id in dMods and type(1) == type(int(message.content.split()[2])) and len(message.mentions) > 0:
+		logs = yield from client.logs_from(message.channel, limit=int(message.content.split()[2]))
 		for log in logs:
-			if log.author == message.author:
-				counter += 1
-		yield from client.edit_message(tmp, 'You have {} messages.'.format(counter))
-	elif message.content in unicodeResponses:
+			if log.author.mention == message.mentions[0].mention:
+				yield from client.delete_message(log)
+		with io.open('vanishlog.txt','a',encoding='utf-8') as f:
+			s = ('Name: ' +str(message.author.name)+ ' ID:' + str(message.author.id)+ ' What they wrote:' + str(message.content)+ '\n')
+			f.write(s)
+	elif message.content.startswith('!vanish') and len(message.content.split()) != 3:
+		yield from client.send_message(message.channel, 'The format for !vanish is: "!vanish (@mention to person) (number of messages to delete)" and is only accessable to chatmods and above.')
+		
+	if message.content in unicodeResponses:
 		yield from client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
 	elif message.content.startswith('!sleep'):
 		yield from asyncio.sleep(5)
 		yield from client.send_message(message.channel, 'Done sleeping')
 	elif message.content.startswith('!hello'):
 		yield from client.send_message(message.channel, 'hi')
-	elif message.content.startswith('!duel') and str(message.channel.id) not in '91518345953689600':	
+	elif message.content.startswith('!duel') and str(message.channel.id) not in '91518345953689600':    
 		results = dueling([message.mentions[0].mention,message.mentions[1].mention])
 		yield from client.send_message(message.channel, results[1])
 		for i in range(len(results[0])):
@@ -228,7 +308,7 @@ def on_message(message):
 		if message.content.startswith("!yt") and len(message.content.split()) == 2:
 			if voice == None:
 				voice = yield from client.join_voice_channel(message.author.voice_channel)
-				#voice = yield from client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352')) to make it only go to voice channel for bot in dn discord
+				#voice = yield from client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352'))
 			if 'stop' in message.content:
 				if voice.is_connected():
 					yield from voice.disconnect()
@@ -242,20 +322,51 @@ def on_message(message):
 			if 'next' in message.content and player != None and len(musicQue) >0:
 				if voice.is_connected():
 					player.stop()
+			if 'pause' in message.content and player != None:
+				if voice.is_connected():
+					player.pause()
+			if 'resume' in message.content and player != None:
+				if voice.is_connected():
+					player.resume()
+			if 'list' in message.content and player != None and len(musicQue) >0:
+				returnS = ''
+				for i in musicQue:
+					if i != "next":
+						if i != "list":
+							if i != "song":
+								if i != "pause":
+									if i != "resume":
+										returnS += ('www.youtube.com/watch?v='+i+'\n')
+				yield from client.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
+				returnS = ''
+			if 'song' in message.content and player != None and len(musicQue) >0:
+				print(currentsong)
+				yield from client.send_message(message.channel, 'Current song playing: '+ currentsong)
 			def playmusicque(voice, queurl):
 				global player
+				global currentsong
 				try:
-					if queurl == "next":
+					if queurl == "next" or queurl == "list" or queurl == "song" or queurl == "pause" or queurl == "resume":
 						musicQue.pop(0)
 						pass
 					elif player != None:
 						player.stop()
 						player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+queurl)
 						player.start()
+						currentsong = ('https://www.youtube.com/watch?v='+queurl)
+						if 'youtube' not in musicQue[0]:
+							yield from client.send_message(message.channel, 'currently playing: https://www.youtube.com/watch?v='+musicQue[0])
+						else:
+							yield from client.send_message(message.channel, 'currently playing: '+ musicQue[0])
 						musicQue.pop(0)
 					else:
 						player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+queurl)
 						player.start()
+						currentsong = ('https://www.youtube.com/watch?v='+queurl)
+						if 'youtube' not in musicQue[0]:
+							yield from client.send_message(message.channel, 'currently playing: https://www.youtube.com/watch?v='+musicQue[0])
+						else:
+							yield from client.send_message(message.channel, 'currently playing: '+ musicQue[0])
 						musicQue.pop(0)
 				except Exception as e:
 					musicQue.pop(0)
@@ -266,11 +377,11 @@ def on_message(message):
 			while len(musicQue) >= 0:
 				yield from asyncio.sleep(2)
 				print("hello1")
-				try:	
+				try:    
 					if player.is_done():
 						print("hello2")
 						if len(musicQue) == 0:
-							print("hello3")
+							yield from client.send_message(message.channel, "No more songs in queue")
 							player = None
 							yield from voice.disconnect()
 							voice = None
@@ -281,6 +392,13 @@ def on_message(message):
 							break
 				except:
 					pass
+
+		with io.open('chatLogs.txt','a',encoding='utf-8') as f:
+			logT = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+			logM = (str(message.author)+'('+str(message.author.id)+') '+ logT +': '+str(message.content)+'\n')
+			f.write(logM)
+		if message.content.startswith('!chatlogs') and str(message.author.id) in dAdmins and str(message.channel.id) == '106560613794197504':
+			client.send_file(message.channel, 'chatLogs.txt')
 
 
 		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
@@ -302,6 +420,59 @@ def on_message(message):
 						yield from client.send_message(message.channel, 'https://dnss-kr.herokuapp.com/'+MainResponses["t5dnskillbuilds"][dnClass])
 				except:
 					yield from client.send_message(message.channel, '2nd argument not recognised')
+	if message.content.startswith("!xD"):
+		yield from client.send_message(message.channel, """
+X               X      DDDDD
+   X         X         D            D
+	   X X             D              D
+	   X X             D              D
+	X        X         D             D
+X                X     DDDDD
+															""")
+		"""
+	if str(message.content).count('┻') > 1:
+		t = int(str(message.content).count('┻')/2)
+		yield from client.send_message(message.channel, '┬─┬ ノ( ^_^ノ) '* t)
+		"""
+	if message.content.startswith('!define') and len(message.content.split()) > 1:
+		words = message.content[8:]
+		r = requests.get('http://api.urbandictionary.com/v0/define?term=' + words)
+		tData = r.json()
+		if r.status_code == 200:
+			try:
+				if True:
+					tCounter = True
+					i = random.randint(0, len(tData['list'])-1)
+					dWord = tData['list'][i]['word']
+					dDef = tData['list'][i]['definition']
+					dEx = tData['list'][i]['example']
+					yield from client.send_message(message.channel, "__Word__: {}\n__**Definition**__\n{}".format(dWord,dDef,dEx))
+				else:
+					yield from client.send_message(message.channel, "on cd")
+			except:
+				yield from client.send_message(message.channel, 'Word is not defined')
+		else:
+			yield from client.send_message(message.channel, 'something went wrong :(')
+	elif message.content.startswith('!define') and len(message.content.split()) == 1:
+		yield from client.send_message(message.channel, 'need something to define')
+	if message.content.startswith('!spookme'):
+		skeleR = random.randint(0,39)
+		if skeleR <=30:
+			yield from client.send_message(message.channel, message.author.mention + ' YOU\'VE BEEN SPOOKED!')
+			yield from client.send_file(message.channel, 'skele'+str(skeleR)+'.jpg')
+		elif skeleR <=38:
+			yield from client.send_message(message.channel, message.author.mention + ' YOU\'VE BEEN SUPER SPOOKED!')
+			yield from client.send_file(message.channel, 'skele'+str(skeleR)+'.jpg')
+		else:
+			yield from client.send_message(message.channel, 'YOU\'VE BEEN SPOOKED TO DEATH\nhttps://www.youtube.com/watch?v=O8XfV8aPAyQ')
+	if message.content.startswith('!dance'):
+		dancing = ['♪┏(°.°)┛♪','♪┗(°.°)┓♪','♪┗(°.°)┛♪','♪┏(°.°)┓♪']
+		dance = yield from client.send_message(message.channel, 'Let\'s dance!')
+		yield from asyncio.sleep(1)
+		for j in range(5):
+			for i in dancing:
+				yield from client.edit_message(dance, i)
+				yield from asyncio.sleep(0.1)
 
 	# discord help commands to get information from user
 
@@ -335,7 +506,43 @@ def on_message(message):
 			dRol = dRol[2:]
 		p = message.author
 		yield from client.send_message(message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
-
+	if message.content.startswith('!avatar'):
+		newR = message.content[8:]
+		if len(message.content.split()) == 1:
+				p = message.author.avatar_url
+				yield from client.send_message(message.channel, p)
+		else:
+			if discord.utils.find(lambda m: m.name == newR, message.channel.server.members) == None:
+				yield from client.send_message(message.channel, 'Person does not exist, or you tried to mention them')
+			else:
+				p = discord.utils.find(lambda m: m.name == newR, message.channel.server.members).avatar_url
+				yield from client.send_message(message.channel, p)
+	if message.content.startswith('!serverpic'):
+		yield from client.send_message(message.channel, message.channel.server.icon_url)
+	if message.content.startswith('!changeme') and len(message.content.split()) >= 3 and (str(message.author.id) in '90886475373109248 90953831583617024 90869992689520640 90940396602953728 90847182772527104' or str(message.author.id) in dAdmins):
+		# light pink FF69B4
+		colorVal = message.content.split()[-1]
+		roleName = message.content.replace('!changeme ', '')
+		roleName = roleName.replace(' '+colorVal, '')
+		print(roleName)
+		print(colorVal)
+		client.send_message(message.channel, 'None')
+		if colorVal.startswith('0x') == False:
+			yield from client.send_message(message.channel, 'Make sure to add \'0x\' infront of your hex value!')
+			counts1 = 1
+		elif discord.utils.find(lambda r: r.name == str(roleName), message.channel.server.roles) == None:
+			yield from client.send_message(message.channel, 'Role name is invalid!')
+			counts1 = 1
+		elif counts1 == 0:
+			yield from client.edit_role(message.channel.server, discord.utils.find(lambda r: r.name == str(roleName), message.channel.server.roles), colour=discord.Colour(int(colorVal, 16)))
+			yield from client.send_message(message.channel, 'did it work')
+		counts1 = 0
+	elif message.content.startswith('!changeme') and len(message.content.split()) >= 3 and str(message.author.id) not in '90886475373109248 91347017103581184':
+		yield from client.send_message(message.channel, 'You do not have access to this command')
+	if message.content.startswith('!chid'):
+		yield from client.send_message(message.channel, message.channel.id)
+	if message.content.startswith('!serverid'):
+		yield from client.send_message(message.channel, message.channel.server.id)
 
 
 	# DN related ! commands to make the discord more integrated with dn
@@ -471,6 +678,190 @@ def on_message(message):
 				for line in newL:    
 					s.write(line)
 			yield from client.send_message(message.channel, 'You have successfully removed yourself for pvp mentions.')
+
+	elif message.content.startswith('!savednbuild'):
+		print(message.content.split()[-1])
+		print(message.content.split()[-1].startswith('https://dnss-kr.herokuapp.com'))
+		countsBNS = 0
+		if message.content == ('!savednbuild') or message.content == ('!savednbuild ') and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Your build must contain the format !savednbuild $(name of command) (tree build url)')
+			countsBNS = 1
+		if message.content.split()[-1].startswith('https://dnss.herokuapp.com') == False and countsBNS == 0:
+			if message.content.split()[-1].startswith('https://dnss-kr.herokuapp.com') == False and countsBNS == 0:
+				if message.content.split()[-1].startswith('https://dnmaze.com') == False and countsBNS == 0:
+					yield from client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com, dnss-kr.herokuapp.com or https://dnmaze.com or is missing the https:// prefix')
+					countsBNS = 1
+		if len(message.content.split()) == 2 and message.content.split()[1].startswith('$') == False and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Your command created command must have $ infront')
+			countsBNS = 1
+		if len(str(message.content).split()) !=3 and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Can only create a link with exactly 3 arguments')
+			countsBNS = 1
+		if len(message.content.split()) == 3 and '$' in message.content.split()[1] and countsBNS == 0: 
+			with open('DNbuilds.txt','r+') as dnBuilds:
+				for line in dnBuilds:
+					if message.content.split()[1] in line:
+						yield from client.send_message(message.channel, 'A build with this name already exists!')
+						countsBNS = 1
+		if countsBNS == 0:
+			dnBuildsSave = message.content.replace('!savednbuild ', '')
+			with open('DNbuilds.txt','a') as bnsBuilds2:
+				bnsBuilds2.write(str(message.author.id) + ' ' + dnBuildsSave + '\n')
+				yield from client.send_message(message.channel, 'build "'+message.content.split()[2]+'" saved! Use your command "'+message.content.split()[1]+'" to use it!')
+		countsBNS = 0
+		pmCount = 1
+	elif message.content.startswith('$') and counts1 == 0:
+		with open('DNbuilds.txt') as readBuilds:
+			for line in readBuilds:
+				if message.content.split()[0] == line.split()[-2]:
+					yield from client.send_message(message.channel, line.split()[-1])
+					counts1 = 1
+		counts1 = 0
+		pmCount = 1
+	elif message.content.startswith('!mydnbuilds'):
+		tempCount = 1
+		with open('DNbuilds.txt') as readBuilds:
+			for line in readBuilds:
+				if str(message.author.id) in line or str(message.author) in line:
+					yield from client.send_message(message.channel, str(tempCount)+': '+line.replace(str(message.author.id)+ ' ', ''))
+					tempCount += 1
+		if tempCount == 1:
+			yield from client.send_message(message.channel, 'You have no saved builds!')
+		pmCount = 1
+	elif message.content.startswith('!editdnbuild'):
+		countsBNS = 0
+		if message.content == ('!editdnbuild') or message.content == ('!editdnbuild ') and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Your build must contain the format !editdnbuild $(name of command) (tree build url)')
+			countsBNS = 1
+		if message.content.split()[-1].startswith('https://dnss.herokuapp.com') == False and countsBNS == 0:
+			if message.content.split()[-1].startswith('https://dnss-kr.herokuapp.com') == False and countsBNS == 0:
+				if message.content.split()[-1].startswith('https://dnmaze.com') == False and countsBNS == 0:
+					yield from client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com ,dnss-kr.herokuapp.com or http://dnmaze.com/ or is missing the http(s):// prefix')
+					countsBNS = 1
+		if len(message.content.split()) == 2 and message.content.split()[1].startswith('$') == False and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Your edited command must have $ infront')
+			countsBNS = 1
+		if len(str(message.content).split()) !=3 and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Can only edit a link with exactly 3 arguments')
+			countsBNS = 1
+		if countsBNS == 0:
+			saveL = ''
+			dnBuildsSave = message.content.replace('!editdnbuild ', '')
+			with open('DNbuilds.txt','r') as bnsBuilds2:
+				for line in bnsBuilds2:
+					if message.content.split()[1] in line:
+						if str(message.author.id) not in line:
+							yield from client.send_message(message.channel, 'This is not your build so you cannot edit it.')
+							countsBNS = 1
+						elif str(message.author.id) in line:
+							saveL = line.rsplit(' ', 1)[0] + ' ' + message.content.split()[-1]
+			saveL += '\n'
+			if countsBNS == 0:
+				newLines = []
+				with open('DNbuilds.txt','r') as bnsBuilds2:
+					for line in bnsBuilds2:
+						if message.content.split()[1] not in line:
+							newLines.append(line)
+						else:
+							newLines.append(saveL)
+				with open('DNbuilds.txt','w') as bnsBuilds2:
+					for line in newLines:
+						bnsBuilds2.write(line)
+				yield from client.send_message(message.channel, 'build "'+message.content.split()[2]+'" has been edited! Use your command "'+message.content.split()[1]+'" to use it!')
+		countsBNS = 0
+		pmCount = 1
+	
+	elif message.content.startswith('!deletednbuild'):
+		countsBNS = 0
+		if message.content == ('!deletednbuild') or message.content == ('!deletednbuild ') and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Your build must contain the format !deletednbuild $(name of command)')
+			countsBNS = 1
+		if len(message.content.split()) == 2 and message.content.split()[1].startswith('$') == False and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Your command created command must have $ infront')
+			countsBNS = 1
+		if len(str(message.content).split()) !=2 and countsBNS == 0:
+			yield from client.send_message(message.channel, 'Can only delete a link with exactly 2 arguments')
+			countsBNS = 1
+		if countsBNS == 0:
+			dnBuildsSave = message.content.replace('!deletednbuild ', '')
+			with open('DNbuilds.txt','r') as bnsBuilds2:
+				for line in bnsBuilds2:
+					if message.content.split()[1] in line:
+						if str(message.author.id) not in line:
+							yield from client.send_message(message.channel, 'This is not your build so you cannot delete it.')
+							countsBNS = 1
+			if countsBNS == 0:
+				newLines = []
+				with open('DNbuilds.txt','r') as bnsBuilds2:
+					for line in bnsBuilds2:
+						if message.content.split()[1] not in line:
+							newLines.append(line)
+				with open('DNbuilds.txt','w') as bnsBuilds2:
+					for line in newLines:
+						bnsBuilds2.write(line)
+				yield from client.send_message(message.channel, 'Your build ' + message.content.split()[-1] + ' has been deleted.')
+
+	elif message.channel.id == '107718615452618752':
+		requestedBuild = []
+		requestedBuilds = []
+		if 'build' in message.content.lower() and '?' in message.content and len(message.content.split()) > 1:
+			for i in MainResponses["t5dnskillbuilds"]:
+				if i in message.content.lower():
+					requestedBuild.append(MainResponses["t5dnskillbuilds"][i])
+		if len(requestedBuild) == 0:
+			return
+		else:
+			for i in requestedBuild:
+				if i not in requestedBuilds:
+					requestedBuilds.append(i)
+			yield from client.send_message(message.channel, 'Would you like me to PM you a list of community saved builds for {}?'.format(requestedBuilds))
+			resp = yield from client.wait_for_message(author=message.author)
+			if 'y' not in resp.content.lower():
+				yield from client.send_message(message.channel, 'ok')
+				return
+			else:
+				pmlist = []
+				noB = False
+				with open('DNbuilds.txt','r') as b:
+					readB = b.readlines()
+					for i in requestedBuilds:
+						checksB = 0
+						for line in readB:
+							if i in line:
+								pmlist.append(line.replace(line.split()[0], discord.utils.get(message.server.members, id = line.split()[0]).name))
+								checksB += 1
+						if checksB == 0:
+							noB = True
+						checksB = 0
+				if len(pmlist) == 0:
+					yield from client.send_message(message.channel, 'I\'m sorry, there appears to be no build for the class(es) requested :(')
+				else:
+					if noB == True:
+						yield from client.send_message(message.channel, 'I\'m sorry, there appears to be no build(s) made for one or more of the classes you requested :(')
+					yield from client.send_message(message.channel, 'I will send you the PM now!')
+					for i in pmlist:
+						yield from client.send_message(message.author, i)
+	if message.channel.server.id == '109902387363217408':
+		if message.content.lower().startswith('!cats'):
+			rcats = random.choice(os.listdir("C:/DISCORD BOT/cats"))
+			yield from client.send_file(message.channel, 'C:/DISCORD BOT/cats/'+rcats)
+
+	if message.author.id == '90886475373109248':
+		if message.content.startswith('!join') and len(message.content.split()) == 2:
+			try:
+				yield from client.accept_invite(message.content.split()[1])
+				yield from client.send_message(message.channel, 'Joined successfully!')
+			except:
+				yield from client.send_message(message.channel, 'didnt work :(')
+		if message.content.startswith('!debug'):
+			deb = message.content[7:]
+			yield from client.send_message(message.channel, str(eval(deb)))
+
+
+
+
+
+
 
 @client.async_event
 def on_ready():
