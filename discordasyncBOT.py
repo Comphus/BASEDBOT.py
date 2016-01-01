@@ -18,6 +18,8 @@ logging.basicConfig()
 client = discord.Client()
 
 
+qQuestion = ['should','can','will','may','are','might','is','do','would','was','am','?','did','how']
+magicEight = ['Yes','It is certain','It is decidedly so','Without a doubt','Yes, definitely','You may rely on it','As I see it, yes','Most likely','Outlook good','Signs point to a yes','Reply hazy try again','Ask again later','Better not tell you now','Cannot predict now','Concentrate and ask again','Don\'t count on it','My reply is no','My sources say no','Outlook not so good','Very doubtful']
 twitchEmotes = []
 MainResponses = {}
 dLogin={}
@@ -170,6 +172,8 @@ def on_message(message):
 	global dTimeout
 	global countsBNS
 	global tCounter
+	global qQuestion
+	global magicEight
 	cTime = datetime.now()
 	wtfyousay = """
 	What the fuck did you just fucking say about me, you little bitch? I’ll have you know I graduated top of my class in the Navy Seals, and I've been involved in numerous secret raids on Al-Quaeda, and I have over 300 confirmed kills. I am trained in gorilla warfare and I’m the top sniper in the entire US armed forces. You are nothing to me but just another target. I will wipe you the fuck out with precision the likes of which has never been seen before on this Earth, mark my fucking words. You think you can get away with saying that shit to me over the Internet? Think again, fucker. As we speak I am contacting my secret network of spies across the USA and your IP is being traced right now so you better prepare for the storm, maggot. The storm that wipes out the pathetic little thing you call your life. You’re fucking dead, kid. I can be anywhere, anytime, and I can kill you in over seven hundred ways, and that’s just with my bare hands. Not only am I extensively trained in unarmed combat, but I have access to the entire arsenal of the United States Marine Corps and I will use it to its full extent to wipe your miserable ass off the face of the continent, you little shit. If only you could have known what unholy retribution your little “clever” comment was about to bring down upon you, maybe you would have held your fucking tongue. But you couldn’t, you didn’t, and now you’re paying the price, you goddamn idiot. I will shit fury all over you and you will drown in it. You’re fucking dead, kiddo.
@@ -283,7 +287,7 @@ def on_message(message):
 		yield from client.send_message(message.channel, results[1])
 		for i in range(len(results[0])):
 			yield from client.send_message(message.channel, results[0][i])
-			yield from client.send_message(message.channel, results[2])
+		yield from client.send_message(message.channel, results[2])
 	elif message.content.startswith('!trivia'):
 		TriviaQuestions = MainResponses['Trivia']
 		TriviaQuestion = random.choice(list(TriviaQuestions.keys()))
@@ -300,11 +304,16 @@ def on_message(message):
 				yield from client.send_message(message.channel, 'Sorry, you took too long! The answer was '+answer)
 				return
 			guess = yield from client.wait_for_message(timeout = time_remaining)
-			print(guess)
 			if guess and answer in guess.content.lower():
 				yield from client.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
 	if message.channel.server.id == '106293726271246336':
+		with io.open('chatLogs.txt','a',encoding='utf-8') as f:
+			logT = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+			logM = (str(message.author)+'('+str(message.author.id)+') '+ logT +': '+str(message.content)+'\n')
+			f.write(logM)
+		if message.content.startswith('!chatlogs') and message.author.id in dAdmins and message.channel.id == '106301620500836352':
+			yield from client.send_file(message.channel, 'chatLogs.txt')
 		if message.content.startswith("!yt") and len(message.content.split()) == 2:
 			if voice == None:
 				voice = yield from client.join_voice_channel(message.author.voice_channel)
@@ -328,15 +337,12 @@ def on_message(message):
 			if 'resume' in message.content and player != None:
 				if voice.is_connected():
 					player.resume()
+			musicControls = ["next", "list", "song","pause", "resume"]
 			if 'list' in message.content and player != None and len(musicQue) >0:
 				returnS = ''
 				for i in musicQue:
-					if i != "next":
-						if i != "list":
-							if i != "song":
-								if i != "pause":
-									if i != "resume":
-										returnS += ('www.youtube.com/watch?v='+i+'\n')
+					if i not in musicControls:
+						returnS += ('www.youtube.com/watch?v='+i+'\n')
 				yield from client.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
 				returnS = ''
 			if 'song' in message.content and player != None and len(musicQue) >0:
@@ -393,16 +399,12 @@ def on_message(message):
 				except:
 					pass
 
-		with io.open('chatLogs.txt','a',encoding='utf-8') as f:
-			logT = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
-			logM = (str(message.author)+'('+str(message.author.id)+') '+ logT +': '+str(message.content)+'\n')
-			f.write(logM)
-		if message.content.startswith('!chatlogs') and str(message.author.id) in dAdmins and str(message.channel.id) == '106560613794197504':
-			client.send_file(message.channel, 'chatLogs.txt')
+
 
 
 		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
 			yield from client.send_message(message.channel, 'You must have a youtube url to show, has to be the last part after v=')
+
 	if message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!t5skillbuilds'):
 			if message.content.lower().startswith('!skillbuilds'):
 				dnClass = message.content.lower().replace('!skillbuilds ', '')
@@ -434,6 +436,8 @@ X                X     DDDDD
 		t = int(str(message.content).count('┻')/2)
 		yield from client.send_message(message.channel, '┬─┬ ノ( ^_^ノ) '* t)
 		"""
+	#if message.content.startswith('O') and message.content.endswith('O') and 'u' in message.content.lower():
+	#	yield from client.delete_message(message)
 	if message.content.startswith('!define') and len(message.content.split()) > 1:
 		words = message.content[8:]
 		r = requests.get('http://api.urbandictionary.com/v0/define?term=' + words)
@@ -473,6 +477,68 @@ X                X     DDDDD
 			for i in dancing:
 				yield from client.edit_message(dance, i)
 				yield from asyncio.sleep(0.1)
+	if message.content.startswith('!checktwitch') and len(message.content.split()) == 2:
+		tChan = message.content.split()[-1].lower()
+		if tChan == 'jaesung':
+			tChan = 'lsjjws3'
+		r = requests.get('https://api.twitch.tv/kraken/streams/'+tChan)
+		if r.status_code == 200:
+			tData = r.json()
+			if tData['stream'] == None:
+				if tChan == 'jaesung':
+					tChan = 'lsjjws3'
+					yield from client.send_message(message.channel, tChan+'\'s channel is currently offline!')
+				else:
+					yield from client.send_message(message.channel, tChan+'\'s channel is currently offline!')
+			else:
+				if tChan == 'jaesung':
+					tChan = 'lsjjws3'
+					yield from client.send_message(message.channel, tChan+'\'s channel is currently online!')
+					yield from client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
+				else:
+					yield from client.send_message(message.channel, tChan+'\'s channel is currently online!')
+					yield from client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
+		elif r.status_code == 404:
+			yield from client.send_message(message.channel, 'This channel does not exist.')
+		elif r.status_code == 422:
+			yield from client.send_message(message.channel, 'Channel ' + tChan + ' is a justin.tv channel and doesnt work on twitch or is banned!')
+	elif message.content.startswith('!checktwitch') and len(message.content.split()) == 1:
+		client.send_message(message.channel, 'The format of !checktwitch is !checktwitch (channelname).')
+	elif message.content.startswith('!checktwitch') and len(message.content.split()) > 2:
+		client.send_message(message.channel, 'The !checktwitch function only takes 1 argument!')
+	if message.content.startswith('!shoot') and len(message.content.split()) == 2:
+		shooting = ['(⌐■_■)--︻╦╤─ -    ','(⌐■_■)--︻╦╤─  -   ','(⌐■_■)--︻╦╤─   -  ','(⌐■_■)--︻╦╤─    - ','(⌐■_■)--︻╦╤─     -']
+		backshooting = ['    - ─╦╤︻--(■_■ㄱ)','   -  ─╦╤︻--(■_■ㄱ)','  -   ─╦╤︻--(■_■ㄱ)',' -    ─╦╤︻--(■_■ㄱ)','-     ─╦╤︻--(■_■ㄱ)']
+		shootrand = random.randint(0,99)
+		if len(message.mentions) > 0:
+			if shootrand < 89:
+				shot = yield from client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',message.mentions[0].mention))
+				for i in shooting:
+					yield from asyncio.sleep(0.1)
+					yield from client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,message.mentions[0].mention))
+
+			elif shootrand < 98:
+				shot = yield from client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',message.mentions[0].mention))
+				for i in backshooting:
+					yield from asyncio.sleep(0.1)
+					yield from client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,message.mentions[0].mention))
+			else:
+				yield from client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,message.mentions[0].mention))
+		elif discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members) != None:
+			if shootrand < 89:
+				shot = yield from client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+				for i in shooting:
+					yield from asyncio.sleep(0.1)
+					yield from client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+			elif shootrand < 98:
+				shot = yield from client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+				for i in backshooting:
+					yield from asyncio.sleep(0.1)
+					yield from client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+			else:
+				yield from client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
+	if message.content.startswith('!sometest') and len(message.content.split()) == 2:
+		yield from client.send_message(message.channel, discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members))
 
 	# discord help commands to get information from user
 
@@ -856,7 +922,30 @@ X                X     DDDDD
 		if message.content.startswith('!debug'):
 			deb = message.content[7:]
 			yield from client.send_message(message.channel, str(eval(deb)))
-
+	if message.content.startswith('<@106469383206883328>'):
+		if 'who are you' == str(message.content).lower().replace('<@106469383206883328>'+ ' ', '') or 'who are you?' == str(message.content).lower().replace('<@106469383206883328>'+ ' ', ''):
+			yield from client.send_message(message.channel, 'I am a bot that runs on a community made python API(more info on that in bot-and-api channel) and programmed by Comphus to have functions for this discord server')
+			counts1 = 1
+		elif counts1 == 0:
+			for word in qQuestion:
+				if word in str(message.content).lower():
+					yield from client.send_message(message.channel, magicEight[random.randint(0,19)]+', ' +  message.author.mention)
+					counts1 = 1
+					break  
+		if counts1 == 1:
+			counts1 = 0
+		elif 'hi' in message.content or 'Hi' in message.content or 'hello' in message.content or 'Hello' in message.content:
+			yield from client.send_message(message.channel, 'Hi! ' + message.author.mention)
+		elif 'bye' in message.content or 'Bye' in message.content:
+			yield from client.send_message(message.channel, 'Bye-Bye! ' + message.author.mention)
+		elif 'i love you' in message.content or 'I love you' in message.content or '<3' in message.content:
+			yield from client.send_message(message.channel, 'I love you too <3 ' + message.author.mention)
+		elif 'thank' in message.content or 'Thanks' in message.content:
+			yield from client.send_message(message.channel, 'You\'re welcome! ' + message.author.mention)
+		elif 'fuck you' in message.content or 'Fuck you' in message.content or 'Fuck u' in message.content or 'fuck u' in message.content or '( ° ͜ʖ͡°)╭∩╮' in message.content:
+			yield from client.send_message(message.channel, '( ° ͜ʖ͡°)╭∩╮ ' + message.author.mention)
+		else:
+			yield from client.send_message(message.channel, 'what? ' + message.author.mention)
 
 
 
