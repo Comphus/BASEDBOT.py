@@ -156,6 +156,7 @@ def on_member_join(member):
 				retS = ('Name: ' +str(member.name)+ ' ID:' + str(member.id)+ ' Time joined:' + str(t) + ' EST\n')
 				f.write(retS)
 
+"""
 @client.async_event
 def on_member_update(before, after):
 	if before.server.id == '106293726271246336':
@@ -224,7 +225,7 @@ def on_member_update(before, after):
 
 				with open('played.json', 'w') as f:
 					json.dump(g, f, indent = 4)
-
+"""
 
 
 @client.async_event
@@ -253,6 +254,9 @@ def on_message(message):
 			for i in f:
 				yield from client.send_message(message.channel, i)
 				yield from asyncio.sleep(2)
+	if message.content.startswith('!lightproc'):
+		yield from client.send_message(message.channel, 'Buckle up!')
+		yield from client.send_file(message.channel, 'Comphus.jpg')
 
 	if message.content.startswith('!slowmode') and message.author.id in dMods and message.server.id == '106293726271246336':
 		if len(message.content.split()) > 1 and 'on' not in message.content.lower() and 'off' not in message.content.lower() and type(int(message.content.split()[1])) == type(5) and int(message.content.split()[1]) < 31:
@@ -321,6 +325,7 @@ def on_message(message):
 				break
 	elif message.content.lower().split()[0] in MainResponses['all!commands']:
 		yield from client.send_message(message.channel, MainResponses['all!commands'][message.content.lower().split()[0]])
+		return
 
 
 	if message.content.lower().startswith('.ahh'):
@@ -758,7 +763,7 @@ X                X     DDDDD
 			yield from client.send_message(message.channel, 'https://bnstree.com/AS')
 			return
 		elif 'summoner' == bnsClass or 'su' == bnsClass or 'summ' == bnsClass or 'sum' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/FM')
+			yield from client.send_message(message.channel, 'https://bnstree.com/SU')
 			return
 		elif 'blade dancer' == bnsClass or 'bd' == bnsClass or 'bladedancer' == bnsClass or 'lbm' == bnsClass or 'lyn blade master' == bnsClass or 'lynblade master' == bnsClass or 'lyn blademaster' == bnsClass:
 			yield from client.send_message(message.channel, 'https://bnstree.com/BD')
@@ -772,18 +777,53 @@ X                X     DDDDD
 		
 	if message.content.startswith('!testbns'):
 		yield from client.send_message(message.channel, "http://na-bns.ncsoft.com/ingame/bs/character/duel?c=Taichou\nhttp://na-bns.ncsoft.com/web/ingame/character/favorcharacter.jsp\nhttp://na-bns.ncsoft.com/web/ingame/character/a_duelinfo.jsp")
-	if message.content.lower().startswith('!bns') and len(message.content.split()) > 1:
+	if message.content.lower().startswith('!bns') and len(message.content.split()) > 1 and message.channel.id != '106293726271246336':
 		newM = message.content.lower()[5:]
 		newerM = newM.split()
 		if len(newerM) > 1:
 			newestM = '%20'.join(newerM)
 		else:
 			newestM = newerM[0]
+		if "faggot" in newestM.lower():
+			yield from client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain')
+			yield from client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
+			return
 		r = requests.get('http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM)
 		if len(r.history) == 0:
 			yield from client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM+'&s=101')
+			from bs4 import BeautifulSoup
+			soup = BeautifulSoup(r.text, 'html.parser')
+			#print(soup.find_all("div", class_="charaterView")[0].img['src'])
+			#print(soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].string)#.find_all(attrs={"class":"desc"})[0])
+			classname = soup.find_all(attrs={"class":"signature"})[0].find_all("ul")[0].li.string
+			level = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].string.replace("Level", "**Level:**")
+			att = soup.find_all("div", class_="attack")[0].span.string
+			hp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[0].find(class_="stat-point").string
+			pierce = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[2].find(class_="stat-point").string
+			piercep = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[2].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+			defense = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[1].find(class_="stat-point").string
+			defensep = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[1].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+			acc = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[3].find(class_="stat-point").string
+			accp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[3].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+			eva = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[3].find(class_="stat-point").string
+			evap = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[3].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+			chit = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
+			chitp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+			block = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[4].find(class_="stat-point").string
+			blockp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[4].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[4].string
+			cdmg = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[6].find(class_="stat-point").string
+			cdmgp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[6].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+			critd = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
+			critdp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[1].string
+			yield from client.send_message(message.channel, "**Class:** {}\n{}\n**Attack:** {}                                                        **HP:** {}\n**Pierce:** {}({})                                          **Defense:** {}({})\n**Accuracy:** {}({})                                 **Evasion:** {}({})\n**Critical Hit:** {}({})                              **Block:** {}({})\n**Critical Damage** {}({})                    **Crit Defense:** {}({})".format(classname,level,att,hp,pierce,piercep,defense,defensep,acc,accp,eva,evap,chit,chitp,block,blockp,cdmg,cdmgp,critd,critdp))
+			yield from client.send_message(message.channel, soup.find_all("div", class_="charaterView")[0].img['src'])
+			return
 		else:
 			yield from client.send_message(message.channel, 'Character name does not exist')
+			return
+	if message.content.startswith('!bnsdaily'):
+		yield from client.send_file(message.channel, "bnsdailymap.png")
+		return
 	if message.content.startswith('!bns') and len(message.content.split()) == 1:
 		yield from client.send_message(message.channel, 'the format for seeing a players bns info is \'!bns (player ign)\'')
 
@@ -951,7 +991,7 @@ X                X     DDDDD
 					tempL = ''
 			pugMentions.append(tempL)
 			for i in pugMentions:
-				yield fromclient.send_message(message.channel, pugM + '\n\n' + i)
+				yield from client.send_message(message.channel, pugM + '\n\n' + i)
 	elif message.content.startswith('!pugs') and str(message.channel.id) != '106300530548039680' and str(message.channel.server.id) == '106293726271246336':
 		yield from client.send_message(message.channel, 'You can only call for pugs in the <#106300530548039680> channel.')
 	elif message.content.startswith('!pugs') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
