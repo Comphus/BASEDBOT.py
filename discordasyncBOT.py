@@ -56,7 +56,7 @@ with open('Admins.txt','r') as f:
 
 
 
-unicodeResponses = {'/lenny':'( ͡° ͜ʖ ͡°)','!gardenintool':'(  ′︵‵  )/','/shrug':'¯\ _(ツ)_/¯',"!donkmay":"🎊🚢💗 **DONMAYKAY**2⃣0⃣1⃣6⃣ 💗🚢🎊"}
+unicodeResponses = {'/lenny':'( ͡° ͜ʖ ͡°)','!gardenintool':'(  ′︵‵  )/','/shrug':'¯\\\\\_(ツ)\_/¯',"!donkmay":"🎊🚢💗 **DONMAYKAY**2⃣0⃣1⃣6⃣ 💗🚢🎊"}
 
 
 
@@ -227,6 +227,23 @@ def on_member_update(before, after):
 					json.dump(g, f, indent = 4)
 """
 
+@client.event
+async def on_message(message):
+	if message.content.startswith('!vanish') and len(message.content.split()) == 3 and (message.author.id in dMods or message.author.id in '105130465039548416') and type(1) == type(int(message.content.split()[2])) and len(message.mentions) > 0:
+		logs = client.logs_from(message.channel)
+		counter = 0
+		async for log in logs:
+			if log.author.mention == message.mentions[0].mention:
+				await client.delete_message(log)
+				counter += 1
+			if counter == int(message.content.split()[2]):
+				break
+		with io.open('vanishlog.txt','a',encoding='utf-8') as f:
+			s = (str(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))+' '+message.server.name+' '+'Name: ' +str(message.author.name)+ ' ID:' + str(message.author.id)+ ' What they wrote:' + str(message.content)+ '\n')
+			f.write(s)
+	elif message.content.startswith('!vanish') and len(message.content.split()) != 3:
+		await client.send_message(message.channel, 'The format for !vanish is: "!vanish (@mention to person) (number of messages to delete)" and is only accessable to chatmods and above.')
+
 
 @client.async_event
 def on_message(message):
@@ -318,7 +335,7 @@ def on_message(message):
 		else:
 			yield from client.send_message(message.channel, 'That person has not been manually timed out.')
 
-	if message.content.startswith('!') == False:
+	if message.content.startswith('!') == False and message.server.id != '110373943822540800':
 		for t in twitchEmotes:
 			if t in message.content:
 				yield from client.send_file(message.channel, 'C:/DISCORD BOT/twitch emotes/'+t+'.jpg')
@@ -328,30 +345,18 @@ def on_message(message):
 		return
 
 
+	"""
 	if message.content.lower().startswith('.ahh'):
 		logs = yield from client.logs_from(message.channel, limit=20)
 		counter = 0
 		for log in logs:
 			if log.author == message.author:
 				yield from client.delete_message(log)
-				counter += 1
+				counter += 1d
 			if counter == 4:
 				break
+	"""
 		
-	if message.content.startswith('!vanish') and len(message.content.split()) == 3 and (message.author.id in dMods or message.author.id in '105130465039548416') and type(1) == type(int(message.content.split()[2])) and len(message.mentions) > 0:
-		logs = yield from client.logs_from(message.channel, limit=300)
-		counter = 0
-		for log in logs:
-			if log.author.mention == message.mentions[0].mention:
-				yield from client.delete_message(log)
-				counter += 1
-			if counter == int(message.content.split()[2]):
-				break
-		with io.open('vanishlog.txt','a',encoding='utf-8') as f:
-			s = (str(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))+' '+message.server.name+' '+'Name: ' +str(message.author.name)+ ' ID:' + str(message.author.id)+ ' What they wrote:' + str(message.content)+ '\n')
-			f.write(s)
-	elif message.content.startswith('!vanish') and len(message.content.split()) != 3:
-		yield from client.send_message(message.channel, 'The format for !vanish is: "!vanish (@mention to person) (number of messages to delete)" and is only accessable to chatmods and above.')
 		
 	if message.content in unicodeResponses:
 		yield from client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
@@ -571,6 +576,8 @@ X                X     DDDDD
 			for i in dancing:
 				yield from client.edit_message(dance, i)
 				yield from asyncio.sleep(0.1)
+	if message.content.startswith('!vladme'):
+		yield from client.send_message(message.channel, "http://i.imgur.com/wkI7NZB.png")
 	if message.content.startswith('!checktwitch') and len(message.content.split()) == 2:
 		tChan = message.content.split()[-1].lower()
 		if tChan == 'jaesung':
@@ -716,7 +723,7 @@ X                X     DDDDD
 				yield from client.send_message(message.channel, p)
 	if message.content.startswith('!serverpic'):
 		yield from client.send_message(message.channel, message.channel.server.icon_url)
-	if message.content.startswith('!changeme') and len(message.content.split()) >= 3 and (str(message.author.id) in '90886475373109248 90953831583617024 90869992689520640 90940396602953728 90847182772527104' or str(message.author.id) in dAdmins):
+	if message.content.startswith('!changeme') and len(message.content.split()) >= 3 and (str(message.author.id) in '90910424551145472 90886475373109248 90953831583617024 90869992689520640 90940396602953728 90847182772527104' or str(message.author.id) in dAdmins):
 		# light pink FF69B4
 		colorVal = message.content.split()[-1]
 		roleName = message.content.replace('!changeme ', '')
@@ -794,9 +801,17 @@ X                X     DDDDD
 			from bs4 import BeautifulSoup
 			soup = BeautifulSoup(r.text, 'html.parser')
 			#print(soup.find_all("div", class_="charaterView")[0].img['src'])
-			#print(soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].string)#.find_all(attrs={"class":"desc"})[0])
+			#print(soup.find_all(attrs={"class":"signature"})[0].find_all(attrs={"href":"#"})[0].string)#.find_all(attrs={"class":"desc"})[0])
+			try:
+				clan = soup.find_all(attrs={"class":"signature"})[0].find_all(attrs={"class":"guild"})[0].text
+			except:
+				clan = 'None'
 			classname = soup.find_all(attrs={"class":"signature"})[0].find_all("ul")[0].li.string
-			level = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].string.replace("Level", "**Level:**")
+			level = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].text.split()[1]
+			try:
+				hmlevel = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("Dark Arts Level", "**Dark Arts Level:**")
+			except:
+				hmlevel = "**Dark Arts Level:** 0"
 			att = soup.find_all("div", class_="attack")[0].span.string
 			hp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[0].find(class_="stat-point").string
 			pierce = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[2].find(class_="stat-point").string
@@ -815,7 +830,7 @@ X                X     DDDDD
 			cdmgp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[6].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
 			critd = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
 			critdp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[1].string
-			yield from client.send_message(message.channel, "**Class:** {}\n{}\n**Attack:** {}                                                        **HP:** {}\n**Pierce:** {}({})                                          **Defense:** {}({})\n**Accuracy:** {}({})                                 **Evasion:** {}({})\n**Critical Hit:** {}({})                              **Block:** {}({})\n**Critical Damage** {}({})                    **Crit Defense:** {}({})".format(classname,level,att,hp,pierce,piercep,defense,defensep,acc,accp,eva,evap,chit,chitp,block,blockp,cdmg,cdmgp,critd,critdp))
+			yield from client.send_message(message.channel, "**Clan:** {}\n**Class:** {}\n**Level:** {}\n{}\n**Attack:** {}                                                        **HP:** {}\n**Pierce:** {}({})                                          **Defense:** {}({})\n**Accuracy:** {}({})                                 **Evasion:** {}({})\n**Critical Hit:** {}({})                              **Block:** {}({})\n**Critical Damage** {}({})                    **Crit Defense:** {}({})".format(clan,classname,level,hmlevel,att,hp,pierce,piercep,defense,defensep,acc,accp,eva,evap,chit,chitp,block,blockp,cdmg,cdmgp,critd,critdp))
 			yield from client.send_message(message.channel, soup.find_all("div", class_="charaterView")[0].img['src'])
 			return
 		else:
