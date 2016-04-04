@@ -28,7 +28,10 @@ dLogin={}
 voice = None
 player = None
 musicQue = []
+extraQue = []
 currentsong = ''
+songtoken = False
+musicon = False
 timeoutStore = 0
 powerTimeout = {}
 dTimeout = {}
@@ -145,7 +148,8 @@ def dueling(msg):
 @client.async_event
 def on_member_join(member):
 	if member.server.id not in '82210263440306176 110373943822540800':
-		yield from client.send_message(member.server, 'Welcome ' + member.mention + ' to the server!')
+		if str(member.server.id) not in '106293726271246336 148358898024316928':
+			yield from client.send_message(member.server, 'Welcome ' + member.mention + ' to the server!')
 		try:
 			print(member)
 		except:
@@ -226,7 +230,7 @@ def on_member_update(before, after):
 				with open('played.json', 'w') as f:
 					json.dump(g, f, indent = 4)
 """
-
+"""
 @client.event
 async def on_message(message):
 	if message.content.startswith('!vanish') and len(message.content.split()) == 3 and (message.author.id in dMods or message.author.id in '105130465039548416') and type(1) == type(int(message.content.split()[2])) and len(message.mentions) > 0:
@@ -243,15 +247,17 @@ async def on_message(message):
 			f.write(s)
 	elif message.content.startswith('!vanish') and len(message.content.split()) != 3:
 		await client.send_message(message.channel, 'The format for !vanish is: "!vanish (@mention to person) (number of messages to delete)" and is only accessable to chatmods and above.')
+"""
 
-
-@client.async_event
-def on_message(message):
+@client.event
+async def on_message(message):
 	global timeoutStore
 	global powerTimeout
 	global voice
 	global player
 	global musicQue
+	global extraQue
+	global songtoken
 	global currentsong
 	global counts1
 	global dTimeout
@@ -261,6 +267,7 @@ def on_message(message):
 	global magicEight
 	global slowM
 	global slowT
+	global musicon
 	cTime = datetime.now()
 
 	if client.user == message.author:
@@ -269,48 +276,69 @@ def on_message(message):
 	if message.content.startswith('!delete ian'):
 		with codecs.open('daddy.txt','r',"utf-8") as f:
 			for i in f:
-				yield from client.send_message(message.channel, i)
-				yield from asyncio.sleep(2)
+				await client.send_message(message.channel, i)
+				await asyncio.sleep(2)
 	if message.content.startswith('!lightproc'):
-		yield from client.send_message(message.channel, 'Buckle up!')
-		yield from client.send_file(message.channel, 'Comphus.jpg')
+		await client.send_message(message.channel, 'Buckle up!')
+		await client.send_file(message.channel, 'Comphus.jpg')
 
-	if message.content.startswith('!slowmode') and message.author.id in dMods and message.server.id == '106293726271246336':
-		if len(message.content.split()) > 1 and 'on' not in message.content.lower() and 'off' not in message.content.lower() and type(int(message.content.split()[1])) == type(5) and int(message.content.split()[1]) < 31:
+	if message.content.startswith('!slowmode') and message.author.id in dMods and message.server.id in '106293726271246336 88422130479276032':
+		if len(message.content.split()) > 1  and 'off' not in message.content.lower() and type(int(message.content.split()[1])) == type(5) and int(message.content.split()[1]) < 31:
+			print('hello')
 			slowT = int(message.content.split()[1])
+		try:				
+			if type(3) == int(message.content.split()[1]): 
+				if int(message.content.split()[1]) > 30:
+					await client.send_message(message.channel, "max limit is 30 seconds for slowmode")
+					return
+		except:
+			pass
 		if 'off' in message.content.lower():
-			yield from client.send_message(message.channel, "slow mode is off!")
+			await client.send_message(message.channel, "slow mode is off!")
 			slowM = False
 			for i in message.server.members:
 				for j in i.roles:
 					if 'slowmode' in j.name:
-						yield from client.remove_roles(i, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
-		elif int(message.content.split()[1]) > 30:
-			yield from client.send_message(message.channel, "max limit is 30 seconds for slowmode")
+						await client.remove_roles(i, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
 		elif 'on' in message.content.lower():
 			if slowT > 0:
-				yield from client.send_message(message.channel, "slow mode is on!")
+				await client.send_message(message.channel, "slow mode is on!")
 			elif slowT == 0:
-				yield from client.send_message(message.channel, "slow mode is on! Since no time interval was stated, the default of 15 seconds has been applied!")
+				await client.send_message(message.channel, "slow mode is on! Since no time interval was stated, the default of 15 seconds has been applied!")
 				slowT = 15
 			slowM = True
 	if slowM == True and message.server.id == '106293726271246336':
 		if message.author.id not in dMods:
-			yield from client.add_roles(message.author, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
-			yield from asyncio.sleep(slowT)
-			yield from client.remove_roles(message.author, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
+			await client.add_roles(message.author, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
+			await asyncio.sleep(slowT)
+			await client.remove_roles(message.author, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
 
 	if message.content.startswith('!smashthat'):
 		tr = random.randint(0,1)
-		yield from client.send_file(message.channel, 'smash{}.jpg'.format(tr))
+		await client.send_file(message.channel, 'smash{}.jpg'.format(tr))
 
 
 	
+	if message.content.startswith('!vanish') and len(message.content.split()) == 3 and (message.author.id in dMods or message.author.id in '105130465039548416') and type(1) == type(int(message.content.split()[2])) and len(message.mentions) > 0:
+		logs = client.logs_from(message.channel)
+		counter = 0
+		async for log in logs:
+			if log.author.mention == message.mentions[0].mention:
+				await client.delete_message(log)
+				counter += 1
+			if counter == int(message.content.split()[2]):
+				break
+		with io.open('vanishlog.txt','a',encoding='utf-8') as f:
+			s = (str(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))+' '+message.server.name+' '+'Name: ' +str(message.author.name)+ ' ID:' + str(message.author.id)+ ' What they wrote:' + str(message.content)+ '\n')
+			f.write(s)
+	elif message.content.startswith('!vanish') and len(message.content.split()) != 3:
+		await client.send_message(message.channel, 'The format for !vanish is: "!vanish (@mention to person) (number of messages to delete)" and is only accessable to chatmods and above.')
+
 	if timeoutStore > 0:
 		for i in powerTimeout:
 			timeDiff = cTime - powerTimeout[i][1]
 			if timeDiff.seconds >= powerTimeout[i][0]:
-				yield from client.remove_roles(powerTimeout[i][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+				await client.remove_roles(powerTimeout[i][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
 				powerTimeout.pop(i)
 				timeoutStore -= 1
 				break
@@ -319,39 +347,39 @@ def on_message(message):
 		t1 = datetime.now()
 		powerTimeout[newM[1]] = [int(newM[2]),t1,message.mentions[0]]
 		timeoutStore += 1
-		yield from client.add_roles(message.mentions[0], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
-		yield from client.send_message(message.channel, newM[1]+' has been timed out for '+newM[2]+' seconds.')
+		await client.add_roles(message.mentions[0], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+		await client.send_message(message.channel, newM[1]+' has been timed out for '+newM[2]+' seconds.')
 	elif message.content.startswith('!timeout') and str(message.author.id) in dAdmins:
-		yield from client.send_message(message.channel, 'The format for timing someone out is !timeout @ mention (timeinseconds)')
+		await client.send_message(message.channel, 'The format for timing someone out is !timeout @ mention (timeinseconds)')
 	if message.content.startswith('!stoptimeout') and str(message.author.id) in dAdmins and len(message.content.split()) == 2:
 		newM = message.content.split()
 		if newM[1] in powerTimeout:
-			yield from client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+			await client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
 			powerTimeout.pop(newM[1])
-			yield from client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
+			await client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
 		elif 'Jail' in discord.utils.find(lambda m: m.name == 'Jail', message.channel.server.members).roles:
-			yield from client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
-			yield from client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
+			await client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
+			await client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
 		else:
-			yield from client.send_message(message.channel, 'That person has not been manually timed out.')
+			await client.send_message(message.channel, 'That person has not been manually timed out.')
 
 	if message.content.startswith('!') == False and message.server.id != '110373943822540800':
 		for t in twitchEmotes:
 			if t in message.content:
-				yield from client.send_file(message.channel, 'C:/DISCORD BOT/twitch emotes/'+t+'.jpg')
+				await client.send_file(message.channel, 'C:/DISCORD BOT/twitch emotes/'+t+'.jpg')
 				break
 	elif message.content.lower().split()[0] in MainResponses['all!commands']:
-		yield from client.send_message(message.channel, MainResponses['all!commands'][message.content.lower().split()[0]])
+		await client.send_message(message.channel, MainResponses['all!commands'][message.content.lower().split()[0]])
 		return
 
 
 	"""
 	if message.content.lower().startswith('.ahh'):
-		logs = yield from client.logs_from(message.channel, limit=20)
+		logs = await client.logs_from(message.channel, limit=20)
 		counter = 0
 		for log in logs:
 			if log.author == message.author:
-				yield from client.delete_message(log)
+				await client.delete_message(log)
 				counter += 1d
 			if counter == 4:
 				break
@@ -359,36 +387,36 @@ def on_message(message):
 		
 		
 	if message.content in unicodeResponses:
-		yield from client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
+		await client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
 	elif message.content.startswith('!sleep'):
-		yield from asyncio.sleep(5)
-		yield from client.send_message(message.channel, 'Done sleeping')
+		await asyncio.sleep(5)
+		await client.send_message(message.channel, 'Done sleeping')
 	elif message.content.startswith('!hello'):
-		yield from client.send_message(message.channel, 'hi')
+		await client.send_message(message.channel, 'hi')
 	elif message.content.startswith('!duel') and str(message.channel.id) not in '91518345953689600 106293726271246336':    
 		results = dueling([message.mentions[0].mention,message.mentions[1].mention])
-		yield from client.send_message(message.channel, results[1])
+		await client.send_message(message.channel, results[1])
 		for i in range(len(results[0])):
-			yield from client.send_message(message.channel, results[0][i])
-		yield from client.send_message(message.channel, results[2])
+			await client.send_message(message.channel, results[0][i])
+		await client.send_message(message.channel, results[2])
 	elif message.content.startswith('!trivia') and message.channel.id != '106293726271246336':
 		TriviaQuestions = MainResponses['Trivia']
 		TriviaQuestion = random.choice(list(TriviaQuestions.keys()))
-		yield from client.send_message(message.channel, 'You have started DN Trivia!\n')
-		yield from asyncio.sleep(1)
-		yield from client.send_message(message.channel, 'You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
-		yield from asyncio.sleep(3)
-		yield from client.send_message(message.channel, TriviaQuestion)
+		await client.send_message(message.channel, 'You have started DN Trivia!\n')
+		await asyncio.sleep(1)
+		await client.send_message(message.channel, 'You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
+		await asyncio.sleep(3)
+		await client.send_message(message.channel, TriviaQuestion)
 		answer = MainResponses['Trivia'][TriviaQuestion]
 		end_time = time.time() + 15
 		while True:
 			time_remaining = end_time - time.time()
 			if time_remaining <= 0:
-				yield from client.send_message(message.channel, 'Sorry, you took too long! The answer was '+answer)
+				await client.send_message(message.channel, 'Sorry, you took too long! The answer was '+answer)
 				return
-			guess = yield from client.wait_for_message(timeout = time_remaining)
+			guess = await client.wait_for_message(timeout = time_remaining)
 			if guess and answer in guess.content.lower():
-				yield from client.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
+				await client.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
 	if message.channel.server.id == '106293726271246336':
 		with io.open('chatLogs.txt','a',encoding='utf-8') as f:
@@ -396,9 +424,9 @@ def on_message(message):
 			logM = (str(message.author)+'('+str(message.author.id)+') '+ logT +': '+str(message.content)+'\n')
 			f.write(logM)
 		if message.content.startswith('!chatlogs') and message.author.id in dAdmins and message.channel.id == '106301620500836352':
-			yield from client.send_file(message.channel, 'chatLogs.txt')
+			await client.send_file(message.channel, 'chatLogs.txt')
 		if message.content.startswith("!evlogs") and message.author.id in dAdmins and message.channel.id == '106301620500836352':
-			yield from client.send_file(message.channel, 'eventlist.txt')
+			await client.send_file(message.channel, 'eventlist.txt')
 		if message.content.lower().startswith('!event'):
 			tradeL = ''
 			with open('eventlist.txt','r') as s:
@@ -407,7 +435,7 @@ def on_message(message):
 				with open('eventlist.txt','a') as s:
 					s.write(message.author.mention)
 					s.write('\n')
-					yield from client.send_message(message.channel, 'You have successfully signed up for Events!')
+					await client.send_message(message.channel, 'You have successfully signed up for Events!')
 			if message.author.mention in tradeL:
 				newL = []
 				with open('eventlist.txt','r') as s:
@@ -417,92 +445,125 @@ def on_message(message):
 				with open('eventlist.txt','w') as s:
 					for line in newL:    
 						s.write(line)
-				yield from client.send_message(message.channel, 'You have successfully removed yourself for Events!')
+				await client.send_message(message.channel, 'You have successfully removed yourself for Events!')
 		if message.content.startswith("!yt") and len(message.content.split()) == 2:
+			ctrC = message.content.lower().split()[1]
+			musicControls = ["next", "skip", "list", "song","pause", "resume", "help"]
 			if voice == None:
-				voice = yield from client.join_voice_channel(message.author.voice_channel)
-				#voice = yield from client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352'))
+				try:
+					voice = await client.join_voice_channel(message.author.voice_channel)
+				except:
+					await client.send_message(message.channel, "You are not in a voice channel, please join a voice channel in order to play music.")
+					return
+				#voice = await client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352'))
 			if 'stop' in message.content:
 				if voice.is_connected():
-					yield from voice.disconnect()
+					await voice.disconnect()
 					musicQue = []
+					player = None
+					voice = None
+					songtoken = False
 					return
-			endurl = message.content.split()[1]
-			if 'https://www.youtube.com/watch?v=' in endurl:
-				endurl = endurl.replace('https://www.youtube.com/watch?v=', '')
-			musicQue.append(endurl)
-			if 'next' in message.content and player != None and len(musicQue) >0:
+			if ('next' in message.content or 'skip' in message.content) and player != None:
 				if voice.is_connected():
 					player.stop()
+					if len(musicQue) == 0:
+						await voice.disconnect()
+						musicQue = []
+					return
 			if 'pause' in message.content and player != None:
 				if voice.is_connected():
 					player.pause()
+					return
 			if 'resume' in message.content and player != None:
 				if voice.is_connected():
 					player.resume()
-			musicControls = ["next", "list", "song","pause", "resume"]
+					return
 			if 'list' in message.content and player != None and len(musicQue) >0:
 				returnS = ''
 				for i in musicQue:
 					if i not in musicControls:
-						returnS += ('www.youtube.com/watch?v='+i+'\n')
-				yield from client.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
+						returnS += (i+'\n')
+				await client.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
 				returnS = ''
 			if 'song' in message.content and player != None and len(musicQue) >0:
-				print(currentsong)
-				yield from client.send_message(message.channel, 'Current song playing: '+ currentsong)
-			def playmusicque(voice, queurl):
+				await client.send_message(message.channel, 'Current song playing: **'+ player.title+'**')
+			if 'help' in message.content:
+				await client.send_message(message.channel, 'How to make the !yt function work, type in \'!yt \', then whatever url you want afterwards to make it play its audio, will not play from ALL links.\n__Commands you can put in after !yt for !yt are:__\n**next/skip** - goes to the next song, if there isnt one then the bot leaves\n**list** - a list of songs in queue\n**song** - current song playing\n**pause/resume** - pauses or resumes the song\n**help** - pulls up this text')
+				if player == None:
+					await voice.disconnect()
+			async def playmusicque(voice, queurl):
+				global musicon
 				global player
+				#global voice
 				global currentsong
+				global songtoken
+				global extraQue
 				try:
-					if queurl == "next" or queurl == "list" or queurl == "song" or queurl == "pause" or queurl == "resume":
-						musicQue.pop(0)
-						pass
-					elif player != None:
+					if player != None:
 						player.stop()
-						player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+queurl)
+						player = await voice.create_ytdl_player(queurl)
 						player.start()
-						currentsong = ('https://www.youtube.com/watch?v='+queurl)
-						if 'youtube' not in musicQue[0]:
-							yield from client.send_message(message.channel, 'currently playing: https://www.youtube.com/watch?v='+musicQue[0])
-						else:
-							yield from client.send_message(message.channel, 'currently playing: '+ musicQue[0])
 						musicQue.pop(0)
+						currentsong = (player.title)
+						await client.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player.title, player.views, player.likes, player.dislikes))
+						return
 					else:
-						player = voice.create_ytdl_player('https://www.youtube.com/watch?v='+queurl)
+						player = await voice.create_ytdl_player(queurl)
 						player.start()
-						currentsong = ('https://www.youtube.com/watch?v='+queurl)
-						if 'youtube' not in musicQue[0]:
-							yield from client.send_message(message.channel, 'currently playing: https://www.youtube.com/watch?v='+musicQue[0])
-						else:
-							yield from client.send_message(message.channel, 'currently playing: '+ musicQue[0])
 						musicQue.pop(0)
+						currentsong = (player.title)
+						await client.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player.title, player.views, player.likes, player.dislikes))
+						return
 				except Exception as e:
 					musicQue.pop(0)
-					yield from client.send_message(message.channel, e)
-			if player == None:
-				if len(musicQue) == 1:
-					yield from playmusicque(voice, musicQue[0])
-			while len(musicQue) >= 0:
-				yield from asyncio.sleep(2)
-				print("hello1")
-				try:    
-					if player.is_done():
-						print("hello2")
-						if len(musicQue) == 0:
-							yield from client.send_message(message.channel, "No more songs in queue")
-							player = None
-							yield from voice.disconnect()
-							voice = None
+					await client.send_message(message.channel, e)
+					return
+
+			if ctrC not in musicControls:
+				endurl = message.content.split()[1]
+				musicQue.append(endurl)
+				#the loop
+				if songtoken == False:
+					songtoken = True
+					while len(musicQue) >= 0:
+						if player == None:
+							print('anothertest')
+							if len(musicQue) == 1:
+								await playmusicque(voice, musicQue[0])
+						await asyncio.sleep(2)
+						print(musicQue)
+						print("hello1")
+						try:
+							if player.is_done():
+								print("hello2")
+								if len(musicQue) == 0:
+									await client.send_message(message.channel, "No more songs in queue")
+									player = None
+									await voice.disconnect()
+									voice = None
+									songtoken = False
+									#print(songtoken)
+									#break
+								elif len(musicQue) > 0:
+									#songtoken = True
+									print("hello4")
+									await playmusicque(voice, musicQue[0])
+									#break
+							
+						except:
+							pass
+						
+						
+						try:
+							if len(musicQue) == 0 and player.is_done():
+								break
+						except:
+							pass
+						if len(musicQue) == 0 and player == None:
 							break
-						else:
-							print("hello4")
-							yield from playmusicque(voice, musicQue[0])
-							break
-				except:
-					pass
 		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
-			yield from client.send_message(message.channel, 'You must have a youtube url to show, has to be the last part after v=')
+			await client.send_message(message.channel, 'You must have a link to show after !yt. It can be almost anything, youtube, soundcloud, even pornhub!')
 
 	if message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!t5skillbuilds'):
 			if message.content.lower().startswith('!skillbuilds'):
@@ -510,19 +571,19 @@ def on_message(message):
 			elif message.content.lower().startswith('!t5skillbuilds'):
 				dnClass = message.content.lower().replace('!t5skillbuilds ', '')
 			if '!skillbuilds' == str(message.content).lower() or '!skillbuilds ' == str(message.content).lower():
-				yield from client.send_message(message.channel, 'http://dnmaze.com/')
+				await client.send_message(message.channel, 'http://dnmaze.com/')
 			elif '!t5skillbuilds' == str(message.content).lower() or '!t5skillbuilds ' == str(message.content).lower():
-				yield from client.send_message(message.channel, 'https://dnss-kr.herokuapp.com/job/')
+				await client.send_message(message.channel, 'https://dnss-kr.herokuapp.com/job/')
 			else:
 				try:
 					if message.content.lower().startswith('!skillbuilds'):
-						yield from client.send_message(message.channel, 'http://dnmaze.com/'+MainResponses["dnskillbuilds"][dnClass])
+						await client.send_message(message.channel, 'http://dnmaze.com/'+MainResponses["dnskillbuilds"][dnClass])
 					elif message.content.lower().startswith('!t5skillbuilds'):
-						yield from client.send_message(message.channel, 'https://dnss-kr.herokuapp.com/job/'+MainResponses["t5dnskillbuilds"][dnClass])
+						await client.send_message(message.channel, 'https://dnss-kr.herokuapp.com/job/'+MainResponses["t5dnskillbuilds"][dnClass])
 				except:
-					yield from client.send_message(message.channel, '2nd argument not recognised')
+					await client.send_message(message.channel, '2nd argument not recognised')
 	if message.content.startswith("!xD"):
-		yield from client.send_message(message.channel, """
+		await client.send_message(message.channel, """
 X               X      DDDDD
    X         X         D            D
 	   X X             D              D
@@ -533,10 +594,10 @@ X                X     DDDDD
 		"""
 	if str(message.content).count('┻') > 1:
 		t = int(str(message.content).count('┻')/2)
-		yield from client.send_message(message.channel, '┬─┬ ノ( ^_^ノ) '* t)
+		await client.send_message(message.channel, '┬─┬ ノ( ^_^ノ) '* t)
 		"""
 	#if message.content.count('O') > 1 and 'u' in message.content.lower():
-	#	yield from client.delete_message(message)
+	#	await client.delete_message(message)
 	if message.content.startswith('!define') and len(message.content.split()) > 1 and message.channel.id != '106293726271246336':
 		words = message.content[8:]
 		r = requests.get('http://api.urbandictionary.com/v0/define?term=' + words)
@@ -549,35 +610,35 @@ X                X     DDDDD
 					dWord = tData['list'][i]['word']
 					dDef = tData['list'][i]['definition']
 					dEx = tData['list'][i]['example']
-					yield from client.send_message(message.channel, "__Word__: {}\n__**Definition**__\n{}".format(dWord,dDef,dEx))
+					await client.send_message(message.channel, "__Word__: {}\n__**Definition**__\n{}".format(dWord,dDef,dEx))
 				else:
-					yield from client.send_message(message.channel, "on cd")
+					await client.send_message(message.channel, "on cd")
 			except:
-				yield from client.send_message(message.channel, 'Word is not defined')
+				await client.send_message(message.channel, 'Word is not defined')
 		else:
-			yield from client.send_message(message.channel, 'something went wrong :(')
+			await client.send_message(message.channel, 'something went wrong :(')
 	elif message.content.startswith('!define') and len(message.content.split()) == 1 and message.channel.id != '106293726271246336':
-		yield from client.send_message(message.channel, 'need something to define')
+		await client.send_message(message.channel, 'need something to define')
 	if message.content.startswith('!spookme'):
 		skeleR = random.randint(0,39)
 		if skeleR <=30:
-			yield from client.send_message(message.channel, message.author.mention + ' YOU\'VE BEEN SPOOKED!')
-			yield from client.send_file(message.channel, 'skele'+str(skeleR)+'.jpg')
+			await client.send_message(message.channel, message.author.mention + ' YOU\'VE BEEN SPOOKED!')
+			await client.send_file(message.channel, 'skele'+str(skeleR)+'.jpg')
 		elif skeleR <=38:
-			yield from client.send_message(message.channel, message.author.mention + ' YOU\'VE BEEN SUPER SPOOKED!')
-			yield from client.send_file(message.channel, 'skele'+str(skeleR)+'.jpg')
+			await client.send_message(message.channel, message.author.mention + ' YOU\'VE BEEN SUPER SPOOKED!')
+			await client.send_file(message.channel, 'skele'+str(skeleR)+'.jpg')
 		else:
-			yield from client.send_message(message.channel, 'YOU\'VE BEEN SPOOKED TO DEATH\nhttps://www.youtube.com/watch?v=O8XfV8aPAyQ')
+			await client.send_message(message.channel, 'YOU\'VE BEEN SPOOKED TO DEATH\nhttps://www.youtube.com/watch?v=O8XfV8aPAyQ')
 	if message.content.startswith('!dance'):
 		dancing = ['♪┏(°.°)┛♪','♪┗(°.°)┓♪','♪┗(°.°)┛♪','♪┏(°.°)┓♪']
-		dance = yield from client.send_message(message.channel, 'Let\'s dance!')
-		yield from asyncio.sleep(1)
+		dance = await client.send_message(message.channel, 'Let\'s dance!')
+		await asyncio.sleep(1)
 		for j in range(5):
 			for i in dancing:
-				yield from client.edit_message(dance, i)
-				yield from asyncio.sleep(0.1)
+				await client.edit_message(dance, i)
+				await asyncio.sleep(0.1)
 	if message.content.startswith('!vladme'):
-		yield from client.send_message(message.channel, "http://i.imgur.com/wkI7NZB.png")
+		await client.send_message(message.channel, "http://i.imgur.com/wkI7NZB.png")
 	if message.content.startswith('!checktwitch') and len(message.content.split()) == 2:
 		tChan = message.content.split()[-1].lower()
 		if tChan == 'jaesung':
@@ -588,21 +649,21 @@ X                X     DDDDD
 			if tData['stream'] == None:
 				if tChan == 'jaesung':
 					tChan = 'lsjjws3'
-					yield from client.send_message(message.channel, tChan+'\'s channel is currently offline!')
+					await client.send_message(message.channel, tChan+'\'s channel is currently offline!')
 				else:
-					yield from client.send_message(message.channel, tChan+'\'s channel is currently offline!')
+					await client.send_message(message.channel, tChan+'\'s channel is currently offline!')
 			else:
 				if tChan == 'jaesung':
 					tChan = 'lsjjws3'
-					yield from client.send_message(message.channel, tChan+'\'s channel is currently online!')
-					yield from client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
+					await client.send_message(message.channel, tChan+'\'s channel is currently online!')
+					await client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
 				else:
-					yield from client.send_message(message.channel, tChan+'\'s channel is currently online!')
-					yield from client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
+					await client.send_message(message.channel, tChan+'\'s channel is currently online!')
+					await client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
 		elif r.status_code == 404:
-			yield from client.send_message(message.channel, 'This channel does not exist.')
+			await client.send_message(message.channel, 'This channel does not exist.')
 		elif r.status_code == 422:
-			yield from client.send_message(message.channel, 'Channel ' + tChan + ' is a justin.tv channel and doesnt work on twitch or is banned!')
+			await client.send_message(message.channel, 'Channel ' + tChan + ' is a justin.tv channel and doesnt work on twitch or is banned!')
 	elif message.content.startswith('!checktwitch') and len(message.content.split()) == 1:
 		client.send_message(message.channel, 'The format of !checktwitch is !checktwitch (channelname).')
 	elif message.content.startswith('!checktwitch') and len(message.content.split()) > 2:
@@ -613,35 +674,35 @@ X                X     DDDDD
 		shootrand = random.randint(0,99)
 		if len(message.mentions) > 0:
 			if shootrand < 89:
-				shot = yield from client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',message.mentions[0].mention))
+				shot = await client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',message.mentions[0].mention))
 				for i in shooting:
-					yield from asyncio.sleep(0.1)
-					yield from client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,message.mentions[0].mention))
+					await asyncio.sleep(0.1)
+					await client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,message.mentions[0].mention))
 
 			elif shootrand < 98:
-				shot = yield from client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',message.mentions[0].mention))
+				shot = await client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',message.mentions[0].mention))
 				for i in backshooting:
-					yield from asyncio.sleep(0.1)
-					yield from client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,message.mentions[0].mention))
+					await asyncio.sleep(0.1)
+					await client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,message.mentions[0].mention))
 			else:
-				yield from client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,message.mentions[0].mention))
+				await client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,message.mentions[0].mention))
 		elif discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members) != None:
 			if shootrand < 89:
-				shot = yield from client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+				shot = await client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 				for i in shooting:
-					yield from asyncio.sleep(0.1)
-					yield from client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+					await asyncio.sleep(0.1)
+					await client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 			elif shootrand < 98:
-				shot = yield from client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+				shot = await client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 				for i in backshooting:
-					yield from asyncio.sleep(0.1)
-					yield from client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+					await asyncio.sleep(0.1)
+					await client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 			else:
-				yield from client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
+				await client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
 	if message.content.startswith('!sometest') and len(message.content.split()) == 2:
-		yield from client.send_message(message.channel, discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members))
+		await client.send_message(message.channel, discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members))
 	if message.content.startswith('!gimmepoutine'):
-		yield from client.send_file(message.channel, 'poutine.jpg')
+		await client.send_file(message.channel, 'poutine.jpg')
 	if message.content.lower().startswith('!mal') and len(message.content) > 5:
 		import xml.etree.ElementTree as ET
 		anime = message.content.lower()[5:]
@@ -669,28 +730,29 @@ X                X     DDDDD
 					aDesc = root[10].text.replace('&amp;','&').replace('&mdash;','—').replace('&lt;','<').replace('&gt;','>').replace('&quot;','"').replace('&#039;',"'").replace('<br />', '').replace('[i]', '').replace('[/i]', '')
 				except:
 					aDesc = None
-			yield from client.send_message(message.channel, "**Name: **{}\n**Eng Name: **{}\n**Status: **{}\n**Air Date: **{}\n**Episodes: **{}\n**Score: **{}\n**Description: **{}\n**Link: **{}".format(aJp,aName,aStat,aDate,aEp,aScore,aDesc,aUrl))
+			await client.send_message(message.channel, "**Name: **{}\n**Eng Name: **{}\n**Status: **{}\n**Air Date: **{}\n**Episodes: **{}\n**Score: **{}\n**Description: **{}\n**Link: **{}".format(aJp,aName,aStat,aDate,aEp,aScore,aDesc,aUrl))
 		elif r.status_code == 204:
-			yield from client.send_message(message.channel, "I couldnt find an anime with that name in MyAnimeList")
+			await client.send_message(message.channel, "I couldnt find an anime with that name in MyAnimeList")
 		else:
-			yield from client.send_message(message.channel, "MyAnimeList is down, NOOOOOOOO :(")
+			await client.send_message(message.channel, "MyAnimeList is down, NOOOOOOOO :(")
 
 	# discord help commands to get information from user
 
-
+	if message.content.startswith('!totalmem'):
+		await client.send_message(message.channel, "**Total Members:** {}".format(message.channel.server.member_count))
 	if message.content.startswith("!voiceid"):
-		yield from client.send_message(message.channel, message.author.voice_channel.id)
+		await client.send_message(message.channel, message.author.voice_channel.id)
 	if message.content.startswith('!id'):
 		newR = message.content[4:]
 		if len(message.content.split()) == 1:
 			p = message.author.id
-			yield from client.send_message(message.channel, p)
+			await client.send_message(message.channel, p)
 		else:
 			if discord.utils.find(lambda m: m.name == newR, message.channel.server.members) == None:
-				yield from client.send_message(message.channel, 'Person does not exist, or you tried to mention them')
+				await client.send_message(message.channel, 'Person does not exist, or you tried to mention them')
 			else:
 				p = discord.utils.find(lambda m: m.name == newR, message.channel.server.members).id
-				yield from client.send_message(message.channel, p)
+				await client.send_message(message.channel, p)
 	if message.content.startswith('!myinfo'):
 		dRol = ''
 		dCol = -1
@@ -706,23 +768,40 @@ X                X     DDDDD
 		if dRol.startswith(', '):
 			dRol = dRol[2:]
 		p = message.author
-		yield from client.send_message(message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
+		await client.send_message(message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
+	if message.content.startswith('!info') and len(message.content.split()) > 1:
+		dRol = ''
+		dCol = -1
+		p = discord.utils.find(lambda m: m.name == message.content[6:], message.channel.server.members)
+		dCol1 = p.roles[0]
+		dJoin = p.joined_at
+		for i in p.roles:
+			dRol += i.name + ', '
+			if i.position > dCol:
+				dCol1 = i
+				dCol = i.position
+		dCol2 = hex(dCol1.colour.value)
+		dRol = dRol[0:-2].replace('@everyone', '@-everyone')
+		if dRol.startswith(', '):
+			dRol = dRol[2:]
+		await client.send_message(message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
+
 	if message.content.startswith('!avatar'):
 		newR = message.content[8:]
 		if len(message.mentions) > 0:
-			yield from client.send_message(message.channel, message.mentions[0].avatar_url)
+			await client.send_message(message.channel, message.mentions[0].avatar_url)
 			return
 		if len(message.content.split()) == 1:
 				p = message.author.avatar_url
-				yield from client.send_message(message.channel, p)
+				await client.send_message(message.channel, p)
 		else:
 			if discord.utils.find(lambda m: m.name == newR, message.channel.server.members) == None:
-				yield from client.send_message(message.channel, 'Person does not exist')
+				await client.send_message(message.channel, 'Person does not exist')
 			else:
 				p = discord.utils.find(lambda m: m.name == newR, message.channel.server.members).avatar_url
-				yield from client.send_message(message.channel, p)
+				await client.send_message(message.channel, p)
 	if message.content.startswith('!serverpic'):
-		yield from client.send_message(message.channel, message.channel.server.icon_url)
+		await client.send_message(message.channel, message.channel.server.icon_url)
 	if message.content.startswith('!changeme') and len(message.content.split()) >= 3 and (str(message.author.id) in '90910424551145472 90886475373109248 90953831583617024 90869992689520640 90940396602953728 90847182772527104' or str(message.author.id) in dAdmins):
 		# light pink FF69B4
 		colorVal = message.content.split()[-1]
@@ -732,59 +811,59 @@ X                X     DDDDD
 		print(colorVal)
 		client.send_message(message.channel, 'None')
 		if colorVal.startswith('0x') == False:
-			yield from client.send_message(message.channel, 'Make sure to add \'0x\' infront of your hex value!')
+			await client.send_message(message.channel, 'Make sure to add \'0x\' infront of your hex value!')
 			counts1 = 1
 		elif discord.utils.find(lambda r: r.name == str(roleName), message.channel.server.roles) == None:
-			yield from client.send_message(message.channel, 'Role name is invalid!')
+			await client.send_message(message.channel, 'Role name is invalid!')
 			counts1 = 1
 		elif counts1 == 0:
-			yield from client.edit_role(message.channel.server, discord.utils.find(lambda r: r.name == str(roleName), message.channel.server.roles), colour=discord.Colour(int(colorVal, 16)))
-			yield from client.send_message(message.channel, 'did it work')
+			await client.edit_role(message.channel.server, discord.utils.find(lambda r: r.name == str(roleName), message.channel.server.roles), colour=discord.Colour(int(colorVal, 16)))
+			await client.send_message(message.channel, 'did it work')
 		counts1 = 0
 	elif message.content.startswith('!changeme') and len(message.content.split()) >= 3 and str(message.author.id) not in '90886475373109248 91347017103581184':
-		yield from client.send_message(message.channel, 'You do not have access to this command')
+		await client.send_message(message.channel, 'You do not have access to this command')
 	if message.content.startswith('!chid'):
-		yield from client.send_message(message.channel, message.channel.id)
+		await client.send_message(message.channel, message.channel.id)
 	if message.content.startswith('!serverid'):
-		yield from client.send_message(message.channel, message.channel.server.id)
+		await client.send_message(message.channel, message.channel.server.id)
 
 	#BNS commands
 	if message.content.startswith('!bnstree'):
 		bnsClass = message.content.replace('!bnstree ', '').lower()
 		if '!bnstree' == message.content:
-			yield from client.send_message(message.channel, 'https://bnstree.com/')
+			await client.send_message(message.channel, 'https://bnstree.com/')
 			return
 		elif 'blade master' == bnsClass or 'bm' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/BM')
+			await client.send_message(message.channel, 'https://bnstree.com/BM')
 			return
 		elif 'kfm' == bnsClass or 'kungfu master' == bnsClass or 'kung fu master' == bnsClass or 'kungfumaster' == bnsClass or 'kf' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/KF')
+			await client.send_message(message.channel, 'https://bnstree.com/KF')
 			return
 		elif 'destroyer' == bnsClass or 'des' == bnsClass or 'de' == bnsClass or 'destro' == bnsClass or 'dest' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/DE')
+			await client.send_message(message.channel, 'https://bnstree.com/DE')
 			return
 		elif 'force master' == bnsClass or 'fm' == bnsClass or 'forcemaster' == bnsClass or 'force user' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/FM')
+			await client.send_message(message.channel, 'https://bnstree.com/FM')
 			return
 		elif 'assassin' == bnsClass or 'as' == bnsClass or 'sin' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/AS')
+			await client.send_message(message.channel, 'https://bnstree.com/AS')
 			return
 		elif 'summoner' == bnsClass or 'su' == bnsClass or 'summ' == bnsClass or 'sum' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/SU')
+			await client.send_message(message.channel, 'https://bnstree.com/SU')
 			return
 		elif 'blade dancer' == bnsClass or 'bd' == bnsClass or 'bladedancer' == bnsClass or 'lbm' == bnsClass or 'lyn blade master' == bnsClass or 'lynblade master' == bnsClass or 'lyn blademaster' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/BD')
+			await client.send_message(message.channel, 'https://bnstree.com/BD')
 			return
 		elif 'warlock' == bnsClass or 'wl' == bnsClass or 'lock' == bnsClass:
-			yield from client.send_message(message.channel, 'https://bnstree.com/WL')
+			await client.send_message(message.channel, 'https://bnstree.com/WL')
 			return
 		else:
-			yield from client.send_message(message.channel, '2nd argument not recognised')
+			await client.send_message(message.channel, '2nd argument not recognised')
 			return
 		
 	if message.content.startswith('!testbns'):
-		yield from client.send_message(message.channel, "http://na-bns.ncsoft.com/ingame/bs/character/duel?c=Taichou\nhttp://na-bns.ncsoft.com/web/ingame/character/favorcharacter.jsp\nhttp://na-bns.ncsoft.com/web/ingame/character/a_duelinfo.jsp")
-	if message.content.lower().startswith('!bns') and len(message.content.split()) > 1 and message.channel.id != '106293726271246336':
+		await client.send_message(message.channel, "http://na-bns.ncsoft.com/ingame/bs/character/duel?c=Taichou\nhttp://na-bns.ncsoft.com/web/ingame/character/favorcharacter.jsp\nhttp://na-bns.ncsoft.com/web/ingame/character/a_duelinfo.jsp")
+	if message.content.lower().startswith('!bns') and len(message.content.split()) > 1 and message.channel.id != '106293726271246336 88422130479276032 124934505810100224 146298657765851137 144803652635328512':
 		newM = message.content.lower()[5:]
 		newerM = newM.split()
 		if len(newerM) > 1:
@@ -792,12 +871,12 @@ X                X     DDDDD
 		else:
 			newestM = newerM[0]
 		if "faggot" in newestM.lower():
-			yield from client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain')
-			yield from client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
+			await client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain')
+			await client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
 			return
 		r = requests.get('http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM)
 		if len(r.history) == 0:
-			yield from client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM+'&s=101')
+			await client.send_message(message.channel, 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM+'&s=101')
 			from bs4 import BeautifulSoup
 			soup = BeautifulSoup(r.text, 'html.parser')
 			#print(soup.find_all("div", class_="charaterView")[0].img['src'])
@@ -830,48 +909,51 @@ X                X     DDDDD
 			cdmgp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[6].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
 			critd = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
 			critdp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[1].string
-			yield from client.send_message(message.channel, "**Clan:** {}\n**Class:** {}\n**Level:** {}\n{}\n**Attack:** {}                                                        **HP:** {}\n**Pierce:** {}({})                                          **Defense:** {}({})\n**Accuracy:** {}({})                                 **Evasion:** {}({})\n**Critical Hit:** {}({})                              **Block:** {}({})\n**Critical Damage** {}({})                    **Crit Defense:** {}({})".format(clan,classname,level,hmlevel,att,hp,pierce,piercep,defense,defensep,acc,accp,eva,evap,chit,chitp,block,blockp,cdmg,cdmgp,critd,critdp))
-			yield from client.send_message(message.channel, soup.find_all("div", class_="charaterView")[0].img['src'])
+			await client.send_message(message.channel, "**Clan:** {}\n**Class:** {}\n**Level:** {}\n{}\n**Attack:** {}                                                        **HP:** {}\n**Pierce:** {}({})                                          **Defense:** {}({})\n**Accuracy:** {}({})                                 **Evasion:** {}({})\n**Critical Hit:** {}({})                              **Block:** {}({})\n**Critical Damage** {}({})                    **Crit Defense:** {}({})".format(clan,classname,level,hmlevel,att,hp,pierce,piercep,defense,defensep,acc,accp,eva,evap,chit,chitp,block,blockp,cdmg,cdmgp,critd,critdp))
+			await client.send_message(message.channel, soup.find_all("div", class_="charaterView")[0].img['src'])
 			return
 		else:
-			yield from client.send_message(message.channel, 'Character name does not exist')
+			await client.send_message(message.channel, 'Character name does not exist')
 			return
 	if message.content.startswith('!bnsdaily'):
-		yield from client.send_file(message.channel, "bnsdailymap.png")
+		await client.send_file(message.channel, "bnsdailymap.png")
+		return
+	if message.content.startswith('!bnsbuild'):
+		await client.send_message(message.channel, "https://docs.google.com/document/d/1kCNNIdKcyXL6kgrXPLJdPk-yy1oqNPrunNc8x0PP7D4/edit?pref=2&pli=1")
 		return
 	if message.content.startswith('!bns') and len(message.content.split()) == 1:
-		yield from client.send_message(message.channel, 'the format for seeing a players bns info is \'!bns (player ign)\'')
+		await client.send_message(message.channel, 'the format for seeing a players bns info is \'!bns (player ign)\'')
 
 	if message.content.startswith('!savebnsbuild'):
 		if message.content == ('!savebnsbuild') or message.content == ('!savebnsbuild '):
-			yield from client.send_message(message.channel, 'Your build must contain the format (!savebnsbuild !!(name of command) (tree build url)')
+			await client.send_message(message.channel, 'Your build must contain the format (!savebnsbuild !!(name of command) (tree build url)')
 			countsBNS = 1
 		elif message.content.split()[-1].startswith('https://bnstree.com/') == False:
-			yield from client.send_message(message.channel, 'Your URL must be from bnstree.com or is missing the https:// prefix')
+			await client.send_message(message.channel, 'Your URL must be from bnstree.com or is missing the https:// prefix')
 			countsBNS = 1
 		elif message.content.split()[1].startswith('!!') == False:
-			yield from client.send_message(message.channel, 'Your command created command must have !! infront')
+			await client.send_message(message.channel, 'Your command created command must have !! infront')
 			countsBNS = 1
 		elif len(str(message.content).split()) !=3:
-			yield from client.send_message(message.channel, 'Can only create a link with exactly 3 arguments')
+			await client.send_message(message.channel, 'Can only create a link with exactly 3 arguments')
 			countsBNS = 1
 		elif len(message.content.split()) == 3 and '!!' in message.content.split()[1]: 
 			with open('BNSBuilds.txt','r+') as bnsBuilds:
 				for line in bnsBuilds:
 					if message.content.split()[1] in line:
-						yield from client.send_message(message.channel, 'A build with this name already exists!')
+						await client.send_message(message.channel, 'A build with this name already exists!')
 						countsBNS = 1
 		if countsBNS == 0:
 			bnsBuildsSave = message.content.replace('!savebnsbuild ', '')
 			with open('BNSBuilds.txt','a') as bnsBuilds2:
 				bnsBuilds2.write(str(message.author.id) + ' ' + bnsBuildsSave + '\n')
-				yield from client.send_message(message.channel, 'build "'+message.content.split()[2]+'" saved! Use your command "'+message.content.split()[1]+'" to use it!')
+				await client.send_message(message.channel, 'build "'+message.content.split()[2]+'" saved! Use your command "'+message.content.split()[1]+'" to use it!')
 		countsBNS = 0
 	if message.content.startswith('!!') and counts1 == 0:
 		with open('BNSBuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if message.content.split()[0] == line.split()[1]:
-					yield from client.send_message(message.channel, line.split()[-1])
+					await client.send_message(message.channel, line.split()[-1])
 					counts1 = 1
 		counts1 = 0
 	
@@ -880,22 +962,22 @@ X                X     DDDDD
 		with open('BNSBuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if str(message.author.id) in line:
-					yield from client.send_message(message.channel, str(tempCount)+': '+line.replace(str(message.author.id)+ ' ', ''))
+					await client.send_message(message.channel, str(tempCount)+': '+line.replace(str(message.author.id)+ ' ', ''))
 					tempCount += 1
 		if tempCount == 1:
-			yield from client.send_message(message.channel, 'You have no saved builds!')
+			await client.send_message(message.channel, 'You have no saved builds!')
 	if message.content.startswith('!editbnsbuild'):
 		if message.content == ('!editbnsbuild') or message.content == ('!editbnsbuild ') and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your build must contain the format !editbnsbuild !!(name of command) (tree build url)')
+			await client.send_message(message.channel, 'Your build must contain the format !editbnsbuild !!(name of command) (tree build url)')
 			countsBNS = 1
 		elif message.content.split()[-1].startswith('https://bnstree.com/') == False and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com ,dnss-kr.herokuapp.com or http://dnmaze.com/ or is missing the http(s):// prefix')
+			await client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com ,dnss-kr.herokuapp.com or http://dnmaze.com/ or is missing the http(s):// prefix')
 			countsBNS = 1
 		if message.content.split()[1].startswith('!!') == False and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your edited command must have !! infront')
+			await client.send_message(message.channel, 'Your edited command must have !! infront')
 			countsBNS = 1
 		if len(str(message.content).split()) !=3 and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Can only edit a link with exactly 3 arguments')
+			await client.send_message(message.channel, 'Can only edit a link with exactly 3 arguments')
 			countsBNS = 1
 		if countsBNS == 0:
 			saveL = ''
@@ -904,7 +986,7 @@ X                X     DDDDD
 				for line in bnsBuilds2:
 					if message.content.split()[1] in line:
 						if str(message.author.id) not in line:
-							yield from client.send_message(message.channel, 'This is not your build so you cannot edit it.')
+							await client.send_message(message.channel, 'This is not your build so you cannot edit it.')
 							countsBNS = 1
 						elif str(message.author.id) in line:
 							saveL = line.rsplit(' ', 1)[0] + ' ' + message.content.split()[-1]
@@ -920,18 +1002,18 @@ X                X     DDDDD
 				with open('BNSBuilds.txt','w') as bnsBuilds2:
 					for line in newLines:
 						bnsBuilds2.write(line)
-				yield from client.send_message(message.channel, 'build "'+message.content.split()[2]+'" has been edited! Use your command "'+message.content.split()[1]+'" to use it!')
+				await client.send_message(message.channel, 'build "'+message.content.split()[2]+'" has been edited! Use your command "'+message.content.split()[1]+'" to use it!')
 		countsBNS = 0
 	
 	if message.content.startswith('!deletebnsbuild'):
 		if message.content == ('!deletebnsbuild') or message.content == ('!deletebnsbuild '):
-			yield from client.send_message(message.channel, 'Your build must contain the format !deletebnsbuild !!(name of command)')
+			await client.send_message(message.channel, 'Your build must contain the format !deletebnsbuild !!(name of command)')
 			countsBNS = 1
 		elif message.content.split()[1].startswith('!!') == False:
-			yield from client.send_message(message.channel, 'Your command created command must have !! infront')
+			await client.send_message(message.channel, 'Your command created command must have !! infront')
 			countsBNS = 1
 		elif len(str(message.content).split()) !=2:
-			yield from client.send_message(message.channel, 'Can only delete a link with exactly 2 arguments')
+			await client.send_message(message.channel, 'Can only delete a link with exactly 2 arguments')
 			countsBNS = 1
 		elif countsBNS == 0:
 			dnBuildsSave = message.content.replace('!deletebnsbuild ', '')
@@ -939,7 +1021,7 @@ X                X     DDDDD
 				for line in bnsBuilds2:
 					if message.content.split()[1] in line:
 						if str(message.author.id) not in line:
-							yield from client.send_message(message.channel, 'This is not your build so you cannot delete it.')
+							await client.send_message(message.channel, 'This is not your build so you cannot delete it.')
 							countsBNS = 1
 			if countsBNS == 0:
 				newLines = []
@@ -950,7 +1032,7 @@ X                X     DDDDD
 				with open('BNSBuilds.txt','w') as bnsBuilds2:
 					for line in newLines:
 						bnsBuilds2.write(line)
-				yield from client.send_message(message.channel, 'Your build ' + message.content.split()[-1] + ' has been deleted.')
+				await client.send_message(message.channel, 'Your build ' + message.content.split()[-1] + ' has been deleted.')
 		countsBNS = 0
 	if message.content.lower().startswith('!played'):
 		g = {}
@@ -967,7 +1049,7 @@ X                X     DDDDD
 					theTime = ("%d:%02d:%02d" % (h, m, s))
 					sendout += (i + ': ' + str(theTime) + '\n')
 		sendout += '```'
-		yield from client.send_message(message.channel, sendout)
+		await client.send_message(message.channel, sendout)
 
 	# DN related ! commands to make the discord more integrated with dn
 	#!pugs,trade,and mention will be put into 1 function since theyre practically the same thing, just different names and file names
@@ -980,11 +1062,11 @@ X                X     DDDDD
 			if "Dragon Nest" in g[message.author.id]:
 				sSeconds = g[message.author.id]["Dragon Nest"][1]
 				dP = sSeconds/720
-				yield from client.send_message(message.channel, "You have {} DN points!".format(dP))
+				await client.send_message(message.channel, "You have {} DN points!".format(dP))
 			else:
-				yield from client.send_message(message.channel, "I have not seen you play DN yet! go play!")
+				await client.send_message(message.channel, "I have not seen you play DN yet! go play!")
 		else:
-			yield from client.send_message(message.channel, "I have not seen you play DN yet! go play!")
+			await client.send_message(message.channel, "I have not seen you play DN yet! go play!")
 
 
 	if message.content.startswith('!pugs') and str(message.channel.id) == '106300530548039680' and len(message.content.split()) > 1 and str(message.channel.server.id) == '106293726271246336' and message.mention_everyone == False:
@@ -1006,11 +1088,11 @@ X                X     DDDDD
 					tempL = ''
 			pugMentions.append(tempL)
 			for i in pugMentions:
-				yield from client.send_message(message.channel, pugM + '\n\n' + i)
+				await client.send_message(message.channel, pugM + '\n\n' + i)
 	elif message.content.startswith('!pugs') and str(message.channel.id) != '106300530548039680' and str(message.channel.server.id) == '106293726271246336':
-		yield from client.send_message(message.channel, 'You can only call for pugs in the <#106300530548039680> channel.')
+		await client.send_message(message.channel, 'You can only call for pugs in the <#106300530548039680> channel.')
 	elif message.content.startswith('!pugs') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
-		yield from client.send_message(message.channel, 'You must have a topic to tell the people about what you are recruiting them for. It is BANNABLE if you do not have a legitamate topic on purpose.')
+		await client.send_message(message.channel, 'You must have a topic to tell the people about what you are recruiting them for. It is BANNABLE if you do not have a legitamate topic on purpose.')
 	elif message.content.lower().startswith('!pug') and str(message.channel.server.id) == '106293726271246336':
 		pugL = ''
 		with open('puglist.txt','r') as s:
@@ -1019,7 +1101,7 @@ X                X     DDDDD
 			with open('puglist.txt','a') as s:
 				s.write(message.author.mention)
 				s.write('\n')
-				yield from client.send_message(message.channel, 'You have successfully signed up for pug mentions.')
+				await client.send_message(message.channel, 'You have successfully signed up for pug mentions.')
 		if message.author.mention in pugL:
 			newL = []
 			with open('puglist.txt','r') as s:
@@ -1029,7 +1111,7 @@ X                X     DDDDD
 			with open('puglist.txt','w') as s:
 				for line in newL:    
 					s.write(line)
-			yield from client.send_message(message.channel, 'You have successfully removed yourself for pug mentions.')
+			await client.send_message(message.channel, 'You have successfully removed yourself for pug mentions.')
 	if message.content.startswith('!trades') and str(message.channel.id) == '106301265817931776' and len(message.content.split()) > 1 and str(message.channel.server.id) == '106293726271246336' and message.mention_everyone == False:
 		tradeM = 'Topic is:\n'
 		tradeM += message.content[8:]
@@ -1049,11 +1131,11 @@ X                X     DDDDD
 					tempL = ''
 			tradeMentions.append(tempL)
 			for i in tradeMentions:
-				yield from client.send_message(message.channel, tradeM + '\n\n' + i)
+				await client.send_message(message.channel, tradeM + '\n\n' + i)
 	elif message.content.startswith('!trades') and str(message.channel.id) != '106301265817931776' and str(message.channel.server.id) == '106293726271246336':
-		yield from client.send_message(message.channel, 'You can only call for trades in the <#106301265817931776> channel.')
+		await client.send_message(message.channel, 'You can only call for trades in the <#106301265817931776> channel.')
 	elif message.content.startswith('!trades') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
-		yield from client.send_message(message.channel, 'You must have a topic to tell the people about what you want to trade. It is BANNABLE if you do not have a legitamate topic on purpose.')
+		await client.send_message(message.channel, 'You must have a topic to tell the people about what you want to trade. It is BANNABLE if you do not have a legitamate topic on purpose.')
 	elif message.content.lower().startswith('!trade') and str(message.channel.server.id) == '106293726271246336':
 		tradeL = ''
 		with open('tradelist.txt','r') as s:
@@ -1062,7 +1144,7 @@ X                X     DDDDD
 			with open('tradelist.txt','a') as s:
 				s.write(message.author.mention)
 				s.write('\n')
-				yield from client.send_message(message.channel, 'You have successfully signed up for trade mentions.')
+				await client.send_message(message.channel, 'You have successfully signed up for trade mentions.')
 		if message.author.mention in tradeL:
 			newL = []
 			with open('tradelist.txt','r') as s:
@@ -1072,7 +1154,7 @@ X                X     DDDDD
 			with open('tradelist.txt','w') as s:
 				for line in newL:    
 					s.write(line)
-			yield from client.send_message(message.channel, 'You have successfully removed yourself for trade mentions.')
+			await client.send_message(message.channel, 'You have successfully removed yourself for trade mentions.')
 	if message.content.startswith('!pvping') and str(message.channel.id) == '106300621459628032' and len(message.content.split()) > 1 and str(message.channel.server.id) == '106293726271246336' and message.mention_everyone == False:
 		pvpM = 'Topic is:\n'
 		pvpM += message.content[8:]
@@ -1092,11 +1174,11 @@ X                X     DDDDD
 					tempL = ''
 			pvpMentions.append(tempL)
 			for i in pvpMentions:
-				yield from client.send_message(message.channel, pvpM + '\n\n' + i)
+				await client.send_message(message.channel, pvpM + '\n\n' + i)
 	elif message.content.startswith('!pvping') and str(message.channel.id) != '106300621459628032' and str(message.channel.server.id) == '106293726271246336':
-		yield from client.send_message(message.channel, 'You can only call for pvp in the <#106300621459628032> channel.')
+		await client.send_message(message.channel, 'You can only call for pvp in the <#106300621459628032> channel.')
 	elif message.content.startswith('!pvping') and len(message.content.split()) < 2 and str(message.channel.server.id) == '106293726271246336':
-		yield from client.send_message(message.channel, 'You must have a topic to tell the people about your pvp request. It is BANNABLE if you do not have a legitamate topic on purpose.')
+		await client.send_message(message.channel, 'You must have a topic to tell the people about your pvp request. It is BANNABLE if you do not have a legitamate topic on purpose.')
 	elif message.content.lower().startswith('!pvp') and str(message.channel.server.id) == '106293726271246336':
 		pvpL = ''
 		with open('pvplist.txt','r') as s:
@@ -1105,7 +1187,7 @@ X                X     DDDDD
 			with open('pvplist.txt','a') as s:
 				s.write(message.author.mention)
 				s.write('\n')
-				yield from client.send_message(message.channel, 'You have successfully signed up for pvp mentions.')
+				await client.send_message(message.channel, 'You have successfully signed up for pvp mentions.')
 		if message.author.mention in pvpL:
 			newL = []
 			with open('pvplist.txt','r') as s:
@@ -1115,46 +1197,46 @@ X                X     DDDDD
 			with open('pvplist.txt','w') as s:
 				for line in newL:    
 					s.write(line)
-			yield from client.send_message(message.channel, 'You have successfully removed yourself for pvp mentions.')
+			await client.send_message(message.channel, 'You have successfully removed yourself for pvp mentions.')
 
 	elif message.content.startswith('!savednbuild'):
 		print(message.content.split()[-1])
 		print(message.content.split()[-1].startswith('https://dnss-kr.herokuapp.com'))
 		countsBNS = 0
 		if message.content == ('!savednbuild') or message.content == ('!savednbuild ') and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your build must contain the format !savednbuild $(name of command) (tree build url)')
+			await client.send_message(message.channel, 'Your build must contain the format !savednbuild $(name of command) (tree build url)')
 			countsBNS = 1
 		if message.content.split()[-1].startswith('https://dnss.herokuapp.com') == False and countsBNS == 0:
 			if message.content.split()[-1].startswith('https://dnss-kr.herokuapp.com') == False and countsBNS == 0:
 				if message.content.split()[-1].startswith('https://dnmaze.com') == False and countsBNS == 0:
-					yield from client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com, dnss-kr.herokuapp.com or https://dnmaze.com or is missing the https:// prefix')
+					await client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com, dnss-kr.herokuapp.com or https://dnmaze.com or is missing the https:// prefix')
 					countsBNS = 1
 		print(message.content.split()[1].startswith('$'))
 		print(message.content.split()[1])
 		if message.content.split()[1].startswith('$') == False and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your command created command must have $ infront')
+			await client.send_message(message.channel, 'Your command created command must have $ infront')
 			countsBNS = 1
 		if len(str(message.content).split()) !=3 and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Can only create a link with exactly 3 arguments')
+			await client.send_message(message.channel, 'Can only create a link with exactly 3 arguments')
 			countsBNS = 1
 		if len(message.content.split()) == 3 and '$' in message.content.split()[1] and countsBNS == 0: 
 			with open('DNbuilds.txt','r+') as dnBuilds:
 				for line in dnBuilds:
 					if message.content.split()[1] in line:
-						yield from client.send_message(message.channel, 'A build with this name already exists!')
+						await client.send_message(message.channel, 'A build with this name already exists!')
 						countsBNS = 1
 		if countsBNS == 0:
 			dnBuildsSave = message.content.replace('!savednbuild ', '')
 			with open('DNbuilds.txt','a') as bnsBuilds2:
 				bnsBuilds2.write(str(message.author.id) + ' ' + dnBuildsSave + '\n')
-				yield from client.send_message(message.channel, 'build "'+message.content.split()[2]+'" saved! Use your command "'+message.content.split()[1]+'" to use it!')
+				await client.send_message(message.channel, 'build "'+message.content.split()[2]+'" saved! Use your command "'+message.content.split()[1]+'" to use it!')
 		countsBNS = 0
 		pmCount = 1
 	elif message.content.startswith('$') and counts1 == 0:
 		with open('DNbuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if message.content.split()[0] == line.split()[-2]:
-					yield from client.send_message(message.channel, line.split()[-1])
+					await client.send_message(message.channel, line.split()[-1])
 					counts1 = 1
 		counts1 = 0
 		pmCount = 1
@@ -1163,26 +1245,26 @@ X                X     DDDDD
 		with open('DNbuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if str(message.author.id) in line or str(message.author) in line:
-					yield from client.send_message(message.channel, str(tempCount)+': '+line.replace(str(message.author.id)+ ' ', ''))
+					await client.send_message(message.channel, str(tempCount)+': '+line.replace(str(message.author.id)+ ' ', ''))
 					tempCount += 1
 		if tempCount == 1:
-			yield from client.send_message(message.channel, 'You have no saved builds!')
+			await client.send_message(message.channel, 'You have no saved builds!')
 		pmCount = 1
 	elif message.content.startswith('!editdnbuild'):
 		countsBNS = 0
 		if message.content == ('!editdnbuild') or message.content == ('!editdnbuild ') and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your build must contain the format !editdnbuild $(name of command) (tree build url)')
+			await client.send_message(message.channel, 'Your build must contain the format !editdnbuild $(name of command) (tree build url)')
 			countsBNS = 1
 		if message.content.split()[-1].startswith('https://dnss.herokuapp.com') == False and countsBNS == 0:
 			if message.content.split()[-1].startswith('https://dnss-kr.herokuapp.com') == False and countsBNS == 0:
 				if message.content.split()[-1].startswith('https://dnmaze.com') == False and countsBNS == 0:
-					yield from client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com ,dnss-kr.herokuapp.com or http://dnmaze.com/ or is missing the http(s):// prefix')
+					await client.send_message(message.channel, 'Your URL must be from dnss.herokuapp.com ,dnss-kr.herokuapp.com or http://dnmaze.com/ or is missing the http(s):// prefix')
 					countsBNS = 1
 		if len(message.content.split()) == 2 and message.content.split()[1].startswith('$') == False and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your edited command must have $ infront')
+			await client.send_message(message.channel, 'Your edited command must have $ infront')
 			countsBNS = 1
 		if len(str(message.content).split()) !=3 and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Can only edit a link with exactly 3 arguments')
+			await client.send_message(message.channel, 'Can only edit a link with exactly 3 arguments')
 			countsBNS = 1
 		if countsBNS == 0:
 			saveL = ''
@@ -1191,7 +1273,7 @@ X                X     DDDDD
 				for line in bnsBuilds2:
 					if message.content.split()[1] in line:
 						if str(message.author.id) not in line:
-							yield from client.send_message(message.channel, 'This is not your build so you cannot edit it.')
+							await client.send_message(message.channel, 'This is not your build so you cannot edit it.')
 							countsBNS = 1
 						elif str(message.author.id) in line:
 							saveL = line.rsplit(' ', 1)[0] + ' ' + message.content.split()[-1]
@@ -1207,20 +1289,20 @@ X                X     DDDDD
 				with open('DNbuilds.txt','w') as bnsBuilds2:
 					for line in newLines:
 						bnsBuilds2.write(line)
-				yield from client.send_message(message.channel, 'build "'+message.content.split()[2]+'" has been edited! Use your command "'+message.content.split()[1]+'" to use it!')
+				await client.send_message(message.channel, 'build "'+message.content.split()[2]+'" has been edited! Use your command "'+message.content.split()[1]+'" to use it!')
 		countsBNS = 0
 		pmCount = 1
 	
 	elif message.content.startswith('!deletednbuild'):
 		countsBNS = 0
 		if message.content == ('!deletednbuild') or message.content == ('!deletednbuild ') and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your build must contain the format !deletednbuild $(name of command)')
+			await client.send_message(message.channel, 'Your build must contain the format !deletednbuild $(name of command)')
 			countsBNS = 1
 		if len(message.content.split()) == 2 and message.content.split()[1].startswith('$') == False and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Your command created command must have $ infront')
+			await client.send_message(message.channel, 'Your command created command must have $ infront')
 			countsBNS = 1
 		if len(str(message.content).split()) !=2 and countsBNS == 0:
-			yield from client.send_message(message.channel, 'Can only delete a link with exactly 2 arguments')
+			await client.send_message(message.channel, 'Can only delete a link with exactly 2 arguments')
 			countsBNS = 1
 		if countsBNS == 0:
 			dnBuildsSave = message.content.replace('!deletednbuild ', '')
@@ -1228,7 +1310,7 @@ X                X     DDDDD
 				for line in bnsBuilds2:
 					if message.content.split()[1] in line:
 						if str(message.author.id) not in line:
-							yield from client.send_message(message.channel, 'This is not your build so you cannot delete it.')
+							await client.send_message(message.channel, 'This is not your build so you cannot delete it.')
 							countsBNS = 1
 			if countsBNS == 0:
 				newLines = []
@@ -1239,7 +1321,7 @@ X                X     DDDDD
 				with open('DNbuilds.txt','w') as bnsBuilds2:
 					for line in newLines:
 						bnsBuilds2.write(line)
-				yield from client.send_message(message.channel, 'Your build ' + message.content.split()[-1] + ' has been deleted.')
+				await client.send_message(message.channel, 'Your build ' + message.content.split()[-1] + ' has been deleted.')
 
 	elif message.channel.id == '107718615452618752':
 		requestedBuild = []
@@ -1254,10 +1336,10 @@ X                X     DDDDD
 			for i in requestedBuild:
 				if i not in requestedBuilds:
 					requestedBuilds.append(i)
-			yield from client.send_message(message.channel, 'Would you like me to PM you a list of community saved builds for {}?'.format(requestedBuilds))
-			resp = yield from client.wait_for_message(author=message.author)
+			await client.send_message(message.channel, 'Would you like me to PM you a list of community saved builds for {}?'.format(requestedBuilds))
+			resp = await client.wait_for_message(author=message.author)
 			if 'y' not in resp.content.lower():
-				yield from client.send_message(message.channel, 'ok')
+				await client.send_message(message.channel, 'ok')
 				return
 			else:
 				pmlist = []
@@ -1274,13 +1356,13 @@ X                X     DDDDD
 							noB = True
 						checksB = 0
 				if len(pmlist) == 0:
-					yield from client.send_message(message.channel, 'I\'m sorry, there appears to be no build for the class(es) requested :(')
+					await client.send_message(message.channel, 'I\'m sorry, there appears to be no build for the class(es) requested :(')
 				else:
 					if noB == True:
-						yield from client.send_message(message.channel, 'I\'m sorry, there appears to be no build(s) made for one or more of the classes you requested :(')
-					yield from client.send_message(message.channel, 'I will send you the PM now!')
+						await client.send_message(message.channel, 'I\'m sorry, there appears to be no build(s) made for one or more of the classes you requested :(')
+					await client.send_message(message.channel, 'I will send you the PM now!')
 					for i in pmlist:
-						yield from client.send_message(message.author, i)
+						await client.send_message(message.author, i)
 	if message.channel.id == '106301265817931776' and (message.content.lower().startswith("s") or message.content.lower().startswith("b")):
 		trades = {}
 		item = ''
@@ -1310,64 +1392,64 @@ X                X     DDDDD
 								json.dump(trades, f, indent = 4)
 							break
 		if message.content.lower().startswith('search market'):
-			yield from client.send_message(message.channel, "From what categories would you like to search? Only one category at a time. **All items in discord market are items registered by other users**")
+			await client.send_message(message.channel, "From what categories would you like to search? Only one category at a time. **All items in discord market are items registered by other users**")
 			cata = []
 			for i in trades["selling"]:
 				cata.append(i)
-			yield from client.send_message(message.channel, cata)
-			resp = yield from client.wait_for_message(timeout = 60, author=message.author)
+			await client.send_message(message.channel, cata)
+			resp = await client.wait_for_message(timeout = 60, author=message.author)
 			if resp is None:
 				return
 			else:
 				if resp.content.lower() in cata:
 					if len(trades["selling"][resp.content.lower()]) == 0:
-						yield from client.send_message(message.channel, "Sorry, there appears to be nothing listed :(")
+						await client.send_message(message.channel, "Sorry, there appears to be nothing listed :(")
 					else:
-						yield from client.send_message(message.channel, "I am sending you the PM")
+						await client.send_message(message.channel, "I am sending you the PM")
 						for i in trades["selling"][resp.content.lower()]:
 							for j in trades["selling"][resp.content.lower()][i]:
 								p = discord.utils.get(message.server.members, id = i).name
 								newitem = trades["selling"][resp.content.lower()][i][str(j)]["description"]
 								diff = datetime.strptime(trades["selling"][resp.content.lower()][i][str(j)]["datetime"], "%Y-%m-%d %H:%M:%S.%f") - datetime.now()
 								dura = diff.days
-								yield from client.send_message(resp.author, "Owner: {},\n**__Description:__** {}. time remaining: {} day(s)".format(p,newitem,dura))
+								await client.send_message(resp.author, "Owner: {},\n**__Description:__** {}. time remaining: {} day(s)".format(p,newitem,dura))
 
 				else:
-					yield from client.send_message(message.channel, "Sorry, what you wrote was not one of the categories i listed out :(")
+					await client.send_message(message.channel, "Sorry, what you wrote was not one of the categories i listed out :(")
 		elif message.content.lower().startswith('s>'):
-			yield from client.send_message(message.channel, message.author.mention+", Since you seem to be selling something, would you like me to register your item in the DN discord marketplace so people can see it? type yes or no so i can know!")
+			await client.send_message(message.channel, message.author.mention+", Since you seem to be selling something, would you like me to register your item in the DN discord marketplace so people can see it? type yes or no so i can know!")
 			if len(item) == 0:
-				yield from client.send_message(message.channel, "Because i could not match a category to what you are selling, the item will be placed in the 'other' category.")
+				await client.send_message(message.channel, "Because i could not match a category to what you are selling, the item will be placed in the 'other' category.")
 				item = 'other'
-			resp = yield from client.wait_for_message(timeout = 60, author=message.author)
+			resp = await client.wait_for_message(timeout = 60, author=message.author)
 			if 'no' in resp.content.lower():
 				return
 			else:
 				r = resp.content.lower().split()
-				yield from client.send_message(message.channel, 'OK! __Just follow these steps!:__\n**1.Give me a description of the item you\'re selling.** Can be an image, forum link to your post, etc.\n\n**2.Then tell me how many days you want this to be registered for at the __end of your description__**, please give me a numercal value before the word \'day(s)\' or this wont work. The max amount of days an item can be registered for is 30\n\n **Example**\ni want to sell a brutal plate, so i would tell it:\n"selling brutal plate c/o: 2k, b/o 4k x days", where \'x\' is the amount of days you want it in there.')
-				resp = yield from client.wait_for_message(timeout = 300, author=message.author)
+				await client.send_message(message.channel, 'OK! __Just follow these steps!:__\n**1.Give me a description of the item you\'re selling.** Can be an image, forum link to your post, etc.\n\n**2.Then tell me how many days you want this to be registered for at the __end of your description__**, please give me a numercal value before the word \'day(s)\' or this wont work. The max amount of days an item can be registered for is 30\n\n **Example**\ni want to sell a brutal plate, so i would tell it:\n"selling brutal plate c/o: 2k, b/o 4k x days", where \'x\' is the amount of days you want it in there.')
+				resp = await client.wait_for_message(timeout = 300, author=message.author)
 				if resp is None:
 					return
 				elif 'day' not in resp.content.lower():
-					yield from client.send_message(message.channel, "sorry, you need to tell me how many days you want to have this up in the database.")
+					await client.send_message(message.channel, "sorry, you need to tell me how many days you want to have this up in the database.")
 					return
 				else:
 					r = resp.content.lower().split()
 					theword = ''
 					if 'day' in r:
 						if type(int(r[r.index('day') - 1])) != type(1):
-							yield from client.send_message(message.channel, "invalid number before 'day'")
+							await client.send_message(message.channel, "invalid number before 'day'")
 							return
 						else:
 							theword = 'day'
 					if 'days' in r:
 						if type(int(r[r.index('days') - 1])) != type(1):
-							yield from client.send_message(message.channel, "invalid number before 'days'")
+							await client.send_message(message.channel, "invalid number before 'days'")
 							return
 						else:
 							theword = 'days'
 					if int(r[r.index(theword) - 1]) > 30:
-						yield from client.send_message(message.channel, "you cannot set an end time that is greater than 30 days")
+						await client.send_message(message.channel, "you cannot set an end time that is greater than 30 days")
 						return
 					thenum = 0
 					try:
@@ -1390,29 +1472,29 @@ X                X     DDDDD
 						trades["selling"][item].update(newA)
 					with open('trading.json', 'w') as f:
 						json.dump(trades, f, indent = 4)
-					yield from client.send_message(message.channel, "Your item has been registered with your description, and is under the '{}' category for {} day(s)".format(item,r[r.index(theword) - 1]))
+					await client.send_message(message.channel, "Your item has been registered with your description, and is under the '{}' category for {} day(s)".format(item,r[r.index(theword) - 1]))
 		elif message.content.lower().startswith('b>'):
 			if len(item) == 0:
 				item = 'other'
-			yield from client.send_message(message.channel, '{}, Would you like me to PM you all items that are currently being sold under \'{}\'? type yes or no so i can know.'.format(message.author.mention,item))
-			resp = yield from client.wait_for_message(timeout = 60, author=message.author)
+			await client.send_message(message.channel, '{}, Would you like me to PM you all items that are currently being sold under \'{}\'? type yes or no so i can know.'.format(message.author.mention,item))
+			resp = await client.wait_for_message(timeout = 60, author=message.author)
 			if resp is None:
 				return
 			elif 'no' in resp.content.lower():
-				yield from client.send_message(message.channel, 'ok')
+				await client.send_message(message.channel, 'ok')
 				return
 			else:
 				if len(trades["selling"][item]) == 0:
-					yield from client.send_message(message.channel, "Sorry, there appears to be nothing listed :(")
+					await client.send_message(message.channel, "Sorry, there appears to be nothing listed :(")
 				else:
-					yield from client.send_message(message.channel, "I am sending you the PM")
+					await client.send_message(message.channel, "I am sending you the PM")
 					for i in trades["selling"][item]:
 						for j in range(len(trades["selling"][item][i])):
 							p = discord.utils.get(message.server.members, id = i).name
 							newitem = trades["selling"][item][i][str(j)]["description"]
 							diff = datetime.strptime(trades["selling"][item][i][str(j)]["datetime"], "%Y-%m-%d %H:%M:%S.%f") - datetime.now()
 							dura = diff.days
-							yield from client.send_message(resp.author, "Owner: {},\n**__Description:__** {}. time remaining: {} day(s)".format(p,newitem,dura))
+							await client.send_message(resp.author, "Owner: {},\n**__Description:__** {}. time remaining: {} day(s)".format(p,newitem,dura))
 
 
 
@@ -1421,53 +1503,53 @@ X                X     DDDDD
 	if message.channel.server.id == '109902387363217408':
 		if message.content.lower().startswith('!cats'):
 			rcats = random.choice(os.listdir("C:/DISCORD BOT/cats"))
-			yield from client.send_file(message.channel, 'C:/DISCORD BOT/cats/'+rcats)
+			await client.send_file(message.channel, 'C:/DISCORD BOT/cats/'+rcats)
 
 	if message.author.id == '90886475373109248':
 		if message.content.startswith('!join') and len(message.content.split()) == 2:
 			try:
-				yield from client.accept_invite(message.content.split()[1])
-				yield from client.send_message(message.channel, 'Joined successfully!')
+				await client.accept_invite(message.content.split()[1])
+				await client.send_message(message.channel, 'Joined successfully!')
 			except:
-				yield from client.send_message(message.channel, 'didnt work :(')
+				await client.send_message(message.channel, 'didnt work :(')
 		if message.content.startswith('!debug'):
 			deb = message.content[7:]
-			yield from client.send_message(message.channel, str(eval(deb)))
+			await client.send_message(message.channel, str(eval(deb)))
 	if message.content.startswith('<@106469383206883328>'):
 		if 'who are you' == str(message.content).lower().replace('<@106469383206883328>'+ ' ', '') or 'who are you?' == str(message.content).lower().replace('<@106469383206883328>'+ ' ', ''):
-			yield from client.send_message(message.channel, 'I am a bot that runs on a community made python API(more info on that in bot-and-api channel) and programmed by Comphus to have functions for this discord server')
+			await client.send_message(message.channel, 'I am a bot that runs on a community made python API(more info on that in bot-and-api channel) and programmed by Comphus to have functions for this discord server')
 			counts1 = 1
 		elif counts1 == 0:
 			for word in qQuestion:
 				if word in str(message.content).lower():
-					yield from client.send_message(message.channel, magicEight[random.randint(0,19)]+', ' +  message.author.mention)
+					await client.send_message(message.channel, magicEight[random.randint(0,19)]+', ' +  message.author.mention)
 					counts1 = 1
 					break  
 		if counts1 == 1:
 			counts1 = 0
 		elif 'hi' in message.content or 'Hi' in message.content or 'hello' in message.content or 'Hello' in message.content:
-			yield from client.send_message(message.channel, 'Hi! ' + message.author.mention)
+			await client.send_message(message.channel, 'Hi! ' + message.author.mention)
 		elif 'bye' in message.content or 'Bye' in message.content:
-			yield from client.send_message(message.channel, 'Bye-Bye! ' + message.author.mention)
+			await client.send_message(message.channel, 'Bye-Bye! ' + message.author.mention)
 		elif 'i love you' in message.content or 'I love you' in message.content or '<3' in message.content:
-			yield from client.send_message(message.channel, 'I love you too <3 ' + message.author.mention)
+			await client.send_message(message.channel, 'I love you too <3 ' + message.author.mention)
 		elif 'thank' in message.content or 'Thanks' in message.content:
-			yield from client.send_message(message.channel, 'You\'re welcome! ' + message.author.mention)
+			await client.send_message(message.channel, 'You\'re welcome! ' + message.author.mention)
 		elif 'fuck you' in message.content or 'Fuck you' in message.content or 'Fuck u' in message.content or 'fuck u' in message.content or '( ° ͜ʖ͡°)╭∩╮' in message.content:
-			yield from client.send_message(message.channel, '( ° ͜ʖ͡°)╭∩╮ ' + message.author.mention)
+			await client.send_message(message.channel, '( ° ͜ʖ͡°)╭∩╮ ' + message.author.mention)
 		else:
-			yield from client.send_message(message.channel, 'what? ' + message.author.mention)
+			await client.send_message(message.channel, 'what? ' + message.author.mention)
 
 	if message.content.startswith('!giveaway') and message.author.id == '90886475373109248':
 		r = random.randint(0,len(message.server.members)-1)
 		winner = message.server.members[r]
 		#print(winner)
-		yield from client.send_message(message.channel, '<@90844964413505536>		')
-		person = yield from client.wait_for_message(timeout = 60, author = winner)
+		await client.send_message(message.channel, '<@90844964413505536>		')
+		person = await client.wait_for_message(timeout = 60, author = winner)
 		if person is None:
-			yield from client.send_message(message.channel, "sorry you took too long, please roll again!")
+			await client.send_message(message.channel, "sorry you took too long, please roll again!")
 		elif len(person.content) > 0:
-			yield from client.send_message(message.channel, "Congratulations {}, You've won!".format(winner.mention))
+			await client.send_message(message.channel, "Congratulations {}, You've won!".format(winner.mention))
 			print('they won')
 
 
