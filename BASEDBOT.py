@@ -17,6 +17,7 @@ from BASEDBOTgames import *
 from BASEDBOTbns import *
 from BASEDBOTow import *
 from BASEDBOTdn import *
+from BASEDBOTetc import *
 if not discord.opus.is_loaded():
 	discord.opus.load_opus('opus')
 logging.basicConfig()
@@ -25,7 +26,6 @@ client = discord.Client()
 
 
 
-#most of these will eventually be removed since they are not in use
 tPlayers = {}
 tt = False
 tStop = 0
@@ -33,13 +33,7 @@ QuizResponses = {}
 with open("triviacontent.json") as j:
 	QuizResponses = json.load(j)
 blacklist = ['128044950024617984']
-regions = ['NA', 'EU', 'SEA', 'KR', 'JP', 'CN']
-qQuestion = ['should','can','will','may','are','might','is','do','would','was','am','?','did','how']
 magicEight = ['Yes','It is certain','It is decidedly so','Without a doubt','Yes, definitely','You may rely on it','As I see it, yes','Most likely','Outlook good','Signs point to a yes','Reply hazy try again','Ask again later','Better not tell you now','Cannot predict now','Concentrate and ask again','Don\'t count on it','My reply is no','My sources say no','Outlook not so good','Very doubtful']
-twitchEmotes = []
-MainResponses = {}
-bnsEmotes = []
-dLogin={}
 voice = None
 player = None
 musicQue = []
@@ -49,12 +43,6 @@ currentsong = ''
 songtoken = False
 musicon = False
 spotlight = False
-extendcount = 0
-timeoutStore = 0
-powerTimeout = {}
-dTimeout = {}
-counts1 = 0
-tCounter = False
 slowM = False
 slowT = 0
 with open('bnsemotes.txt') as inputF:
@@ -70,7 +58,6 @@ dAdmins = []
 with open('Mods.txt','r') as f:
 	for i in f:
 		dMods.append(str(i).replace('\n', ''))
-
 with open('Admins.txt','r') as f:
 	for i in f:
 		dAdmins.append(str(i).replace('\n', ''))
@@ -166,26 +153,16 @@ def on_member_update(before, after):
 
 @client.event
 async def on_message(message):
-	global regions
-	global botcont
-	global timeoutStore
-	global powerTimeout
 	global voice
 	global player
 	global musicQue
 	global extraQue
 	global songtoken
 	global currentsong
-	global counts1
-	global dTimeout
-	global tCounter
-	global qQuestion
-	global magicEight
 	global slowM
 	global slowT
 	global musicon
 	global karaokelist
-	global extendcount
 	global spotlight
 	global tStop
 	global tt
@@ -267,34 +244,6 @@ async def on_message(message):
 	elif message.content.startswith('!vanish') and len(message.content.split()) != 3:
 		await client.send_message(message.channel, 'The format for !vanish is: "!vanish (@mention to person) (number of messages to delete)" and is only accessable to chatmods and above.')
 
-	if timeoutStore > 0:
-		for i in powerTimeout:
-			timeDiff = cTime - powerTimeout[i][1]
-			if timeDiff.seconds >= powerTimeout[i][0]:
-				await client.remove_roles(powerTimeout[i][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
-				powerTimeout.pop(i)
-				timeoutStore -= 1
-				break
-	if message.content.startswith('!timeout') and str(message.author.id) in dAdmins and len(message.content.split()) == 3 and type(int(message.content.split()[2])) == type(1):
-		newM = message.content.split()
-		t1 = datetime.now()
-		powerTimeout[newM[1]] = [int(newM[2]),t1,message.mentions[0]]
-		timeoutStore += 1
-		await client.add_roles(message.mentions[0], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
-		await client.send_message(message.channel, newM[1]+' has been timed out for '+newM[2]+' seconds.')
-	elif message.content.startswith('!timeout') and str(message.author.id) in dAdmins:
-		await client.send_message(message.channel, 'The format for timing someone out is !timeout @ mention (timeinseconds)')
-	if message.content.startswith('!stoptimeout') and str(message.author.id) in dAdmins and len(message.content.split()) == 2:
-		newM = message.content.split()
-		if newM[1] in powerTimeout:
-			await client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
-			powerTimeout.pop(newM[1])
-			await client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
-		elif 'Jail' in discord.utils.find(lambda m: m.name == 'Jail', message.channel.server.members).roles:
-			await client.remove_roles(powerTimeout[newM[1]][2], discord.utils.find(lambda r: r.name == 'Jail', message.channel.server.roles))
-			await client.send_message(message.channel, newM[1]+'\'s timeout has been manually stopped.')
-		else:
-			await client.send_message(message.channel, 'That person has not been manually timed out.')
 	if message.content.startswith('!') and message.content.lower().split()[0] in MainResponses['all!commands']:
 		if message.content.lower().startswith("!commands"):
 			await client.send_message(message.author, MainResponses['all!commands'][message.content.lower().split()[0]])
@@ -573,8 +522,8 @@ async def on_message(message):
 							break
 		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
 			await client.send_message(message.channel, 'You must have a link to show after !yt. It can be almost anything, youtube, soundcloud, even pornhub!')
-		if any(reg.lower() in message.content.lower() for reg in regions) and message.content.startswith('!'):
-			for i in regions:
+		if any(reg.lower() in message.content.lower() for reg in MainResponses["regions"]) and message.content.startswith('!'):
+			for i in MainResponses["regions"]:
 				for j in message.author.roles:
 					if i in j.name and i.lower() == message.content.lower().replace('!', ''):
 						await client.remove_roles(message.author, discord.utils.get(message.server.roles, name = i))
@@ -639,30 +588,15 @@ async def on_message(message):
 					await client.send_message(message.channel, 'http://dnskillsim.herokuapp.com/na/{}'.format(MainResponses["dnskillbuilds"][dnClass]))
 				elif message.content.lower().startswith('!krskillbuilds'):
 					await client.send_message(message.channel, 'http://dnskillsim.herokuapp.com/kdn/{}'.format(MainResponses["t5dnskillbuilds"][dnClass]))
-			except:
+			except:	
 				await client.send_message(message.channel, '2nd argument not recognised')
 
-	if message.content.startswith('!define') and len(message.content.split()) > 1 and message.channel.id != '106293726271246336':
-		words = message.content[8:]
-		r = requests.get('http://api.urbandictionary.com/v0/define?term=' + words)
-		tData = r.json()
-		if r.status_code == 200:
-			try:
-				if True:
-					tCounter = True
-					i = random.randint(0, len(tData['list'])-1)
-					dWord = tData['list'][i]['word']
-					dDef = tData['list'][i]['definition']
-					dEx = tData['list'][i]['example']
-					await client.send_message(message.channel, "__Word__: {}\n__**Definition**__\n{}".format(dWord,dDef,dEx))
-				else:
-					await client.send_message(message.channel, "on cd")
-			except:
-				await client.send_message(message.channel, 'Word is not defined')
-		else:
-			await client.send_message(message.channel, 'something went wrong :(')
-	elif message.content.startswith('!define') and len(message.content.split()) == 1 and message.channel.id != '106293726271246336':
-		await client.send_message(message.channel, 'need something to define')
+	if message.content.startswith('!define') and message.channel.id != '106293726271246336':
+		await client.send_message(message.channel, defines(message))
+	if message.content.startswith('!checktwitch'):
+		await client.send_message(message.channel, checktwitch(message))
+	if message.content.lower().startswith('!mal') and message.channel.id not in '106293726271246336':
+		await client.send_message(message.channel, mal(message))
 	if message.content.startswith('!spookme'):
 		skeleR = random.randint(0,39)
 		if skeleR <=30:
@@ -674,33 +608,6 @@ async def on_message(message):
 		else:
 			await client.send_message(message.channel, 'YOU\'VE BEEN SPOOKED TO DEATH\nhttps://www.youtube.com/watch?v=O8XfV8aPAyQ')
 
-	if message.content.startswith('!checktwitch') and len(message.content.split()) == 2:
-		tChan = message.content.split()[-1].lower()
-		if tChan == 'jaesung':
-			tChan = 'lsjjws3'
-		r = requests.get('https://api.twitch.tv/kraken/streams/'+tChan)
-		if r.status_code == 200:
-			tData = r.json()
-			if tData['stream'] == None:
-				if tChan == 'jaesung':
-					tChan = 'lsjjws3'
-					await client.send_message(message.channel, tChan+'\'s channel is currently offline!')
-				else:
-					await client.send_message(message.channel, tChan+'\'s channel is currently offline!')
-			else:
-				if tChan == 'jaesung':
-					tChan = 'lsjjws3'
-					await client.send_message(message.channel, tChan+'\'s channel is currently online!')
-					await client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
-				else:
-					await client.send_message(message.channel, tChan+'\'s channel is currently online!')
-					await client.send_message(message.channel, tChan+' is currently playing {} with {} viewers!\n{}'.format(tData['stream']['game'], str(tData['stream']['viewers']), 'http://www.twitch.tv/'+tChan))
-		elif r.status_code == 404:
-			await client.send_message(message.channel, 'This channel does not exist.')
-		elif r.status_code == 422:
-			await client.send_message(message.channel, 'Channel ' + tChan + ' is a justin.tv channel and doesnt work on twitch or is banned!')
-	elif message.content.startswith('!checktwitch') and len(message.content.split()) != 2:
-		client.send_message(message.channel, 'The format of !checktwitch is !checktwitch (channelname).')
 	if message.content.startswith('!shoot') and len(message.content.split()) == 2:
 		shooting = ['(⌐■_■)--︻╦╤─ -    ','(⌐■_■)--︻╦╤─  -   ','(⌐■_■)--︻╦╤─   -  ','(⌐■_■)--︻╦╤─    - ','(⌐■_■)--︻╦╤─     -']
 		backshooting = ['    - ─╦╤︻--(■_■ㄱ)','   -  ─╦╤︻--(■_■ㄱ)','  -   ─╦╤︻--(■_■ㄱ)',' -    ─╦╤︻--(■_■ㄱ)','-     ─╦╤︻--(■_■ㄱ)']
@@ -734,41 +641,8 @@ async def on_message(message):
 				await client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
 	if message.content.startswith('!gimmepoutine'):
 		await client.send_file(message.channel, 'poutine.jpg')
-	if message.content.lower().startswith('!mal') and len(message.content) > 5 and message.channel.id not in '106293726271246336':
-		import xml.etree.ElementTree as ET
-		anime = message.content.lower()[5:]
-		r = requests.get('http://myanimelist.net/api/anime/search.xml?q=' + anime, auth=(dLogin['maluser'], dLogin['malpassword']))
-		if r.status_code == 200:
-			resp = r.text
-			aUrl = 'http://myanimelist.net/anime/' + re.search("id>(\d+)</i", resp).group(1)
-			try:
-				aName = re.search("english>(\D+)</e", resp).group(1)
-			except:
-				aName = None
-			try:
-				aJp = re.search("title>(\D+)</t", resp).group(1)
-			except:
-				aJp = None
-			aScore = re.search("score>(\S+|\s+)</s", resp).group(1)
-			aEp = re.search("episodes>(\d+)</e", resp).group(1)
-			aStat = re.search("status>(\D+)</s", resp).group(1)
-			aDate = re.search("start_date>(\S+|\s+)</start_date", resp).group(1)
-			try:
-				aDesc = re.search("synopsis>(\S+|\s+)</synopsis", resp).group(1).replace('&mdash;','—').replace('&amp;','&').replace('&lt;','<').replace('&gt;','>').replace('&quot;','"').replace('&#039;',"'").replace('<br />', '').replace('[i]', '').replace('[/i]', '')
-			except:
-				try:
-					root = ET.fromstring(resp)[0]
-					aDesc = root[10].text.replace('&amp;','&').replace('&mdash;','—').replace('&lt;','<').replace('&gt;','>').replace('&quot;','"').replace('&#039;',"'").replace('<br />', '').replace('[i]', '').replace('[/i]', '')
-				except:
-					aDesc = None
-			await client.send_message(message.channel, "**Name: **{}\n**Eng Name: **{}\n**Status: **{}\n**Air Date: **{}\n**Episodes: **{}\n**Score: **{}\n**Description: **{}\n**Link: **{}".format(aJp,aName,aStat,aDate,aEp,aScore,aDesc,aUrl))
-		elif r.status_code == 204:
-			await client.send_message(message.channel, "I couldnt find an anime with that name in MyAnimeList")
-		else:
-			await client.send_message(message.channel, "MyAnimeList is down, NOOOOOOOO :(")
 
 	# discord help commands to get information from user
-
 	if message.content.startswith('!totalmem'):
 		await client.send_message(message.channel, "**Total Members:** {}".format(message.channel.server.member_count))
 	if message.content.startswith("!voiceid"):
@@ -816,7 +690,6 @@ async def on_message(message):
 		if dRol.startswith(', '):
 			dRol = dRol[2:]
 		await client.send_message(message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
-
 	if message.content.startswith('!avatar'):
 		newR = message.content[8:]
 		if len(message.mentions) > 0:
@@ -858,7 +731,7 @@ async def on_message(message):
 	if message.content.startswith('!mybnsbuilds'):
 		for line in mybnsbuilds(message):
 			await client.send_message(message.channel, line)
-	if message.content.startswith('!!') and counts1 == 0:
+	if message.content.startswith('!!'):
 		await client.send_message(message.channel, prefixbnscommands(message))
 	"""
 	if message.content.lower().startswith('!played'):
@@ -1026,30 +899,24 @@ async def on_message(message):
 			deb = message.content[7:]
 			await client.send_message(message.channel, str(eval(deb)))
 	if message.content.startswith('<@175433427175211008>'):
-		if 'who are you' == str(message.content).lower().replace('<@175433427175211008>'+ ' ', '') or 'who are you?' == str(message.content).lower().replace('<@175433427175211008>'+ ' ', ''):
-			await client.send_message(message.channel, 'I am a bot that runs on a community made python API(more info on that in bot-and-api channel) and programmed by Comphus to have functions for this discord server')
-			counts1 = 1
-		elif counts1 == 0:
-			for word in qQuestion:
-				if word in str(message.content).lower():
-					await client.send_message(message.channel, magicEight[random.randint(0,19)]+', ' +  message.author.mention)
-					counts1 = 1
-					break  
-		if counts1 == 1:
-			counts1 = 0
-		elif 'hi' in message.content or 'Hi' in message.content or 'hello' in message.content or 'Hello' in message.content:
+		if 'who are you' in message.content.lower():
+			await client.send_message(message.channel, 'I am a bot that runs on a community made python API(more info on that in bot-and-api channel) and programmed by Comphus to have functions for the Dragon Nest NA Community Discord Server')
+			return
+		if any(word in message.content.lower() for word in MainResponses['qQuestion']):
+			await client.send_message(message.channel, MainResponses['magicEight'][random.randint(0,19)]+', ' +  message.author.mention)
+			return 
+		elif 'hi' in message.content.lower() or 'hello' in message.content.lower():
 			await client.send_message(message.channel, 'Hi! ' + message.author.mention)
-		elif 'bye' in message.content or 'Bye' in message.content:
+		elif 'bye' in message.content.lower():
 			await client.send_message(message.channel, 'Bye-Bye! ' + message.author.mention)
-		elif 'i love you' in message.content or 'I love you' in message.content or '<3' in message.content:
+		elif 'i love you' in message.content.lower() or '<3' in message.content:
 			await client.send_message(message.channel, 'I love you too <3 ' + message.author.mention)
-		elif 'thank' in message.content or 'Thanks' in message.content:
+		elif 'thank' in message.content.lower():
 			await client.send_message(message.channel, 'You\'re welcome! ' + message.author.mention)
-		elif 'fuck you' in message.content or 'Fuck you' in message.content or 'Fuck u' in message.content or 'fuck u' in message.content or '( ° ͜ʖ͡°)╭∩╮' in message.content:
+		elif 'fuck you' in message.content.lower() or 'fuck u' in message.content.lower() or '( ° ͜ʖ͡°)╭∩╮' in message.content:
 			await client.send_message(message.channel, '( ° ͜ʖ͡°)╭∩╮ ' + message.author.mention)
 		else:
 			await client.send_message(message.channel, 'what? ' + message.author.mention)
-
 
 
 
@@ -1067,7 +934,6 @@ def on_ready():
 async def main_task():
 	await client.login(dLogin['username'])
 	await client.connect()
-
 
 loop = asyncio.get_event_loop()
 try:
