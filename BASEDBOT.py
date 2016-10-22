@@ -1,7 +1,6 @@
 import discord
 import asyncio
 from datetime import datetime, date, timedelta
-import requests
 import json
 import re
 import fileinput
@@ -13,17 +12,18 @@ import random
 import logging
 import codecs
 import shelve
+
 from BASEDBOTgames import *
 from BASEDBOTbns import *
 from BASEDBOTow import *
 from BASEDBOTdn import *
 from BASEDBOTetc import *
+from BASEDBOTmusic import *
+
 if not discord.opus.is_loaded():
 	discord.opus.load_opus('opus')
 logging.basicConfig()
 client = discord.Client()
-
-
 
 
 tPlayers = {}
@@ -33,14 +33,7 @@ QuizResponses = {}
 with open("triviacontent.json") as j:
 	QuizResponses = json.load(j)
 blacklist = ['128044950024617984']
-voice = None
-player = None
-musicQue = []
-extraQue = []
 karaokelist = []
-currentsong = ''
-songtoken = False
-musicon = False
 spotlight = False
 slowM = False
 slowT = 0
@@ -61,13 +54,16 @@ with open('Admins.txt','r') as f:
 	for i in f:
 		dAdmins.append(str(i).replace('\n', ''))
 
-unicodeResponses = {'/lenny':'( ͡° ͜ʖ ͡°)','!gardenintool':'(  ′︵‵  )/','/shrug':'¯\\\\\_(ツ)\_/¯',"!donkmay":"🎊🚢💗 **DONMAYKAY**2⃣0⃣1⃣6⃣ 💗🚢🎊"}
+
 
 @client.async_event
 def on_member_join(member):
 	if member.server.id not in '82210263440306176 110373943822540800':
-		if str(member.server.id) not in '106293726271246336 148358898024316928':
-			yield from client.send_message(member.server, 'Welcome ' + member.mention + ' to the server!')
+		try:
+			if str(member.server.id) not in '106293726271246336 148358898024316928':
+				yield from client.send_message(member.server, 'Welcome ' + member.mention + ' to the server!')
+		except:
+			pass
 		try:
 			print(member)
 		except:
@@ -152,15 +148,8 @@ def on_member_update(before, after):
 
 @client.event
 async def on_message(message):
-	global voice
-	global player
-	global musicQue
-	global extraQue
-	global songtoken
-	global currentsong
 	global slowM
 	global slowT
-	global musicon
 	global karaokelist
 	global spotlight
 	global tStop
@@ -221,12 +210,6 @@ async def on_message(message):
 			await client.add_roles(message.author, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
 			await asyncio.sleep(slowT)
 			await client.remove_roles(message.author, discord.utils.find(lambda r: r.name == 'slowmode', message.channel.server.roles))
-
-	if message.content.startswith('!smashthat'):
-		tr = random.randint(0,1)
-		await client.send_file(message.channel, 'smash{}.jpg'.format(tr))
-	if message.content.startswith('!oceanman'):
-		await client.send_message(message.channel, 'OCEAN MAN 🌊 😍 Take me by the hand ✋ lead me to the land that you understand 🙌 🌊 OCEAN MAN 🌊 😍 The voyage 🚲 to the corner of the 🌎 globe is a real trip 👌 🌊 OCEAN MAN 🌊 😍 The crust of a tan man 👳 imbibed by the sand 👍 Soaking up the 💦 thirst of the land 💯')
 	
 	if message.content.startswith('!vanish') and len(message.content.split()) == 3 and (message.author.id in dMods or message.author.id in '105130465039548416' or message.author.server_permissions.administrator) and type(1) == type(int(message.content.split()[2])) and len(message.mentions) > 0:
 		logs = client.logs_from(message.channel)
@@ -383,6 +366,9 @@ async def on_message(message):
 			if guess and answer in guess.content.lower():
 				await client.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
+	if message.content.startswith("!yt"):
+		startmusic = musicbot(client)
+		await startmusic.playmusic(message, message.server.id)
 	if message.channel.is_private == False and message.channel.server.id == '106293726271246336':
 		with io.open('chatLogs.txt','a',encoding='utf-8') as f:
 			logT = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
@@ -392,135 +378,6 @@ async def on_message(message):
 			await client.send_file(message.channel, 'chatLogs.txt')
 		if message.content.startswith("!evlogs") and message.author.id in dAdmins and message.channel.id == '106301620500836352':
 			await client.send_file(message.channel, 'eventlist.txt')
-		if message.content.startswith("!yt") and (len(message.content.split()) == 2 or 'volume' in message.content):
-			ctrC = message.content.lower().split()[1]
-			musicControls = ["next", "skip", "list", "song","pause", "resume", "help"]
-			if voice == None:
-				try:
-					voice = await client.join_voice_channel(message.author.voice_channel)
-				except:
-					await client.send_message(message.channel, "You are not in a voice channel, please join a voice channel in order to play music.")
-					return
-				#voice = await client.join_voice_channel(discord.utils.get(client.get_all_channels(), id ='129079702403940352'))
-			if 'stop' in message.content:
-				if voice.is_connected():
-					await voice.disconnect()
-					musicQue = []
-					player = None
-					voice = None
-					songtoken = False
-					return
-			if ('next' in message.content or 'skip' in message.content) and player != None:
-				if voice.is_connected():
-					player.stop()
-					if len(musicQue) == 0:
-						await voice.disconnect()
-						musicQue = []
-					return
-			if 'pause' in message.content and player != None:
-				if voice.is_connected():
-					player.pause()
-					return
-			if 'resume' in message.content and player != None:
-				if voice.is_connected():
-					player.resume()
-					return
-			if 'volume' in message.content and player != None:
-				if type(int(message.content[-1])) == type(5):
-					vol = int(message.content.split()[-1])
-					if vol > 200 or vol < 0:
-						await client.send_message(message.channel, 'volume number must be between 0 and 200')
-						return
-					elif vol <= 200 and vol >= 0:
-						v = (vol/100.0)
-						player.volume = v
-						return
-				elif type(int(message.content[-1])) != type(5):
-					await client.send_message(message.channel, 'that is not a number')
-				return
-			if 'list' in message.content and player != None and len(musicQue) >0:
-				returnS = ''
-				for i in musicQue:
-					if i not in musicControls:
-						returnS += (i+'\n')
-				await client.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
-				returnS = ''
-			if 'song' in message.content and player != None and len(musicQue) >0:
-				await client.send_message(message.channel, 'Current song playing: **'+ player.title+'**')
-			if 'help' in message.content:
-				await client.send_message(message.channel, 'How to make the !yt function work, type in \'!yt \', then whatever url you want afterwards to make it play its audio, will not play from ALL links.\n__Commands you can put in after !yt for !yt are:__\n**next/skip** - goes to the next song, if there isnt one then the bot leaves\n**list** - a list of songs in queue\n**song** - current song playing\n**pause/resume** - pauses or resumes the song\n**help** - pulls up this text')
-				if player == None:
-					await voice.disconnect()
-			async def playmusicque(voice, queurl):
-				global musicon
-				global player
-				#global voice
-				global currentsong
-				global songtoken
-				global extraQue
-				try:
-					if player != None:
-						player.stop()
-						player = await voice.create_ytdl_player(queurl)
-						player.start()
-						musicQue.pop(0)
-						currentsong = (player.title)
-						await client.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player.title, player.views, player.likes, player.dislikes))
-						return
-					else:
-						player = await voice.create_ytdl_player(queurl)
-						player.start()
-						musicQue.pop(0)
-						currentsong = (player.title)
-						await client.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player.title, player.views, player.likes, player.dislikes))
-						return
-				except Exception as e:
-					musicQue.pop(0)
-					await client.send_message(message.channel, e)
-					return
-
-			if ctrC not in musicControls:
-				endurl = message.content.split()[1]
-				musicQue.append(endurl)
-				#the loop
-				if songtoken == False:
-					songtoken = True
-					while len(musicQue) >= 0:
-						if player == None:
-							print('anothertest')
-							if len(musicQue) == 1:
-								await playmusicque(voice, musicQue[0])
-						await asyncio.sleep(2)
-						print(musicQue)
-						print("hello1")
-						try:
-							if player.is_done():
-								print("hello2")
-								if len(musicQue) == 0:
-									await client.send_message(message.channel, "No more songs in queue")
-									player = None
-									await voice.disconnect()
-									voice = None
-									songtoken = False
-									#print(songtoken)
-									#break
-								elif len(musicQue) > 0:
-									#songtoken = True
-									print("hello4")
-									await playmusicque(voice, musicQue[0])
-									#break
-						except:
-							pass
-						
-						try:
-							if len(musicQue) == 0 and player.is_done():
-								break
-						except:
-							pass
-						if len(musicQue) == 0 and player == None:
-							break
-		elif message.content.startswith("!yt") and len(message.content.split()) != 2:
-			await client.send_message(message.channel, 'You must have a link to show after !yt. It can be almost anything, youtube, soundcloud, even pornhub!')
 		if any(reg.lower() in message.content.lower() for reg in MainResponses["regions"]) and message.content.startswith('!'):
 			for i in MainResponses["regions"]:
 				for j in message.author.roles:
@@ -572,23 +429,7 @@ async def on_message(message):
 			
 
 
-	if message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!krskillbuilds'):
-		if message.content.lower().startswith('!skillbuilds'):
-			dnClass = message.content.lower().replace('!skillbuilds ', '')
-		elif message.content.lower().startswith('!krskillbuilds'):
-			dnClass = message.content.lower().replace('!krskillbuilds ', '')
-		if '!skillbuilds' == str(message.content).lower() or '!skillbuilds ' == str(message.content).lower():
-			await client.send_message(message.channel, 'https://dnskillsim.herokuapp.com/na')
-		elif '!krskillbuilds' == str(message.content).lower() or '!krskillbuilds ' == str(message.content).lower():
-			await client.send_message(message.channel, 'https://dnskillsim.herokuapp.com/kdn')
-		else:
-			try:
-				if message.content.lower().startswith('!skillbuilds'):
-					await client.send_message(message.channel, 'http://dnskillsim.herokuapp.com/na/{}'.format(MainResponses["dnskillbuilds"][dnClass]))
-				elif message.content.lower().startswith('!krskillbuilds'):
-					await client.send_message(message.channel, 'http://dnskillsim.herokuapp.com/kdn/{}'.format(MainResponses["t5dnskillbuilds"][dnClass]))
-			except:	
-				await client.send_message(message.channel, '2nd argument not recognised')
+
 
 	if message.content.startswith('!define') and message.channel.id != '106293726271246336':
 		await client.send_message(message.channel, defines(message))
@@ -608,36 +449,8 @@ async def on_message(message):
 			await client.send_message(message.channel, 'YOU\'VE BEEN SPOOKED TO DEATH\nhttps://www.youtube.com/watch?v=O8XfV8aPAyQ')
 
 	if message.content.startswith('!shoot') and len(message.content.split()) == 2:
-		shooting = ['(⌐■_■)--︻╦╤─ -    ','(⌐■_■)--︻╦╤─  -   ','(⌐■_■)--︻╦╤─   -  ','(⌐■_■)--︻╦╤─    - ','(⌐■_■)--︻╦╤─     -']
-		backshooting = ['    - ─╦╤︻--(■_■ㄱ)','   -  ─╦╤︻--(■_■ㄱ)','  -   ─╦╤︻--(■_■ㄱ)',' -    ─╦╤︻--(■_■ㄱ)','-     ─╦╤︻--(■_■ㄱ)']
-		shootrand = random.randint(0,99)
-		if len(message.mentions) > 0:
-			if shootrand < 89:
-				shot = await client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',message.mentions[0].mention))
-				for i in shooting:
-					await asyncio.sleep(0.1)
-					await client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,message.mentions[0].mention))
-
-			elif shootrand < 98:
-				shot = await client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',message.mentions[0].mention))
-				for i in backshooting:
-					await asyncio.sleep(0.1)
-					await client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,message.mentions[0].mention))
-			else:
-				await client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,message.mentions[0].mention))
-		elif discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members) != None:
-			if shootrand < 89:
-				shot = await client.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
-				for i in shooting:
-					await asyncio.sleep(0.1)
-					await client.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
-			elif shootrand < 98:
-				shot = await client.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
-				for i in backshooting:
-					await asyncio.sleep(0.1)
-					await client.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
-			else:
-				await client.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
+		shoot = shooting(client)
+		await shoot.shoots(message, message.channel)
 	if message.content.startswith('!gimmepoutine'):
 		await client.send_file(message.channel, 'poutine.jpg')
 
@@ -731,7 +544,10 @@ async def on_message(message):
 		for line in mybnsbuilds(message):
 			await client.send_message(message.channel, line)
 	if message.content.startswith('!!'):
-		await client.send_message(message.channel, prefixbnscommands(message))
+		if prefixbnscommands(message) == None:
+			return
+		else:
+			await client.send_message(message.channel, prefixbnscommands(message))
 	"""
 	if message.content.lower().startswith('!played'):
 		g = {}
@@ -824,6 +640,8 @@ async def on_message(message):
 		await asyncio.sleep(15)
 		await client.delete_message(m)
 
+	elif message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!krskillbuilds'):
+		await client.send_message(message.channel, skillbuilds(message))
 	elif message.content.startswith('!savednbuild'):
 		await client.send_message(message.channel, savednbuild(message))
 	elif message.content.startswith('!editdnbuild'):
@@ -833,9 +651,12 @@ async def on_message(message):
 	elif message.content.startswith('!mydnbuilds'):
 		for line in mydnbuilds(message):
 			await client.send_message(message.channel, line)
-	elif message.content.startswith('$'):
-		await client.send_message(message.channel, prefixdncommands(message))
-	elif message.channel.id == '107718615452618752':
+	elif message.content.startswith('$') and len(message.content.split()) == 1:
+		if prefixdncommands(message) == None:
+			return
+		else:
+			await client.send_message(message.channel, prefixdncommands(message))
+	elif message.channel.id == '107718615452618752': # skill-builds channel auto skill build distributor
 		requestedBuild = []
 		requestedBuilds = []
 		m = message.content.lower()
