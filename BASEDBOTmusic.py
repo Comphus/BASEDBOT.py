@@ -7,7 +7,7 @@ voice = {}
 sToken = {}
 class musicbot:
 	"""
-	contains all variables needed for seperate sessions of music
+	makes music
 	"""
 
 	def __init__(self, bot):
