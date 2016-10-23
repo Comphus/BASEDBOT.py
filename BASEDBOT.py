@@ -157,6 +157,7 @@ async def on_message(message):
 	global tPlayers
 	cTime = datetime.now()
 
+
 	if client.user == message.author:
 		return
 	if message.channel.id == '168949939118800896':
