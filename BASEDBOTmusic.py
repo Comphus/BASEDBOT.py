@@ -12,6 +12,7 @@ class musicbot:
 
 	def __init__(self, bot):
 		self.bot = bot
+		self.musicControls = ["next", "skip", "list", "song","pause", "resume", "help"]
 
 	async def playmusic(self, message, sid):
 		if (len(message.content.split()) == 2 or 'volume' in message.content) == False:
@@ -21,16 +22,15 @@ class musicbot:
 			await self.bot.send_message(message.channel, 'How to make the !yt function work, type in \'!yt \', then whatever url you want afterwards to make it play its audio, will not play from ALL links.\n__Commands you can put in after !yt for !yt are:__\n**next/skip** - goes to the next song, if there isnt one then the bot leaves\n**list** - a list of songs in queue\n**song** - current song playing\n**pause/resume** - pauses or resumes the song\n**stop** - stops the music bot and removes it from the channel, use this incase it breaks, or to end the session\n**volume** - can change volume of bot to either 0 or 200%, ex: !yt volume 50\n**help** - pulls up this text')
 			return
 		ctrC = message.content.lower().split()[1]
-		musicControls = ["next", "skip", "list", "song","pause", "resume", "help"]
-		print(voice)
-		print(musicQue)
-		print(player)
-		print(sToken)
-		if sid not in voice:
-			voice[sid] = await self.bot.join_voice_channel(message.author.voice_channel)
-			musicQue[sid] = []
-			player[sid] = None
-			sToken[sid] = False
+		try:
+			if sid not in voice:
+				voice[sid] = await self.bot.join_voice_channel(message.author.voice_channel)
+				musicQue[sid] = []
+				player[sid] = None
+				sToken[sid] = False
+		except:
+			await self.bot.send_message(message.channel, "You are not in a voice channel, please join a voice channel in order to play music.")
+			return
 		try:
 			if voice[sid] == None:
 				voice[sid] = await self.bot.join_voice_channel(message.author.voice_channel)
@@ -47,6 +47,7 @@ class musicbot:
 				musicQue[sid] = []
 				voice[sid] = None
 				sToken[sid] = False
+				print('Used !stop in:' + sid)
 				return
 		if ('next' in message.content or 'skip' in message.content) and player[sid] != None:
 			if voice[sid].is_connected():
@@ -79,7 +80,7 @@ class musicbot:
 		if 'list' in message.content and player[sid] != None and len(musicQue[sid]) >0:
 			returnS = ''
 			for i in musicQue[sid]:
-				if i not in musicControls:
+				if i not in self.musicControls:
 					returnS += (i+'\n')
 			await self.bot.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
 			returnS = ''
@@ -111,21 +112,22 @@ class musicbot:
 						voice[sid] = None
 						sToken = False
 					return
-			if ctrC not in musicControls:
-				print('hellohere')
+			if ctrC not in self.musicControls:
 				endurl = message.content.split()[1]
 				musicQue[sid].append(endurl)
 				#the loop
 				if sToken[sid] == False:
 					sToken[sid] = True
+					print('started in '+ sid)
+					try:
+						print('server name is: '+ message.server.name)
+					except:
+						pass
 					while len(musicQue[sid]) >= 0:
 						if player[sid] == None:
-							print('anothertest')
 							if len(musicQue[sid]) == 1:
 								await playmusicque(musicQue[sid][0])
 						await asyncio.sleep(2)
-						print(musicQue[sid])
-						print("hello1")
 						try:
 							if player[sid].is_done():
 								if len(musicQue[sid]) == 0:
@@ -134,6 +136,7 @@ class musicbot:
 									await voice[sid].disconnect()
 									voice[sid] = None
 									sToken = False
+									print('ended in '+sid)
 								elif len(musicQue[sid]) > 0:
 									await playmusicque(musicQue[sid][0])
 						except:
