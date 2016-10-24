@@ -1,4 +1,4 @@
-import random#idk why this is here
+import random
 import json
 import discord
 import io
