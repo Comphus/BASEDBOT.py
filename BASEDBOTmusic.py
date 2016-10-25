@@ -47,7 +47,7 @@ class musicbot:
 				musicQue[sid] = []
 				voice[sid] = None
 				sToken[sid] = False
-				print('Used !stop in:' + sid)
+				print('Used !stop in: ' + sid)
 				return
 		if ('next' in message.content or 'skip' in message.content) and player[sid] != None:
 			if voice[sid].is_connected():
