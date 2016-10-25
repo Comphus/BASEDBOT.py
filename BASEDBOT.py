@@ -22,7 +22,7 @@ async def on_member_join(member):
 async def on_message(message):
 	if client.user == message.author or message.channel.id == '168949939118800896' or message.author.id in '128044950024617984':
 		return
-	
+
 	#basedbot discord commands
 	bbd = bbDiscord(client, message)
 	if message.content.startswith('!debug') and message.author.id == '90886475373109248':
@@ -49,7 +49,7 @@ async def on_message(message):
 		await client.send_message(message.channel, message.channel.id)
 	elif message.content.startswith('!serverid'):
 		await client.send_message(message.channel, message.channel.server.id)
-	if message.server.id == '106293726271246336': #main server commands
+	if message.channel.is_private == False and message.server.id == '106293726271246336': #main server commands
 		await bbd.logmessage()
 		if bbd.slowM() == True:
 			await bbd.startslowmode()
@@ -145,7 +145,7 @@ async def on_message(message):
 	etc = botetc(client, message)
 	if message.content.startswith('!'):
 		await etc.mainprefixcommands()
-	if '!' in message.content and message.server.id not in '119222314964353025':
+	if '!' in message.content and message.channel.is_private == False and message.server.id not in '119222314964353025':
 		await etc.zealemotes()
 	if message.content.startswith('<@175433427175211008>'):
 		await etc.bbresponse()
@@ -165,8 +165,13 @@ async def on_message(message):
 		await client.send_message(message.channel, """<:Heck1:235258589621649408><:Heck2:235258604448382978><:Fucking:235256098427240451>\n<:Heck4:235258621955407872><:Man:235256139514773504><:Im:235256149455273984>\n<:Fuckin:235256165804539906><:Cumming:235256179045957633><:Cx:235256191154913280>""")
 	elif message.content.startswith('!gimmepoutine'):
 		await client.send_file(message.channel, 'poutine.jpg')
-	elif message.content.lower().startswith('!cats') and message.channel.server.id == '109902387363217408':
+	elif message.content.lower().startswith('!cats') and message.channel.is_private == False and message.channel.server.id == '109902387363217408':
 		await etc.cats()
+	elif (message.content.lower().startswith('!colors') or message.content.lower().startswith('!colorlist')) and message.channel.is_private == False and message.server.id == '106293726271246336':
+		await etc.colors()
+	elif message.content.lower().startswith('!color') and message.channel.is_private == False and message.server.id == '106293726271246336':
+		await etc.color()
+	
 
 @client.async_event
 def on_ready():
