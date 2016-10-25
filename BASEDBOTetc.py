@@ -105,6 +105,39 @@ class botetc:
 				await self.bot.add_roles(self.message.author, discord.utils.get(self.message.server.roles, name = i))
 				await asyncio.sleep(1)
 				return
+	
+	async def color(self):
+		if len(self.message.content.split()) == 1:
+			await self.bot.send_message(self.message.channel, "Type in !colors or !colorlist so I can PM you a list of colors available, then type in `!color (nameofcolor)` for the color you want without the parentheses!")
+			return
+		rColor = self.message.content.lower().replace('!color ', '')
+		currentcolor = ''
+		requestedcolor = ''
+		for i in MainResponses["colors"]:
+			for j in self.message.author.roles:
+				if i == j.name:
+					currentcolor = j.name
+			if i.lower() in rColor:
+				requestedcolor = i
+		if len(requestedcolor) == 0:
+			await self.bot.send_message(self.message.channel, "Couldnt find that color! Make sure to copy the name from the list of colors!")
+			return
+		elif len(currentcolor) > 0 and len(requestedcolor) > 0:
+			oldcolor = discord.utils.get(self.message.server.roles, name = currentcolor)
+			newcolor = discord.utils.get(self.message.server.roles, name = requestedcolor)
+			await self.bot.remove_roles(self.message.author, oldcolor)
+			await asyncio.sleep(1)
+			await self.bot.add_roles(self.message.author, newcolor)
+			await self.bot.send_message(self.message.author, "I removed the {} color, and gave you the {} color!".format(currentcolor, requestedcolor))
+		elif len(requestedcolor) > 0:
+			newcolor = discord.utils.get(self.message.server.roles, name = requestedcolor)
+			await self.bot.add_roles(self.message.author, newcolor)
+			await self.bot.send_message(self.message.author, "I gave you the {} color!".format(requestedcolor))
+
+	async def colors(self):
+		await self.bot.send_file(self.message.author, 'colorlist.png')
+		return
+	
 	async def zealemotes(self):
 		for i in self.message.content.lower().split():
 			if i.startswith('!') and i.replace('!','') in bnsEmotes:
@@ -155,6 +188,10 @@ class botetc:
 		if self.message.content.lower().split()[0] in MainResponses['all!commands']:
 			if self.message.content.lower().startswith("!commands"):
 				await self.bot.send_message(self.message.author, MainResponses['all!commands'][self.message.content.lower().split()[0]])
+				await self.bot.send_message(self.message.author, MainResponses['all!commands']['!dncommands'])
+				await self.bot.send_message(self.message.author, MainResponses['all!commands']['!bnscommands'])
+				await self.bot.send_message(self.message.author, MainResponses['all!commands']['!games'])
+				await self.bot.send_message(self.message.author, MainResponses['all!commands']['!dncdcommands'])
 			else:
 				await self.bot.send_message(self.message.channel, MainResponses['all!commands'][self.message.content.lower().split()[0]])
 		if any(reg.lower() in self.message.content.lower() for reg in MainResponses["regions"]):
