@@ -12,8 +12,9 @@ with open("triviacontent.json") as j:
 
 # all types of functions are here
 class games:
-	def __init__(self, bot):
+	def __init__(self, bot, message):
 		self.bot = bot
+		self.message = message
 
 
 	def dueling(self, msg):
@@ -132,14 +133,14 @@ class games:
 
 		return [z,x,endZ]
 
-	async def duel(self, message):
-		results = self.dueling([message.mentions[0],message.mentions[1]])
-		await self.bot.send_message(message.channel, results[1])
+	async def duel(self):
+		results = self.dueling([self.message.mentions[0],self.message.mentions[1]])
+		await self.bot.send_message(self.message.channel, results[1])
 		for i in range(len(results[0])):
 			dDelay = random.randint(3,5)
-			await self.bot.send_message(message.channel, results[0][i])
+			await self.bot.send_message(self.message.channel, results[0][i])
 			await asyncio.sleep(dDelay)
-		await self.bot.send_message(message.channel, results[2])
+		await self.bot.send_message(self.message.channel, results[2])
 
 	async def playrps(self, msg):
 		att = {0:':fist:',1:':hand_splayed:',2:':v:'}
@@ -172,18 +173,18 @@ class games:
 				w = r+win
 				return [w,1]
 
-	async def rps(self, message):
-		if len(message.mentions) != 2:
-			await self.bot.send_message(message.channel, "You must mention two people in order to play.")
+	async def rps(self):
+		if len(self.message.mentions) != 2:
+			await self.bot.send_message(self.message.channel, "You must mention two people in order to play.")
 			return
-		players = [message.mentions[0].mention,message.mentions[1].mention]
+		players = [self.message.mentions[0].mention,self.message.mentions[1].mention]
 		results = await self.playrps(players)
 		async def rpsresults(r):
-			players = [message.mentions[0].mention,message.mentions[1].mention]
+			players = [self.message.mentions[0].mention,self.message.mentions[1].mention]
 			if r[1] == 0:
-				await self.bot.send_message(message.channel, r[0])
-				await self.bot.send_message(message.channel, "It looks like you two have tied! Would you like to try again {}? Type **yes** or **no**".format(message.author.mention))
-				resp = await self.bot.wait_for_message(timeout = 60, author=message.author)
+				await self.bot.send_message(self.message.channel, r[0])
+				await self.bot.send_message(self.message.channel, "It looks like you two have tied! Would you like to try again {}? Type **yes** or **no**".format(self.message.author.mention))
+				resp = await self.bot.wait_for_message(timeout = 60, author=self.message.author)
 				if resp is None:
 					return
 				if 'n' in resp.content.lower():
@@ -193,11 +194,11 @@ class games:
 					await rpsresults(res)
 					return
 			elif r[1] == 1:
-				await self.bot.send_message(message.channel, r[0])
+				await self.bot.send_message(self.message.channel, r[0])
 				return
 			elif r[1] == 2:
-				await self.bot.send_file(message.channel, 'C:/Users/gabriel/Pictures/BnS/donkay.png')
-				await self.bot.send_message(message.channel, "You have been visited by the __Mystical__ **DonkaDonks**, you both _Lose_!")
+				await self.bot.send_file(self.message.channel, 'C:/Users/gabriel/Pictures/BnS/donkay.png')
+				await self.bot.send_message(self.message.channel, "You have been visited by the __Mystical__ **DonkaDonks**, you both _Lose_!")
 				return
 		await rpsresults(results)
 
@@ -292,69 +293,69 @@ class games:
 
 			return c4out
 
-	async def c4(self, message):
+	async def c4(self):
 		c4 = {}
 		with open("connect4.json") as j:
 			c4 = json.load(j)
-		if message.author.id in c4.keys():
+		if self.message.author.id in c4.keys():
 			pass
-		results = self.connect4(message)
-		await self.bot.send_message(message.channel, results)
+		results = self.connect4(self.message)
+		await self.bot.send_message(self.message.channel, results)
 
-	async def dntrivia(self, message):
+	async def dntrivia(self):
 		TriviaQuestions = MainResponses['Trivia']
 		TriviaQuestion = random.choice(list(TriviaQuestions.keys()))
-		await self.bot.send_message(message.channel, 'You have started DN Trivia!\n')
+		await self.bot.send_message(self.message.channel, 'You have started DN Trivia!\n')
 		await asyncio.sleep(1)
-		await self.bot.send_message(message.channel, 'You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
+		await self.bot.send_message(self.message.channel, 'You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
 		await asyncio.sleep(3)
-		await self.bot.send_message(message.channel, TriviaQuestion)
+		await self.bot.send_message(self.message.channel, TriviaQuestion)
 		answer = MainResponses['Trivia'][TriviaQuestion]
 		end_time = time.time() + 15
 		while True:
 			time_remaining = end_time - time.time()
 			if time_remaining <= 0:
-				await self.bot.send_message(message.channel, 'Sorry, you took too long! The answer was '+answer)
+				await self.bot.send_message(self.message.channel, 'Sorry, you took too long! The answer was '+answer)
 				return
 			guess = await self.bot.wait_for_message(timeout = time_remaining)
 			if guess and answer in guess.content.lower():
-				await self.bot.send_message(message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
+				await self.bot.send_message(self.message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
 
 
 
 
-	async def shoots(self, message, channel):
+	async def shoots(self):
 		shooting = ['(⌐■_■)--︻╦╤─ -    ','(⌐■_■)--︻╦╤─  -   ','(⌐■_■)--︻╦╤─   -  ','(⌐■_■)--︻╦╤─    - ','(⌐■_■)--︻╦╤─     -']
 		backshooting = ['    - ─╦╤︻--(■_■ㄱ)','   -  ─╦╤︻--(■_■ㄱ)','  -   ─╦╤︻--(■_■ㄱ)',' -    ─╦╤︻--(■_■ㄱ)','-     ─╦╤︻--(■_■ㄱ)']
 		shootrand = random.randint(0,99)
 
-		if len(message.mentions) > 0:
+		if len(self.message.mentions) > 0:
 			if shootrand < 89:
-				shot = await self.bot.send_message(channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',message.mentions[0].mention))
+				shot = await self.bot.send_message(self.message.channel, '{} shoots {}{}'.format(self.message.author.mention,'(⌐■_■)--︻╦╤─-     ',self.message.mentions[0].mention))
 				for i in shooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,message.mentions[0].mention))
+					await self.bot.edit_message(shot, '{} shoots {}{}'.format(self.message.author.mention,i,self.message.mentions[0].mention))
 
 			elif shootrand < 98:
-				shot = await self.bot.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',message.mentions[0].mention))
+				shot = await self.bot.send_message(self.message.channel, '{}{} the tables have turned! {}'.format(self.message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',self.message.mentions[0].mention))
 				for i in backshooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,message.mentions[0].mention))
+					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(self.message.author.mention,i,self.message.mentions[0].mention))
 			else:
-				await self.bot.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,message.mentions[0].mention))
-		elif discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members) != None:
+				await self.bot.send_message(self.message.channel, '{} and {} make love!'.format(self.message.author.mention,self.message.mentions[0].mention))
+		elif discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members) != None:
 			if shootrand < 89:
-				shot = await self.bot.send_message(message.channel, '{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+				shot = await self.bot.send_message(self.message.channel, '{} shoots {}{}'.format(self.message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
 				for i in shooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+					await self.bot.edit_message(shot, '{} shoots {}{}'.format(self.message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
 			elif shootrand < 98:
-				shot = await self.bot.send_message(message.channel, '{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+				shot = await self.bot.send_message(self.message.channel, '{}{} the tables have turned! {}'.format(self.message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
 				for i in backshooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
+					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(self.message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
 			else:
-				await self.bot.send_message(message.channel, '{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
+				await self.bot.send_message(self.message.channel, '{} and {} make love!'.format(self.message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()).mention, self.message.channel.server.members)))
 
 
