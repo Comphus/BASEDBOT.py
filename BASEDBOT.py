@@ -94,6 +94,8 @@ async def on_message(message):
 		await dn.mydnbuilds()
 	elif message.content.startswith('$') and len(message.content.split()) == 1:
 		await dn.customdncommands()
+	elif message.content.lower().startswith('!enhance') and message.channel.id != '106293726271246336':
+		await dn.enhancement()
 	elif message.channel.id == '107718615452618752': # skill-builds channel auto skill build distributor
 		await dn.autobuilds()
 
