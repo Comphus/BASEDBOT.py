@@ -241,4 +241,3 @@ class dragonnest:
 		await self.bot.delete_message(self.message)
 		await asyncio.sleep(15)
 		await self.bot.delete_message(m)
-
