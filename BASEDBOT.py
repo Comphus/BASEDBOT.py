@@ -1,6 +1,8 @@
 import discord
 import asyncio
 import json
+import datetime
+import random
 
 from BASEDBOTgames import *
 from BASEDBOTbns import *
@@ -8,7 +10,7 @@ from BASEDBOTow import *
 from BASEDBOTdn import *
 from BASEDBOTetc import *
 from BASEDBOTmusic import *
-from BASEDBOTdiscord import *
+import BASEDBOTdiscord
 client = discord.Client()
 
 with open("C:/discordlogin.json") as j:
@@ -16,7 +18,20 @@ with open("C:/discordlogin.json") as j:
 
 @client.event
 async def on_member_join(member):
-	await newmem(client, member).newmember()
+	await BASEDBOTdiscord.newmem(client, member).newmember()
+
+@client.event
+async def on_member_update(before, after):
+	if before.server.id == '106293726271246336':
+		if len(before.roles) == len(after.roles):
+			for i in after.roles:
+				if i.name == 'Streamer':
+					try:
+						if after.game.type == 1:
+							strm = streamer(client, after).DNstream()
+							await strm
+					except:
+						pass
 
 @client.event
 async def on_message(message):
@@ -24,7 +39,7 @@ async def on_message(message):
 		return
 
 	#basedbot discord commands
-	bbd = bbDiscord(client, message)
+	bbd = BASEDBOTdiscord.bbDiscord(client, message)
 	if message.content.startswith('!debug') and message.author.id == '90886475373109248':
 		await bbd.debug()
 	elif message.content.startswith('!removeallmsgs') and message.author.id == '90886475373109248':
@@ -35,6 +50,8 @@ async def on_message(message):
 		await client.send_message(message.channel, "**Total Members:** {}".format(message.channel.server.member_count))
 	elif message.content.startswith("!voiceid"):
 		await client.send_message(message.channel, message.author.voice_channel.id)
+	elif message.content.startswith("!stats"):
+		await bbd.dStats()
 	elif message.content.startswith('!id'):
 		await bbd.dID()
 	elif message.content.startswith('!myinfo'):
@@ -55,7 +72,7 @@ async def on_message(message):
 			await bbd.startslowmode()
 		elif message.content.startswith('!slowmode'):
 			await bbd.slowmode()
-		""" disabled until monthly karaoke starts
+		""" DISABLED UNTIL MONTHLY KARAOKE STARTS
 		elif message.content.startswith("!raisehand"):
 			await bbd.raisehand()
 		elif message.content.startswith('!klist'):
@@ -71,17 +88,21 @@ async def on_message(message):
 	#dn commands
 	dn = dragonnest(client, message)
 	if message.content.lower().startswith('!pug') and message.channel.id != '106293726271246336' and message.channel.server.id == '106293726271246336':
-		await dn.pug()
+		await dn.onoffrole('pug')
 	elif message.content.lower().startswith('!trade') and message.channel.id != '106293726271246336':
-		await dn.trade()
+		await dn.onoffrole('trade')
 	elif message.content.lower().startswith('!pvp') and message.channel.id != '106293726271246336':
-		await dn.pvp()
+		await dn.onoffrole('pvp')
+	elif message.content.startswith('!viewer') and message.server.id == '106293726271246336':
+		await dn.onoffrole('viewer')
 	elif '@pug' in message.clean_content and message.channel.id != '106300530548039680' and message.channel.server.id == '106293726271246336':
-		await dn.pugmention()
+		await dn.roleMention('pug')
 	elif '@trade' in message.clean_content and message.channel.id != '106301265817931776' and message.channel.server.id == '106293726271246336':
-		await dn.trademention()
+		await dn.roleMention('trade')
 	elif '@pvp' in message.clean_content and message.channel.id != '106300621459628032' and message.channel.server.id == '106293726271246336':
-		await dn.pvpmention()
+		await dn.roleMention('pvp')
+	elif '@viewer' in message.clean_content and message.channel.server.id == '106293726271246336':
+		await dn.roleMention('viewer')
 	elif message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!krskillbuilds'):
 		await client.send_message(message.channel, dn.skillbuilds())
 	elif message.content.startswith('!savednbuild'):
@@ -96,6 +117,8 @@ async def on_message(message):
 		await dn.customdncommands()
 	elif message.content.lower().startswith('!enhance') and message.channel.id != '106293726271246336':
 		await dn.enhancement()
+	elif message.content.lower().replace(' ', '') == '!sa':
+		await dn.SA()
 	elif message.channel.id == '107718615452618752': # skill-builds channel auto skill build distributor
 		await dn.autobuilds()
 
@@ -129,6 +152,26 @@ async def on_message(message):
 		await bns.prefixbnscommands()
 
 	#games
+	if message.content.startswith('!donkayme'):
+		await client.add_reaction(message, "🇩")
+		await client.add_reaction(message, "🇴")
+		await client.add_reaction(message, "🇳")
+		await client.add_reaction(message, "🇰")
+		await client.add_reaction(message, "🇦")
+		await client.add_reaction(message, "🇾")
+	if message.content.startswith('!boop'):
+		await client.add_reaction(message, "🅱")
+		await client.add_reaction(message, "🅾")
+		await client.add_reaction(message, "🇴")
+		await client.add_reaction(message, "🅿")
+	if message.content.startswith('!bruh') and message.channel.id != '106293726271246336':
+		s = '🇦 🇧 🇨 🇩 🇪 🇫 🇬 🇭 🇮 🇯 🇰 🇱 🇲 🇳 🇴 🇵 🇶 🇷 🇸 🇹 🇺 🇻 🇼 🇽 🇾 🇿 😂 👌'
+		n = s.split()
+		for i in range(15):
+			r = random.randint(0, len(n)-1)
+			await client.add_reaction(message, n[r])
+
+
 	g = games(client, message)
 	if message.content in unicodeResponses:
 		await client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
@@ -167,8 +210,6 @@ async def on_message(message):
 		await client.send_message(message.channel, """<:Heck1:235258589621649408><:Heck2:235258604448382978><:Fucking:235256098427240451>\n<:Heck4:235258621955407872><:Man:235256139514773504><:Im:235256149455273984>\n<:Fuckin:235256165804539906><:Cumming:235256179045957633><:Cx:235256191154913280>""")
 	elif message.content.startswith('!gimmepoutine'):
 		await client.send_file(message.channel, 'poutine.jpg')
-	elif message.content.lower().startswith('!cats') and message.channel.is_private == False and message.channel.server.id == '109902387363217408':
-		await etc.cats()
 	elif (message.content.lower().startswith('!colors') or message.content.lower().startswith('!colorlist')) and message.channel.is_private == False and message.server.id == '106293726271246336':
 		await etc.colors()
 	elif message.content.lower().startswith('!color') and message.channel.is_private == False and message.server.id == '106293726271246336':
@@ -182,6 +223,7 @@ def on_ready():
 	print(client.user.id)
 	print('------')
 	yield from client.change_presence(game=discord.Game(name='you like a fiddle'))
+	BASEDBOTdiscord.upT = datetime.now()
 
 async def main_task():
 	await client.login(dLogin['username'])
