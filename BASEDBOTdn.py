@@ -1,13 +1,17 @@
 import random
+import requests
 import json
 import discord
 import io
 import asyncio
+from datetime import datetime, date, timedelta
+import time
 
-with open("MainResponses.json") as j:
+with open("C:/DISCORD BOT/DiscordStuff/MainResponses.json") as j:
 	MainResponses = json.load(j)
 
 enhancing = {}
+rtLimit = {}
 
 class dragonnest:
 
@@ -31,6 +35,12 @@ class dragonnest:
 		13:[5716, 1000, 3333, 3333, 2],
 		14:[6840, 500, 7999, 7999, 2]
 		}
+		self.ment = {
+		'pug':['You have signed up for <#106300530548039680> mentions!','You have removed yourself from <#106300530548039680> mentions!','You can only mention the trade role in the <#106300530548039680> channel. This message will be deleted in 15 seconds'],
+		'trade':['You have signed up for <#106301265817931776> mentions!', 'You have removed yourself from <#106301265817931776> mentions!', 'You can only mention the trade role in the <#106301265817931776> channel. This message will be deleted in 15 seconds'],
+		'pvp':['You have signed up for <#106300621459628032> mentions!', 'You have removed yourself from <#106300621459628032> mentions!', 'You can only mention the pvp role in the <#106300621459628032> channel. This message will be deleted in 15 seconds'],
+		'viewer':['You have signed up for Viewer mentions! Whenever a streamer goes online `BASEDBOT` will @ the role to notify you.','You have removed yourself from viewer mentions!','Only `BASEDBOT` can mention the Viewer role. This message will be deleted in 15 seconds']
+		}
 
 	def savednbuild(self):
 		if self.message.content == ('!savednbuild') or self.message.content == ('!savednbuild '):
@@ -42,12 +52,12 @@ class dragonnest:
 		elif len(str(self.message.content).split()) !=3:
 			return 'Can only create a link with exactly 3 arguments'
 		elif len(self.message.content.split()) == 3 and '$' in self.message.content.split()[1]: 
-			with open('DNbuilds.txt','r+') as dnBuilds:
+			with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','r+') as dnBuilds:
 				for line in dnBuilds:
 					if self.message.content.lower().split()[1] == line.lower().split()[1]:
 						return 'A build with this name already exists!'
 		dnBuildsSave = self.message.content.replace('!savednbuild ', '')
-		with open('DNbuilds.txt','a') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','a') as bnsBuilds2:
 			bnsBuilds2.write(str(self.message.author.id) + ' ' + dnBuildsSave + '\n')
 			return 'build "'+self.message.content.split()[2]+'" saved! Use your command "'+self.message.content.split()[1]+'" to use it!'
 
@@ -63,7 +73,7 @@ class dragonnest:
 			return 'Can only edit a link with exactly 3 arguments'
 		saveL = ''
 		dnBuildsSave = self.message.content.replace('!editdnbuild ', '')
-		with open('DNbuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] in line:
 					if str(self.message.author.id) not in line:
@@ -72,13 +82,13 @@ class dragonnest:
 						saveL = line.rsplit(' ', 1)[0] + ' ' + self.message.content.split()[-1]
 		saveL += '\n'
 		newLines = []
-		with open('DNbuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] not in line:
 					newLines.append(line)
 				else:
 					newLines.append(saveL)
-		with open('DNbuilds.txt','w') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','w') as bnsBuilds2:
 			for line in newLines:
 				bnsBuilds2.write(line)
 		return 'build "'+self.message.content.split()[2]+'" has been edited! Use your command "'+self.message.content.split()[1]+'" to use it!'
@@ -90,23 +100,23 @@ class dragonnest:
 			return 'Your command created command must have $ infront'
 		if len(str(self.message.content).split()) !=2:
 			return 'Can only delete a link with exactly 2 arguments'
-		with open('DNbuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] in line:
 					if str(self.message.author.id) not in line:
 						return 'This is not your build so you cannot delete it.'
 		newLines = []
-		with open('DNbuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] not in line:
 					newLines.append(line)
-		with open('DNbuilds.txt','w') as bnsBuilds2:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','w') as bnsBuilds2:
 			for line in newLines:
 				bnsBuilds2.write(line)
 		return 'Your build ' + self.message.content.split()[-1] + ' has been deleted.'
 
 	def prefixdncommands(self): #this is for the $ prefix
-		with open('DNbuilds.txt') as readBuilds:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if self.message.content.split()[0] == line.split()[-2]:
 					return line.split()[-1]
@@ -115,6 +125,9 @@ class dragonnest:
 			return
 		else:
 			await self.bot.send_message(self.message.channel, self.prefixdncommands())
+
+	async def SA(self):
+		await self.bot.send_message(self.message.channel, "https://docs.google.com/spreadsheets/d/1PMrzSRCuqBxOUsSpIUnh70-_uQRIkV3fZdOvaJ0rejc/edit#gid=29")
 
 	async def enhancement(self):
 		if 'stop' in self.message.content.lower():
@@ -201,7 +214,7 @@ class dragonnest:
 	def mdb(self):
 		numbercount = 1
 		returnbox = []
-		with open('DNbuilds.txt') as readBuilds:
+		with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if str(self.message.author.id) in line or str(self.message.author) in line:
 					returnbox.append(str(numbercount)+': '+line.replace(str(self.message.author.id)+ ' ', ''))
@@ -252,91 +265,66 @@ class dragonnest:
 			for i in requestedBuild:
 				if i not in requestedBuilds:
 					requestedBuilds.append(i)
-			await self.bot.send_message(self.message.channel, 'Would you like me to PM you a list of community saved builds for {}?'.format(requestedBuilds))
-			resp = await self.bot.wait_for_message(author=self.message.author)
-			if 'y' not in resp.content.lower():
-				await self.bot.send_message(self.message.channel, 'ok')
-				return
+			pmlist = []
+			missingb = []
+			noB = False
+			with open('C:/DISCORD BOT/DragonNest/DNbuilds.txt','r') as b:
+				readB = b.readlines()
+				for i in requestedBuilds:
+					checksB = 0
+					for line in readB:
+						if i in line.split()[-1]:
+							try:
+								pmlist.append(line.replace(line.split()[0], discord.utils.get(self.message.server.members, id = line.split()[0]).name))
+								checksB += 1
+							except:
+								pmlist.append(line.replace(line.split()[0], 'Unknown User'))
+								checksB += 1
+					if checksB == 0:
+						missingb.append(i)
+						noB = True
+					checksB = 0
+			if len(pmlist) == 0:
+				await self.bot.send_message(self.message.channel, 'There appears to be no build for the class(es) requested :(')
 			else:
-				pmlist = []
-				noB = False
-				with open('DNbuilds.txt','r') as b:
-					readB = b.readlines()
-					for i in requestedBuilds:
-						checksB = 0
-						for line in readB:
-							if i in line.split()[-1]:
-								try:
-									pmlist.append(line.replace(line.split()[0], discord.utils.get(self.message.server.members, id = line.split()[0]).name))
-									checksB += 1
-								except:
-									pmlist.append(line.replace(line.split()[0], 'Unknown User'))
-									checksB += 1
-						if checksB == 0:
-							noB = True
-						checksB = 0
-				if len(pmlist) == 0:
-					await self.bot.send_message(self.message.channel, 'I\'m sorry, there appears to be no build for the class(es) requested :(')
-				else:
-					if noB == True:
-						await self.bot.send_message(self.message.channel, 'I\'m sorry, there appears to be no build(s) made for one or more of the classes you requested :(')
-					await self.bot.send_message(self.message.channel, 'I will send you the PM now!')
-					for i in pmlist:
-						await self.bot.send_message(self.message.author, i)
+				await self.bot.send_message(self.message.channel, 'I have PMed you a list of community saved build(s) for {}'.format(requestedBuilds))
+				if noB == True:
+					await self.bot.send_message(self.message.channel, 'However, there appears to be no build(s) made for {} :('.format(missingb))
+				for i in pmlist:
+					await self.bot.send_message(self.message.author, i)
 
-
-	async def pug(self):
-		mrole = discord.utils.get(self.message.server.roles, name = 'pug')
+	async def onoffrole(self, mess):
+		mrole = discord.utils.get(self.message.server.roles, name = mess)
 		rlist = []
 		for i in self.message.author.roles:
 			rlist.append(i.name)
-		if 'pug' not in rlist:
+		if mess not in rlist:
 			await self.bot.add_roles(self.message.author, mrole)
-			await self.bot.send_message(self.message.channel, 'You have signed up for <#106300530548039680> mentions!')
-		elif 'pug' in rlist:
+			await self.bot.send_message(self.message.channel, '{}'.format(self.ment[mess][0]))
+		elif mess in rlist:
 			await self.bot.remove_roles(self.message.author, mrole)
-			await self.bot.send_message(self.message.channel, 'You have removed yourself from <#106300530548039680> mentions!')
-	async def trade(self):
-		mrole = discord.utils.get(self.message.server.roles, name = 'trade')
-		rlist = []
-		for i in self.message.author.roles:
-			rlist.append(i.name)
-		if 'trade' not in rlist:
-			await self.bot.add_roles(self.message.author, mrole)
-			await self.bot.send_message(self.message.channel, 'You have signed up for <#106301265817931776> mentions!')
-		elif 'trade' in rlist:
-			await self.bot.remove_roles(self.message.author, mrole)
-			await self.bot.send_message(self.message.channel, 'You have removed yourself from <#106301265817931776> mentions!')
-	async def pvp(self):
-		mrole = discord.utils.get(self.message.server.roles, name = 'pvp')
-		rlist = []
-		for i in self.message.author.roles:
-			rlist.append(i.name)
-		if 'pvp' not in rlist:
-			await self.bot.add_roles(self.message.author, mrole)
-			await self.bot.send_message(self.message.channel, 'You have signed up for <#106300621459628032> mentions!')
-		elif 'pvp' in rlist:
-			await self.bot.remove_roles(self.message.author, mrole)
-			await self.bot.send_message(self.message.channel, 'You have removed yourself from <#106300621459628032> mentions!')
+			await self.bot.send_message(self.message.channel, '{}'.format(self.ment[mess][1]))
 	
-	async def pugmention(self):
-		m = await self.bot.send_message(self.message.channel, "{} You can only mention the trade role in the <#106300530548039680> channel. This message will be deleted in 15 seconds".format(self.message.author.mention))
-		with io.open('attempts.txt','a',encoding='utf-8') as attempts:
-			attempts.write('{}({}) attempted to mention @pug on {}UTC outside of the pug channel. They said: {}\n'.format(self.message.author.id, self.message.author.name, str(self.message.timestamp), self.message.content))
+	async def roleMention(self, mess):
+		m = await self.bot.send_message(self.message.channel, "{} {}".format(self.message.author.mention, self.ment[mess][2]))
+		with io.open('C:/DISCORD BOT/DiscordStuff/attempts.txt','a',encoding='utf-8') as attempts:
+			attempts.write('{}({}) attempted to mention {} on {}UTC outside of the {} channel. They said: {}\n'.format(self.message.author.id, self.message.author.name, ('@'+mess), str(self.message.timestamp), mess, self.message.content))
 		await self.bot.delete_message(self.message)
 		await asyncio.sleep(15)
 		await self.bot.delete_message(m)
-	async def trademention(self):
-		m = await self.bot.send_message(self.message.channel, "{} You can only mention the trade role in the <#106301265817931776> channel. This message will be deleted in 15 seconds".format(self.message.author.mention))
-		with io.open('attempts.txt','a',encoding='utf-8') as attempts:
-			attempts.write('{}({}) attempted to mention @trade on {}UTC outside of the trade channel. They said: {}\n'.format(self.message.author.id, self.message.author.name, str(self.message.timestamp), self.message.content))
-		await self.bot.delete_message(self.message)
-		await asyncio.sleep(15)
-		await self.bot.delete_message(m)
-	async def pvpmention(self):
-		m = await self.bot.send_message(self.message.channel, "{} You can only mention the pvp role in the <#106300621459628032> channel. This message will be deleted in 15 seconds".format(self.message.author.mention))
-		with io.open('attempts.txt','a',encoding='utf-8') as attempts:
-			attempts.write('{}({}) attempted to mention @pvp on {}UTC outside of the pvp channel. They said: {}\n'.format(self.message.author.id, self.message.author.name, str(self.message.timestamp), self.message.content))
-		await self.bot.delete_message(self.message)
-		await asyncio.sleep(15)
-		await self.bot.delete_message(m)
+
+class streamer:
+
+	def __init__(self, bot, member):
+		self.bot = bot
+		self.member = member
+
+	async def DNstream(self):
+		if self.member.id not in list(rtLimit.keys()):
+			rtLimit[self.member.id] = None
+		if rtLimit[self.member.id] == None or (datetime.now() - rtLimit[self.member.id]).total_seconds() // 3600 >= 2:
+			rtLimit[self.member.id] = datetime.now()
+			r = requests.get('https://api.twitch.tv/kraken/streams/{}/?&client_id=4asyzu8i1l7ea1f61aebw3mgbuv04y2'.format(self.member.game.url.replace('https://www.twitch.tv/', '')))
+			tData = r.json()
+			await self.bot.send_message(self.bot.get_channel('106293726271246336'), "<@&246470826675666944> **{}#{}** has started streaming **{}**!\nThey're playing **{}**, Come watch them at <{}>".format(self.member.name, self.member.discriminator, self.member.game.name,tData['stream']['game'], self.member.game.url))
+			print('something happened with {} for stream'.format(self.member.id))
