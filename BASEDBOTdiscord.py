@@ -8,8 +8,9 @@ logging.basicConfig()
 
 sm = {'dncd':[False, 0]}
 karaoke = [[], False]
+upT = 0
 dMods = []
-with open('Mods.txt','r') as f:
+with open('C:/DISCORD BOT/DiscordStuff/Mods.txt','r') as f:
 	for i in f:
 		dMods.append(str(i).replace('\n', ''))
 
@@ -72,10 +73,10 @@ class bbDiscord:
 				counter += 1
 			if counter == int(self.message.content.split()[2]):
 				break
-		with io.open('vanishlog.txt','a',encoding='utf-8') as f:
+		with io.open('C:/DISCORD BOT/DiscordStuff/vanishlog.txt','a',encoding='utf-8') as f:
 			s = ("{} {} Name: {} ID: {} What they wrote: {}\n".format(str(datetime.now().strftime("%m/%d/%Y %H:%M:%S")), self.message.server.name, self.message.author.name, self.message.author.id, self.message.content))
 			f.write(s)
-			
+
 	async def removeallmsgs(self):
 		logs =  self.bot.logs_from(self.message.channel)
 		async for log in logs:
@@ -107,12 +108,11 @@ class bbDiscord:
 			if i.position > dCol:
 				dCol1 = i
 				dCol = i.position
-		dCol2 = str(dCol1.color)
+		dCol2 = p.color
 		dRol = dRol[0:-2].replace('@everyone', '@-everyone')
 		if dRol.startswith(', '):
 			dRol = dRol[2:]
-		await self.bot.send_message(self.message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,str(dCol2)))
-
+		await self.bot.send_message(self.message.channel, '```Name: {}\nID: {}\nDiscriminator: {}\nRoles: {}\nJoin Date: {}\nName Color: {}```'.format(p,p.id,p.discriminator,dRol,dJoin,dCol2))
 
 	async def myinfo(self):
 		dRol = ''
@@ -124,7 +124,7 @@ class bbDiscord:
 			if i.position > dCol:
 				dCol1 = i
 				dCol = i.position
-		dCol2 = hex(dCol1.colour.value)
+		dCol2 = self.message.author.color
 		dRol = dRol[0:-2].replace('@everyone', '@-everyone')
 		if dRol.startswith(', '):
 			dRol = dRol[2:]
@@ -142,6 +142,14 @@ class bbDiscord:
 			else:
 				p = discord.utils.find(lambda m: m.name == newR, self.message.channel.server.members).id
 				await self.bot.send_message(self.message.channel, p)
+	
+	async def dStats(self):
+		s = len(self.bot.servers)
+		m = len(list(self.bot.get_all_members()))
+		uniq = len(set(self.bot.get_all_members()))
+		u = (datetime.now() - upT).total_seconds()
+		t = str(time.strftime("%H:%M:%S", time.gmtime(u)))
+		await self.bot.send_message(self.message.channel, "Uptime: **{}**\nI am in **{}** servers serving **{}** members(**{}** unique) ".format(t,s,m,uniq))
 
 	async def raisehand(self):
 		mrole = discord.utils.get(self.message.server.roles, name = 'Karaoke-Hand Raised')
@@ -192,14 +200,20 @@ class bbDiscord:
 			await self.bot.add_roles(karaoke[1], srole)
 
 	async def logmessage(self):
-		with io.open('chatLogs.txt','a',encoding='utf-8') as f:
+		await self.logM(self.message.channel.name)
+
+	async def logM(self, cName):
+		with io.open('C:/DISCORD BOT/message_logs/{}_Logs.txt'.format(cName),'a',encoding='utf-8') as f:
 			logT = str(datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
 			logM = ("{}({}) {}: {}\n".format(self.message.author.name, self.message.author.id, logT, self.message.content))
 			f.write(logM)
 
 	async def debug(self):
 		deb = self.message.content[7:]
-		await self.bot.send_message(self.message.channel, str(eval(deb)))
+		try:
+			await self.bot.send_message(self.message.channel, str(eval(deb)))
+		except Exception as e:
+			await self.bot.send_message(self.message.channel, e)
 
 class newmem():
 
@@ -211,7 +225,7 @@ class newmem():
 		if self.member.server.id not in '82210263440306176 110373943822540800':
 			try:
 				if self.member.server.id not in '106293726271246336 148358898024316928':
-					await client.send_message(self.member.server, 'Welcome {} to the server!'.format(self.member.mention))
+					await self.bot.send_message(self.member.server, 'Welcome {} to the server!'.format(self.member.mention))
 			except:
 				pass
 			try:
@@ -220,6 +234,6 @@ class newmem():
 				pass
 			t = datetime.now()
 			if str(self.member.server.id) == '106293726271246336':
-				with io.open('joinLog.txt','a',encoding='utf-8') as f:
+				with io.open('C:/DISCORD BOT/DiscordStuff/joinLog.txt','a',encoding='utf-8') as f:
 					retS = "Name: {} ID: {} Time joined: {} EST\n".format(self.member.name, self.member.id, str(t))
 					f.write(retS)
