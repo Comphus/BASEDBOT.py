@@ -96,12 +96,12 @@ class bladeandsoul:
 		elif len(self.message.content.split()) !=3:
 			return 'Can only create a link with exactly 3 arguments'
 		elif len(self.message.content.split()) == 3 and '!!' in self.message.content.split()[1]: 
-			with open('BNSBuilds.txt','r+') as bnsBuilds:
+			with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','r+') as bnsBuilds:
 				for line in bnsBuilds:
 					if self.message.content.split()[1] in line:
 						return 'A build with this name already exists!'
 		bnsBuildsSave = self.message.content.replace('!savebnsbuild ', '')
-		with open('BNSBuilds.txt','a') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','a') as bnsBuilds2:
 			bnsBuilds2.write(str(self.message.author.id) + ' ' + bnsBuildsSave + '\n')
 			return 'build "'+self.message.content.split()[2]+'" saved! Use your command "'+self.message.content.split()[1]+'" to use it!'
 
@@ -117,7 +117,7 @@ class bladeandsoul:
 			return 'Can only edit a link with exactly 3 arguments'
 		saveL = ''
 		dnBuildsSave = self.message.content.replace('!editbnsbuild ', '')
-		with open('BNSBuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] in line:
 					if str(self.message.author.id) not in line:
@@ -126,13 +126,13 @@ class bladeandsoul:
 						saveL = line.rsplit(' ', 1)[0] + ' ' + self.message.content.split()[-1]
 		saveL += '\n'
 		newLines = []
-		with open('BNSBuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] not in line:
 					newLines.append(line)
 				else:
 					newLines.append(saveL)
-		with open('BNSBuilds.txt','w') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','w') as bnsBuilds2:
 			for line in newLines:
 				bnsBuilds2.write(line)
 		return 'build "'+self.message.content.split()[2]+'" has been edited! Use your command "'+self.message.content.split()[1]+'" to use it!'
@@ -145,17 +145,17 @@ class bladeandsoul:
 		elif len(str(self.message.content).split()) !=2:
 			return 'Can only delete a link with exactly 2 arguments'
 		dnBuildsSave = self.message.content.replace('!deletebnsbuild ', '')
-		with open('BNSBuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] in line:
 					if str(self.message.author.id) not in line:
 						return 'This is not your build so you cannot delete it.'
 		newLines = []
-		with open('BNSBuilds.txt','r') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','r') as bnsBuilds2:
 			for line in bnsBuilds2:
 				if self.message.content.split()[1] not in line:
 					newLines.append(line)
-		with open('BNSBuilds.txt','w') as bnsBuilds2:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt','w') as bnsBuilds2:
 			for line in newLines:
 				bnsBuilds2.write(line)
 		return 'Your build ' + self.message.content.split()[-1] + ' has been deleted.'
@@ -163,7 +163,7 @@ class bladeandsoul:
 
 
 	def prefixbns(self): # for the !! prefix
-		with open('BNSBuilds.txt') as readBuilds:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if self.message.content.split()[0] == line.split()[1]:
 					return line.split()[-1]
@@ -177,7 +177,7 @@ class bladeandsoul:
 	def mybns(self):
 		numbercount = 1
 		returnbox = []
-		with open('BNSBuilds.txt') as readBuilds:
+		with open('C:/DISCORD BOT/BladeAndSoul/BNSbuilds.txt') as readBuilds:
 			for line in readBuilds:
 				if str(self.message.author.id) in line:
 					returnbox.append(str(numbercount)+': '+line.replace(str(self.message.author.id)+ ' ', ''))
@@ -190,3 +190,31 @@ class bladeandsoul:
 	async def mybnsbuilds(self):
 		for line in self.mybns():
 			await self.bot.send_message(self.message.channel, line)
+
+	async def bnsmarket(self):#whenever i get back from school tomorrow make it so it searches instead of exact
+		if len(self.message.content.split()) == 1:
+			await self.bot.send_message(self.message.channel, "In order to use the BNS market search function, type in whatever item after you type `!bnsmarket` so i can search through <http://www.bnsmarketplace.com/search> for it. Currently i only look for the item exactly as typed, will be upgraded later!")
+			return
+		m = self.message.content.lower().replace('!bnsmarket ', '').replace(' ', '_')
+		r = requests.get('http://www.bnsmarketplace.com/item/{}'.format(m))
+		from bs4 import BeautifulSoup
+		soup = BeautifulSoup(r.text, 'html.parser')
+		err = soup.find_all(attrs={"id":"textResult"})[0].string
+		try:
+			if len(err) > 0:
+				await self.bot.send_message(self.message.channel, "Sorry, I could not find that item!")
+				return
+		except:
+			pass
+		NAg = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAGold"})[0].string
+		NAs = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNASilver"})[0].string
+		NAc = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNACopper"})[0].string
+		NAu = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAUpdated"})[0].string
+
+		EUg = soup.find_all(attrs={"id":"EUPanel"})[0].find_all(attrs={"id":"priceEUGold"})[0].string
+		EUs = soup.find_all(attrs={"id":"EUPanel"})[0].find_all(attrs={"id":"priceEUSilver"})[0].string
+		EUc = soup.find_all(attrs={"id":"EUPanel"})[0].find_all(attrs={"id":"priceEUCopper"})[0].string
+		EUu = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAUpdated"})[0].string
+
+		await self.bot.send_message(self.message.channel, "**__NA:__**\n<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}** `{}`\n**__EU:__**\n<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}** `{}`".format(NAg,NAs,NAc,NAu,EUg,EUs,EUc,EUu))
+
