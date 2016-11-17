@@ -138,6 +138,8 @@ async def on_message(message):
 	bns = bladeandsoul(client, message)
 	if message.content.startswith('!bnstree'):
 		await client.send_message(message.channel, bns.bnstree())
+	elif message.content.startswith('!bnsmarket'):
+		await bns.bnsmarket()
 	elif message.content.lower().startswith('!bns') and message.channel.id != '106293726271246336 88422130479276032 124934505810100224 146298657765851137 144803652635328512':
 		await client.send_message(message.channel, bns.bnssearch())
 	elif message.content.startswith('!savebnsbuild'):
@@ -151,8 +153,7 @@ async def on_message(message):
 	elif message.content.startswith('!!'):
 		await bns.prefixbnscommands()
 
-	#games
-	if message.content.startswith('!donkayme'):
+	if message.content.startswith('!donkayme'):#these are random ass test commands
 		await client.add_reaction(message, "🇩")
 		await client.add_reaction(message, "🇴")
 		await client.add_reaction(message, "🇳")
@@ -171,7 +172,7 @@ async def on_message(message):
 			r = random.randint(0, len(n)-1)
 			await client.add_reaction(message, n[r])
 
-
+	#games
 	g = games(client, message)
 	if message.content in unicodeResponses:
 		await client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
