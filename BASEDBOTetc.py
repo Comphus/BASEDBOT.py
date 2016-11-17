@@ -6,11 +6,11 @@ import discord
 import asyncio
 import codecs
 
-with open("malinfo.json") as j:
+with open("C:/DISCORD BOT/Etc/malinfo.json") as j:
 	malinfo = json.load(j)
-with open("MainResponses.json") as j:
+with open("C:/DISCORD BOT/DiscordStuff/MainResponses.json") as j:
 	MainResponses = json.load(j)
-with open('bnsemotes.txt') as inputF:
+with open('C:/DISCORD BOT/BladeAndSoul/bnsemotes.txt') as inputF:
 	bnsEmotes = inputF.read().splitlines()
 
 unicodeResponses = {'/lenny':'( ͡° ͜ʖ ͡°)',
@@ -47,8 +47,9 @@ class botetc:
 		if self.message.content.lower().split()[0] == '!mal' and len(self.message.content.split()) == 1:
 			return 'https://myanimelist.net/'
 		import xml.etree.ElementTree as ET
-		anime = self.message.content.lower()[5:]
-		r = requests.get('http://myanimelist.net/api/anime/search.xml?q=' + anime, auth=(malinfo['maluser'], malinfo['malpassword']))
+		anime = self.message.content.lower()[5:].replace(' ', '%20')
+		session = requests.Session()
+		r = requests.get('https://myanimelist.net/api/anime/search.xml?q=' + anime, auth=(malinfo['User Name'], malinfo['Password']))
 		if r.status_code == 200:
 			resp = r.text
 			aUrl = 'http://myanimelist.net/anime/' + re.search("id>(\d+)</i", resp).group(1)
@@ -135,16 +136,16 @@ class botetc:
 			await self.bot.send_message(self.message.author, "I gave you the {} color!".format(requestedcolor))
 
 	async def colors(self):
-		await self.bot.send_file(self.message.author, 'colorlist.png')
+		await self.bot.send_file(self.message.author, 'C:/DISCORD BOT/Etc/colorlist.png')
 		return
 	
 	async def zealemotes(self):
 		for i in self.message.content.lower().split():
 			if i.startswith('!') and i.replace('!','') in bnsEmotes:
-				await self.bot.send_file(self.message.channel, 'C:/DISCORD BOT/bns_emotes/'+i.replace('!','')+'.png')
+				await self.bot.send_file(self.message.channel, 'C:/DISCORD BOT/BladeAndSoul/bns_emotes/'+i.replace('!','')+'.png')
 				return
 	async def deleteian(self):
-		with codecs.open('daddy.txt','r',"utf-8") as f:
+		with codecs.open('C:/DISCORD BOT/Etc/daddy.txt','r',"utf-8") as f:
 			for i in f:
 				await self.bot.send_message(self.message.channel, i)
 				await asyncio.sleep(2)
@@ -173,16 +174,16 @@ class botetc:
 		skeleR = random.randint(0,39)
 		if skeleR <=30:
 			await self.bot.send_message(self.message.channel, self.message.author.mention + ' YOU\'VE BEEN SPOOKED!')
-			await self.bot.send_file(self.message.channel, 'skele'+str(skeleR)+'.jpg')
+			await self.bot.send_file(self.message.channel, 'C:/DISCORD BOT/Etc/spook_me/skele'+str(skeleR)+'.jpg')
 		elif skeleR <=38:
 			await self.bot.send_message(self.message.channel, self.message.author.mention + ' YOU\'VE BEEN SUPER SPOOKED!')
-			await self.bot.send_file(self.message.channel, 'skele'+str(skeleR)+'.jpg')
+			await self.bot.send_file(self.message.channel, 'C:/DISCORD BOT/Etc/spook_me/skele'+str(skeleR)+'.jpg')
 		else:
 			await self.bot.send_message(self.message.channel, 'YOU\'VE BEEN SPOOKED TO DEATH\nhttps://www.youtube.com/watch?v=O8XfV8aPAyQ')
 
 	async def lightproc(self):
 		await self.bot.send_message(self.message.channel, 'Buckle up!')
-		await self.bot.send_file(self.message.channel, 'Comphus.jpg')
+		await self.bot.send_file(self.message.channel, 'C:/DISCORD BOT/Etc/Comphus.jpg')
 
 	async def mainprefixcommands(self):
 		if self.message.content.lower().split()[0] in MainResponses['all!commands']:
@@ -194,8 +195,5 @@ class botetc:
 				await self.bot.send_message(self.message.author, MainResponses['all!commands']['!dncdcommands'])
 			else:
 				await self.bot.send_message(self.message.channel, MainResponses['all!commands'][self.message.content.lower().split()[0]])
-		if any(reg.lower() in self.message.content.lower() for reg in MainResponses["regions"]):
+		if self.message.channel.is_private == False and any(reg.lower() in self.message.content.lower() for reg in MainResponses["regions"]):
 			await self.regions()
-	async def cats(self):
-		rcats = random.choice(os.listdir("C:/DISCORD BOT/cats"))
-		await self.bot.send_file(self.message.channel, 'C:/DISCORD BOT/cats/'+rcats)
