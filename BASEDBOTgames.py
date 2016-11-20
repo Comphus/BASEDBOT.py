@@ -5,21 +5,19 @@ import time
 import random
 import json
 
-with open("MainResponses.json") as j:
+with open("C:/DISCORD BOT/DiscordStuff/MainResponses.json") as j:
 	MainResponses = json.load(j)
-with open("triviacontent.json") as j:
+with open("C:/DISCORD BOT/Games/triviacontent.json") as j:
 	QuizResponses = json.load(j)
 
-# all types of functions are here
 class games:
 	def __init__(self, bot, message):
 		self.bot = bot
 		self.message = message
 
-
 	def dueling(self, msg):
 		duelingInfo = {}#from this line to the end of the 'with open'
-		with open('duel.txt') as f:
+		with open('C:/DISCORD BOT/Games/duel.txt') as f:
 			a = []
 			for i in f:
 				a.append(str(i).replace('\n', ''))
@@ -72,8 +70,7 @@ class games:
 				if crits == 0:
 					z.append('This attack is a critical hit!\n')
 				z.append('_{} has {} HP left, and {} has {} HP left_ \n\n'.format(n[0],people[n[0]][0],n[1],people[n[1]][0]))
-
-			
+	
 			#applying the status stuns
 			rStun = random.randint(0,142)
 			if people[n[p1]][1] != 0:
@@ -89,9 +86,6 @@ class games:
 					people[n[p2]][1] = 0
 					status = 0
 					z.append("{} broke free and is able to move! {} becomes immune to CC for 1 turn!\n\n".format(n[p2],n[p2]))
-			#print()
-			#print(people[n[p1]][1])
-			#print(people[n[p2]][1])
 			if status > 0:
 				people[n[p2]][1] += abs(status)
 			elif status < 0:
@@ -134,12 +128,14 @@ class games:
 		return [z,x,endZ]
 
 	async def duel(self):
+		if len(self.message.mentions) != 2:
+			await self.bot.send_message(self.message.channel, 'Must have two distinct mentions to duel!')
+			return
 		results = self.dueling([self.message.mentions[0],self.message.mentions[1]])
 		await self.bot.send_message(self.message.channel, results[1])
 		for i in range(len(results[0])):
-			dDelay = random.randint(3,5)
 			await self.bot.send_message(self.message.channel, results[0][i])
-			await asyncio.sleep(dDelay)
+			await asyncio.sleep(3)
 		await self.bot.send_message(self.message.channel, results[2])
 
 	async def playrps(self, msg):
@@ -207,35 +203,42 @@ class games:
 		thekey = ''
 		p1 = []
 		p2 = []
-		with open("connect4.json") as j:
+		with open("C:/DISCORD BOT/Games/connect4.json") as j:
 			c4 = json.load(j)
 		if msg.author.id in str(c4.keys()) and msg.content.lower().split()[-1] == 'done':
 			for i in c4:
 				if msg.author.id in i:
 					del c4[i]
-					with open('connect4.json', 'w') as f:
+					with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 						json.dump(c4, f, indent = 4)
 					return 'You have finished your game!'
-		if msg.author.id in str(c4.keys()) and type(int(msg.content.split()[-1])) == type(5) and int(msg.content.split()[-1]) > 0 and int(msg.content.split()[-1]) < 8:
+		if msg.author.id in str(c4.keys()) and msg.content.split()[-1].isdigit() and int(msg.content.split()[-1]) > 0 and int(msg.content.split()[-1]) < 8:
 			for i in c4:
 				if msg.author.id in i.split()[0]:
-					p1 = [i,int(msg.content.split()[-1])-1]
+					if c4[i]['turn'] == msg.author.id:
+						return 'It is not your turn yet.'
+					p1 = [i,int(msg.content.split()[-1])-1,msg.author.id]
 					thekey = i
 					break
 				if msg.author.id in i.split()[-1]:
-					p2 = [i,int(msg.content.split()[-1])-1]
+					if c4[i]['turn'] == msg.author.id:
+						return 'It is not your turn yet.'
+					p2 = [i,int(msg.content.split()[-1])-1,msg.author.id]
 					thekey = i
 					break
+		elif msg.author.id in str(c4.keys()) and (msg.content.split()[-1].isdigit() == False or (int(msg.content.split()[-1]) > 0 and int(msg.content.split()[-1]) < 8) == False):
+			return 'You need to input a number from 1-7'
 		if len(p1) > 1:
+			c4[p1[0]]['turn'] = p1[2]
 			inc = 0
 			prevs = {}
 			for i in range(6):
 				i = str(i)
 				prevs[inc] = i
-				if c4[p1[0]][i][p1[1]] == ":white_circle: " and inc < len(c4[p1[0]])-1:
+				if c4[p1[0]][i][p1[1]] == ":white_circle: " and inc < 5:
 					inc += 1
 					continue
-				elif c4[p1[0]][i][p1[1]] == ":white_circle: " and inc == len(c4[p1[0]])-1:
+				elif c4[p1[0]][i][p1[1]] == ":white_circle: " and inc == 5:
 					c4[p1[0]][i][p1[1]] = ":red_circle: "
 					continue
 				elif inc >= 0 and c4[p1[0]][i][p1[1]] != ":white_circle: ":
@@ -245,16 +248,62 @@ class games:
 							break
 					except:
 						return 'You cant put your chip there!'
+			#winner check after p1 move
+			for y in range(6):
+				for x in range(7):
+					if c4[p1[0]][str(y)][x] == ":red_circle: ":
+						print('hello2')
+						#horizontal check
+						if 0 <= y <= 5 and 0 <= x+3 <= 6:
+							print('h1')
+							if c4[p1[0]][str(y)][x+1] == ":red_circle: " and c4[p1[0]][str(y)][x+2] == ":red_circle: " and c4[p1[0]][str(y)][x+3] == ":red_circle: ":
+								print('h2')
+								del c4[p1[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going horizontally!\nThe game is now over!'.format(p1[2])
+						#vertical check
+						if 0 <= y+3 <= 5 and 0 <= x <= 6:
+							print('v1')
+							if c4[p1[0]][str(y+1)][x] == ":red_circle: " and c4[p1[0]][str(y+2)][x] == ":red_circle: " and c4[p1[0]][str(y+3)][x] == ":red_circle: ":
+								print('v2')
+								del c4[p1[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going vertically!\nThe game is now over!'.format(p1[2])
+						#north east check
+						if 0 <= y+3 <= 5 and 0 <= x+3 <= 6:
+							print('ne1')
+							if c4[p1[0]][str(y+1)][x+1] == ":red_circle: " and c4[p1[0]][str(y+2)][x+2] == ":red_circle: " and c4[p1[0]][str(y+3)][x+3] == ":red_circle: ":
+								print('ne2')
+								del c4[p1[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going across!\nThe game is now over!'.format(p1[2])
+						#south east check
+						if 0 <= y-3 <= 5 and 0 <= x+3 <= 6:
+							print('se1')
+							print(c4[p1[0]][str(y-1)][x+1] == ":red_circle: ")
+							print(c4[p1[0]][str(y-2)][x+2] == ":red_circle: ")
+							print(c4[p1[0]][str(y-3)][x+3] == ":red_circle: ")
+							if c4[p1[0]][str(y-1)][x+1] == ":red_circle: " and c4[p1[0]][str(y-2)][x+2] == ":red_circle: " and c4[p1[0]][str(y-3)][x+3] == ":red_circle: ":
+								print('se2')
+								del c4[p1[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going across!\nThe game is now over!'.format(p1[2])
+
 		if len(p2) > 1:
+			c4[p2[0]]['turn'] = p2[2]
 			inc = 0
 			prevs = {}
 			for i in range(6):
 				i = str(i)
 				prevs[inc] = i
-				if c4[p2[0]][i][p2[1]] == ":white_circle: " and inc < len(c4[p2[0]])-1:
+				if c4[p2[0]][i][p2[1]] == ":white_circle: " and inc < 5:
 					inc += 1
 					continue
-				elif c4[p2[0]][i][p2[1]] == ":white_circle: " and inc == len(c4[p2[0]])-1:
+				elif c4[p2[0]][i][p2[1]] == ":white_circle: " and inc == 5:
 					c4[p2[0]][i][p2[1]] = ":large_blue_circle: "
 					continue
 				elif inc >= 0 and c4[p2[0]][i][p2[1]] != ":white_circle: ":
@@ -264,16 +313,67 @@ class games:
 							break
 					except:
 						return 'You cant put your chip there!'
+			#winner check after p2 move
+			for y in range(6):
+				for x in range(7):
+					if c4[p2[0]][str(y)][x] == ":large_blue_circle: ":
+						print('hello1')
+						#horizontal check
+						if 0 <= y <= 5 and 0 <= x+3 <= 6:
+							print('h1')
+							if c4[p2[0]][str(y)][x+1] == ":large_blue_circle: " and c4[p2[0]][str(y)][x+2] == ":large_blue_circle: " and c4[p2[0]][str(y)][x+3] == ":large_blue_circle: ":
+								print('h2')
+								del c4[p2[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going horizontally!\nThe game is now over!'.format(p2[2])
+						#vertical check
+						if 0 <= y+3 <= 5 and 0 <= x <= 6:
+							print('v1')
+							if c4[p2[0]][str(y+1)][x] == ":large_blue_circle: " and c4[p2[0]][str(y+2)][x] == ":large_blue_circle: " and c4[p2[0]][str(y+3)][x] == ":large_blue_circle: ":
+								print('v2')
+								del c4[p2[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going vertically!\nThe game is now over!'.format(p2[2])
+						#north east check
+						if 0 <= y-3 <= 5 and 0>= x+3 <= 6:
+							print('ne1')
+							if c4[p2[0]][str(y-1)][x+1] == ":large_blue_circle: " and c4[p2[0]][str(y-2)][x+2] == ":large_blue_circle: " and c4[p2[0]][str(y-3)][x+3] == ":large_blue_circle: ":
+								print('ne2')
+								del c4[p2[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going across!\nThe game is now over!'.format(p2[2])
+						#south east check
+						if 0 <= y+3 <= 5 and 0 <= x+3 <= 6:
+							print('se1')
+							print(c4[p2[0]][str(y+1)][x+1] == ":large_blue_circle: ")
+							print(c4[p2[0]][str(y+2)][x+2] == ":large_blue_circle: ")
+							print(c4[p2[0]][str(y+3)][x+3] == ":large_blue_circle: ")
+							if c4[p2[0]][str(y+1)][x+1] == ":large_blue_circle: " and c4[p2[0]][str(y+2)][x+2] == ":large_blue_circle: " and c4[p2[0]][str(y+3)][x+3] == ":large_blue_circle: ":
+								print('se2')
+								del c4[p2[0]]
+								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+									json.dump(c4, f, indent = 4)
+								return 'Congratulations! <@{}> has won with 4 going across!\nThe game is now over!'.format(p2[2])
+
 		if len(p1) > 1 or len(p2) > 1:
 			c4out = '**<@{}> VS <@{}>**\n'.format(thekey.split()[0],thekey.split()[-1])
 			for i in range(6):
 				i = str(i)
-				for j in range(len(c4[thekey][i])):
+				for j in range(8):
 					c4out += c4[thekey][i][j]
 			c4out += '-----------------------------------\n   **1**      **2**      **3**     **4**      **5**      **6**      **7**'
-			with open('connect4.json', 'w') as f:
+			nm = discord.utils.get(self.message.server.members, id = c4[thekey]['turn'])
+			if nm.id == thekey.split()[0]:
+				c4out += '\n**CURRENT TURN:** {}'.format(discord.utils.get(self.message.server.members, id = thekey.split()[-1]).name)
+			if nm.id == thekey.split()[-1]:
+				c4out += '\n**CURRENT TURN:** {}'.format(discord.utils.get(self.message.server.members, id = thekey.split()[0]).name)
+			with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 				json.dump(c4, f, indent = 4)
 			return c4out
+
 		if len(msg.mentions) != 2:
 			return 'You need to mention two people'
 		print(str(c4.keys()))
@@ -283,24 +383,47 @@ class games:
 			c4[p] = {}
 			for i in range(6):
 				c4[p][i] = [':white_circle: ',':white_circle: ',':white_circle: ',':white_circle: ',':white_circle: ',':white_circle: ',':white_circle: ','\n']
-			for i in c4[p]:
-				for j in range(len(c4[p][i])):
+			for i in range(6):
+				for j in range(8):
 					c4out += c4[p][i][j]
 			c4out += '-----------------------------------\n   **1**      **2**      **3**     **4**      **5**      **6**      **7**'
 			print(c4)
-			with open('connect4.json', 'w') as f:
+			c4[p]['turn'] = 'None'
+			#c4[p]['message'] = [msg.channel.id, msg.id]
+			with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 				json.dump(c4, f, indent = 4)
 
 			return c4out
 
 	async def c4(self):
 		c4 = {}
-		with open("connect4.json") as j:
+		with open("C:/DISCORD BOT/Games/connect4.json") as j:
 			c4 = json.load(j)
-		if self.message.author.id in c4.keys():
-			pass
 		results = self.connect4(self.message)
-		await self.bot.send_message(self.message.channel, results)
+		if self.message.author.id not in str(c4.keys()):
+			ms = await self.bot.send_message(self.message.channel, results)
+			with open("C:/DISCORD BOT/Games/connect4.json") as j:
+				c4 = json.load(j)
+			for i in c4:
+				if self.message.author.id in i:
+					c4[i]['message'] = [ms.channel.id, ms.id]
+			with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
+				json.dump(c4, f, indent = 4)
+			return
+		for i in c4:
+			if self.message.author.id in i:
+				if '-----------------------------------\n' in results:
+					ch = await self.bot.get_message(self.bot.get_channel(c4[i]['message'][0]), c4[i]['message'][1])
+					await self.bot.edit_message(ch, results)
+					await self.bot.delete_message(self.message)
+				elif 'won' in results:
+					await self.bot.send_message(self.message.channel, results)
+					await self.bot.delete_message(self.message)
+				else:
+					m = await self.bot.send_message(self.message.channel, results)
+					await asyncio.sleep(10)
+					await self.bot.delete_message(self.message)
+					await self.bot.delete_message(m)
 
 	async def dntrivia(self):
 		TriviaQuestions = MainResponses['Trivia']
@@ -321,9 +444,6 @@ class games:
 			if guess and answer in guess.content.lower():
 				await self.bot.send_message(self.message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
-
-
-
 
 	async def shoots(self):
 		shooting = ['(⌐■_■)--︻╦╤─ -    ','(⌐■_■)--︻╦╤─  -   ','(⌐■_■)--︻╦╤─   -  ','(⌐■_■)--︻╦╤─    - ','(⌐■_■)--︻╦╤─     -']
