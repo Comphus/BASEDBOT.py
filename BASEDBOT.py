@@ -105,13 +105,13 @@ async def on_message(message):
 		await dn.roleMention('viewer')
 	elif message.content.lower().startswith('!skillbuilds') or message.content.lower().startswith('!krskillbuilds'):
 		await client.send_message(message.channel, dn.skillbuilds())
-	elif message.content.startswith('!savednbuild'):
+	elif message.content.startswith(('!savednbuild','!savebuild')):
 		await client.send_message(message.channel, dn.savednbuild())
-	elif message.content.startswith('!editdnbuild'):
+	elif message.content.startswith(('!editdnbuild','!editbuild')):
 		await client.send_message(message.channel, dn.editdnbuild())
-	elif message.content.startswith('!deletednbuild'):
+	elif message.content.startswith(('!deletednbuild','!deletebuild')):
 		await client.send_message(message.channel, dn.deletednbuild())
-	elif message.content.startswith('!mydnbuilds'):
+	elif message.content.startswith(('!mydnbuilds','!mybuilds')):
 		await dn.mydnbuilds()
 	elif message.content.startswith('$') and len(message.content.split()) == 1:
 		await dn.customdncommands()
