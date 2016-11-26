@@ -3,13 +3,15 @@ import asyncio
 import json
 import datetime
 import random
+import importlib
+import sys
 
-from BASEDBOTgames import *
-from BASEDBOTbns import *
-from BASEDBOTow import *
-from BASEDBOTdn import *
-from BASEDBOTetc import *
-from BASEDBOTmusic import *
+import BASEDBOTgames
+import BASEDBOTbns
+import BASEDBOTow
+import BASEDBOTdn
+import BASEDBOTetc
+import BASEDBOTmusic
 import BASEDBOTdiscord
 client = discord.Client()
 
@@ -28,7 +30,7 @@ async def on_member_update(before, after):
 				if i.name == 'Streamer':
 					try:
 						if after.game.type == 1:
-							strm = streamer(client, after).DNstream()
+							strm = BASEDBOTdn.streamer(client, after).DNstream()
 							await strm
 					except:
 						pass
@@ -83,10 +85,10 @@ async def on_message(message):
 
 	#music bot
 	if message.content.startswith("!yt"):
-		await musicbot(client).playmusic(message, message.server.id)
+		await BASEDBOTmusic.musicbot(client).playmusic(message, message.server.id)
 
 	#dn commands
-	dn = dragonnest(client, message)
+	dn = BASEDBOTdn.dragonnest(client, message)
 	if message.content.lower().startswith('!pug') and message.channel.id != '106293726271246336' and message.channel.server.id == '106293726271246336':
 		await dn.onoffrole('pug')
 	elif message.content.lower().startswith('!trade') and message.channel.id != '106293726271246336':
@@ -117,13 +119,13 @@ async def on_message(message):
 		await dn.customdncommands()
 	elif message.content.lower().startswith('!enhance') and message.channel.id != '106293726271246336':
 		await dn.enhancement()
-	elif message.content.lower().replace(' ', '') == '!sa':
+	elif message.content.lower().startswith('!sa'):
 		await dn.SA()
 	elif message.channel.id == '107718615452618752': # skill-builds channel auto skill build distributor
 		await dn.autobuilds()
 
 	#overwatch commands
-	ow = overwatch(client, message)
+	ow = BASEDBOTow.overwatch(client, message)
 	if len(message.content.split()) > 1 and message.content.lower().split()[0] == '!ow' and message.channel.id != '106293726271246336':
 		await client.send_message(message.channel, ow.owcheck(message.content[4:]))
 		return
@@ -135,13 +137,14 @@ async def on_message(message):
 		await ow.points(message.server.id)
 
 	#BNS commands
-	bns = bladeandsoul(client, message)
+	bns = BASEDBOTbns.bladeandsoul(client, message)
 	if message.content.startswith('!bnstree'):
 		await client.send_message(message.channel, bns.bnstree())
 	elif message.content.startswith('!bnsmarket'):
 		await bns.bnsmarket()
+		return
 	elif message.content.lower().startswith('!bns') and message.channel.id != '106293726271246336 88422130479276032 124934505810100224 146298657765851137 144803652635328512':
-		await client.send_message(message.channel, bns.bnssearch())
+		await bns.bnssearch()
 	elif message.content.startswith('!savebnsbuild'):
 		await client.send_message(message.channel, bns.savebnsbuild())
 	elif message.content.startswith('!editbnsbuild'):
@@ -150,6 +153,8 @@ async def on_message(message):
 		await client.send_message(message.channel, bns.deletebnsbuild())
 	elif message.content.startswith('!mybnsbuilds'):
 		await bns.mybnsbuilds()
+	elif message.content.lower().startswith('!mspguide'):
+		await client.send_message(message.channel, 'https://drive.google.com/file/d/0Bx5A-bjrg1p1aVlJZElJV3JoWk0/view')
 	elif message.content.startswith('!!'):
 		await bns.prefixbnscommands()
 
@@ -173,9 +178,9 @@ async def on_message(message):
 			await client.add_reaction(message, n[r])
 
 	#games
-	g = games(client, message)
-	if message.content in unicodeResponses:
-		await client.send_message(message.channel, unicodeResponses[message.content.lower().split()[0]])
+	g = BASEDBOTgames.games(client, message)
+	if message.content in BASEDBOTetc.unicodeResponses:
+		await client.send_message(message.channel, BASEDBOTetc.unicodeResponses[message.content.lower().split()[0]])
 	elif message.content.startswith('!c4'):
 		await g.c4()
 	elif message.content.startswith('!duel') and str(message.channel.id) not in '91518345953689600 106293726271246336':    
@@ -188,7 +193,7 @@ async def on_message(message):
 		await g.dntrivia()
 
 	#other commands
-	etc = botetc(client, message)
+	etc = BASEDBOTetc.botetc(client, message)
 	if message.content.startswith('!'):
 		await etc.mainprefixcommands()
 	if '!' in message.content and message.channel.is_private == False and message.server.id not in '119222314964353025':
@@ -198,7 +203,7 @@ async def on_message(message):
 	elif message.content.startswith('!define') and message.channel.id != '106293726271246336':
 		await client.send_message(message.channel, etc.defines())
 	elif message.content.lower().startswith('!mal') and message.channel.id not in '106293726271246336':
-		await client.send_message(message.channel, etc.mal())
+		await etc.mal()
 	elif message.content.startswith('!checktwitch'):
 		await client.send_message(message.channel, etc.checktwitch())
 	elif message.content.startswith('!spookme'):
@@ -215,7 +220,14 @@ async def on_message(message):
 		await etc.colors()
 	elif message.content.lower().startswith('!color') and message.channel.is_private == False and message.server.id == '106293726271246336':
 		await etc.color()
-	
+	if message.content.startswith('!msg') and message.author.id == '90886475373109248':
+		await client.send_message(client.get_server(message.content.split()[1]).default_channel, message.content.replace(message.content.split()[0], '').replace(message.content.split()[1], ''))
+	if message.content.startswith('!reload') and message.author.id == '90886475373109248':
+		try:
+			importlib.reload(sys.modules[message.content.split()[1]])
+			await client.send_message(message.channel, 'module {} reloaded'.format(message.content.split()[1]))
+		except Exception as e:
+			await client.send_message(message.channel, 'reloading failed, error is:```{}```'.format(e))
 
 @client.async_event
 def on_ready():
@@ -224,7 +236,7 @@ def on_ready():
 	print(client.user.id)
 	print('------')
 	yield from client.change_presence(game=discord.Game(name='you like a fiddle'))
-	BASEDBOTdiscord.upT = datetime.now()
+	BASEDBOTdiscord.upT = datetime.datetime.now()
 
 async def main_task():
 	await client.login(dLogin['username'])
