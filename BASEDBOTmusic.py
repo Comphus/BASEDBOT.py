@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 import asyncio
 
 player = {}
@@ -13,6 +14,70 @@ class musicbot:
 	def __init__(self, bot):
 		self.bot = bot
 		self.musicControls = ["next", "skip", "list", "song","pause", "resume", "help"]
+
+	async def playmusicque(self, message, queurl, sid):
+		try:
+			if player[sid] != None:
+				player[sid].stop()
+				player[sid] = await voice[sid].create_ytdl_player(queurl)
+				player[sid].start()
+				musicQue[sid].pop(0)
+				await self.bot.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player[sid].title, player[sid].views, player[sid].likes, player[sid].dislikes))
+				return
+			else:
+				player[sid] = await voice[sid].create_ytdl_player(queurl)
+				player[sid].start()
+				musicQue[sid].pop(0)
+				await self.bot.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player[sid].title, player[sid].views, player[sid].likes, player[sid].dislikes))
+				return
+		except Exception as e:
+			musicQue[sid].pop(0)
+			await self.bot.send_message(message.channel, e)
+			if len(musicQue[sid]) == 0:
+				await self.bot.send_message(message.channel, "No more songs in queue")
+				player[sid] = None
+				await voice[sid].disconnect()
+				voice[sid] = None
+				sToken = False
+			return
+
+	async def runmusic(self, message, sid, sToken, ctrC):
+		if ctrC not in self.musicControls:
+			endurl = message.content.split()[1]
+			musicQue[sid].append(endurl)
+			#the loop
+			if sToken[sid] == False:
+				sToken[sid] = True
+				print('started in '+ sid)
+				try:
+					print('server name is: '+ message.server.name)
+				except:
+					pass
+				while len(musicQue[sid]) >= 0:
+					if player[sid] == None:
+						if len(musicQue[sid]) == 1:
+							await self.playmusicque(message, musicQue[sid][0],sid)
+					await asyncio.sleep(2)
+					try:
+						if player[sid].is_done():
+							if len(musicQue[sid]) == 0:
+								await self.bot.send_message(message.channel, "No more songs in queue")
+								player[sid] = None
+								await voice[sid].disconnect()
+								voice[sid] = None
+								sToken = False
+								print('ended in '+sid)
+							elif len(musicQue[sid]) > 0:
+								await self.playmusicque(message, musicQue[sid][0], sid)
+					except:
+						pass
+					try:
+						if len(musicQue[sid]) == 0 and player[sid].is_done():
+							break
+					except:
+						pass
+					if len(musicQue[sid]) == 0 and player[sid] == None:
+						break
 
 	async def playmusic(self, message, sid):
 		if (len(message.content.split()) == 2 or 'volume' in message.content) == False:
@@ -78,74 +143,21 @@ class musicbot:
 				await self.bot.send_message(message.channel, 'that is not a number')
 			return
 		if 'list' in message.content and player[sid] != None and len(musicQue[sid]) >0:
-			returnS = ''
+			returnS = '```xl\n'
 			for i in musicQue[sid]:
 				if i not in self.musicControls:
 					returnS += (i+'\n')
-			await self.bot.send_message(message.channel, 'Current list of music in queue\n\n'+returnS)
+			returnS += '```'
+			await self.bot.send_message(message.channel, 'Current list of music in queue\n'+returnS)
 			returnS = ''
 		if 'song' in message.content and player[sid] != None and len(musicQue[sid]) >0:
 			await self.bot.send_message(message.channel, 'Current song playing: **'+ player[sid].title+'**')
-		async def runmusic(message, sid, sToken):
-			async def playmusicque(queurl):
-				try:
-					if player[sid] != None:
-						player[sid].stop()
-						player[sid] = await voice[sid].create_ytdl_player(queurl)
-						player[sid].start()
-						musicQue[sid].pop(0)
-						await self.bot.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player[sid].title, player[sid].views, player[sid].likes, player[sid].dislikes))
-						return
-					else:
-						player[sid] = await voice[sid].create_ytdl_player(queurl)
-						player[sid].start()
-						musicQue[sid].pop(0)
-						await self.bot.send_message(message.channel, '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player[sid].title, player[sid].views, player[sid].likes, player[sid].dislikes))
-						return
-				except Exception as e:
-					musicQue[sid].pop(0)
-					await self.bot.send_message(message.channel, e)
-					if len(musicQue[sid]) == 0:
-						await self.bot.send_message(message.channel, "No more songs in queue")
-						player[sid] = None
-						await voice[sid].disconnect()
-						voice[sid] = None
-						sToken = False
-					return
-			if ctrC not in self.musicControls:
-				endurl = message.content.split()[1]
-				musicQue[sid].append(endurl)
-				#the loop
-				if sToken[sid] == False:
-					sToken[sid] = True
-					print('started in '+ sid)
-					try:
-						print('server name is: '+ message.server.name)
-					except:
-						pass
-					while len(musicQue[sid]) >= 0:
-						if player[sid] == None:
-							if len(musicQue[sid]) == 1:
-								await playmusicque(musicQue[sid][0])
-						await asyncio.sleep(2)
-						try:
-							if player[sid].is_done():
-								if len(musicQue[sid]) == 0:
-									await self.bot.send_message(message.channel, "No more songs in queue")
-									player[sid] = None
-									await voice[sid].disconnect()
-									voice[sid] = None
-									sToken = False
-									print('ended in '+sid)
-								elif len(musicQue[sid]) > 0:
-									await playmusicque(musicQue[sid][0])
-						except:
-							pass
-						try:
-							if len(musicQue[sid]) == 0 and player[sid].is_done():
-								break
-						except:
-							pass
-						if len(musicQue[sid]) == 0 and player[sid] == None:
-							break
-		await runmusic(message, sid, sToken)
+
+		await self.runmusic(message, sid, sToken, ctrC)
+
+	@commands.command(pass_context=True)
+	async def yt(self, ctx):
+		await self.playmusic(ctx.message, ctx.message.server.id)
+
+def setup(bot):
+	bot.add_cog(musicbot(bot))
