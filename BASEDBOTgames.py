@@ -1,4 +1,5 @@
 import asyncio
+from discord.ext import commands
 import discord
 from math import *
 import time
@@ -11,9 +12,8 @@ with open("C:/DISCORD BOT/Games/triviacontent.json") as j:
 	QuizResponses = json.load(j)
 
 class games:
-	def __init__(self, bot, message):
+	def __init__(self, bot):
 		self.bot = bot
-		self.message = message
 
 	def dueling(self, msg):
 		duelingInfo = {}#from this line to the end of the 'with open'
@@ -127,16 +127,18 @@ class games:
 
 		return [z,x,endZ]
 
-	async def duel(self):
-		if len(self.message.mentions) != 2:
-			await self.bot.send_message(self.message.channel, 'Must have two distinct mentions to duel!')
+	@commands.command(pass_context=True)
+	async def duel(self, ctx):
+		message = ctx.message
+		if len(message.mentions) != 2:
+			await self.bot.say('Must have two distinct mentions to duel!')
 			return
-		results = self.dueling([self.message.mentions[0],self.message.mentions[1]])
-		await self.bot.send_message(self.message.channel, results[1])
+		results = self.dueling([message.mentions[0],message.mentions[1]])
+		await self.bot.say(results[1])
 		for i in range(len(results[0])):
-			await self.bot.send_message(self.message.channel, results[0][i])
+			await self.bot.say(results[0][i])
 			await asyncio.sleep(3)
-		await self.bot.send_message(self.message.channel, results[2])
+		await self.bot.say(results[2])
 
 	async def playrps(self, msg):
 		att = {0:':fist:',1:':hand_splayed:',2:':v:'}
@@ -169,18 +171,20 @@ class games:
 				w = r+win
 				return [w,1]
 
-	async def rps(self):
-		if len(self.message.mentions) != 2:
-			await self.bot.send_message(self.message.channel, "You must mention two people in order to play.")
+	@commands.command(pass_context=True)
+	async def rps(self, ctx):
+		message = ctx.message
+		if len(message.mentions) != 2:
+			await self.bot.say("You must mention two people in order to play.")
 			return
-		players = [self.message.mentions[0].mention,self.message.mentions[1].mention]
+		players = [message.mentions[0].mention,message.mentions[1].mention]
 		results = await self.playrps(players)
 		async def rpsresults(r):
-			players = [self.message.mentions[0].mention,self.message.mentions[1].mention]
+			players = [message.mentions[0].mention,message.mentions[1].mention]
 			if r[1] == 0:
-				await self.bot.send_message(self.message.channel, r[0])
-				await self.bot.send_message(self.message.channel, "It looks like you two have tied! Would you like to try again {}? Type **yes** or **no**".format(self.message.author.mention))
-				resp = await self.bot.wait_for_message(timeout = 60, author=self.message.author)
+				await self.bot.say(r[0])
+				await self.bot.say("It looks like you two have tied! Would you like to try again {}? Type **yes** or **no**".format(message.author.mention))
+				resp = await self.bot.wait_for_message(timeout = 60, author=message.author)
 				if resp is None:
 					return
 				if 'n' in resp.content.lower():
@@ -190,11 +194,11 @@ class games:
 					await rpsresults(res)
 					return
 			elif r[1] == 1:
-				await self.bot.send_message(self.message.channel, r[0])
+				await self.bot.say(r[0])
 				return
 			elif r[1] == 2:
-				await self.bot.send_file(self.message.channel, 'C:/Users/gabriel/Pictures/BnS/donkay.png')
-				await self.bot.send_message(self.message.channel, "You have been visited by the __Mystical__ **DonkaDonks**, you both _Lose_!")
+				await self.bot.upload('C:/Users/gabriel/Pictures/BnS/donkay.png')
+				await self.bot.say("You have been visited by the __Mystical__ **DonkaDonks**, you both _Lose_!")
 				return
 		await rpsresults(results)
 
@@ -338,21 +342,21 @@ class games:
 								return 'Congratulations! <@{}> has won with 4 going vertically!\nThe game is now over!'.format(p2[2])
 						#north east check
 						if 0 <= y-3 <= 5 and 0>= x+3 <= 6:
-							print('ne1')
+							#print('ne1')
 							if c4[p2[0]][str(y-1)][x+1] == ":large_blue_circle: " and c4[p2[0]][str(y-2)][x+2] == ":large_blue_circle: " and c4[p2[0]][str(y-3)][x+3] == ":large_blue_circle: ":
-								print('ne2')
+								#print('ne2')
 								del c4[p2[0]]
 								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 									json.dump(c4, f, indent = 4)
 								return 'Congratulations! <@{}> has won with 4 going across!\nThe game is now over!'.format(p2[2])
 						#south east check
 						if 0 <= y+3 <= 5 and 0 <= x+3 <= 6:
-							print('se1')
+							#print('se1')
 							print(c4[p2[0]][str(y+1)][x+1] == ":large_blue_circle: ")
 							print(c4[p2[0]][str(y+2)][x+2] == ":large_blue_circle: ")
 							print(c4[p2[0]][str(y+3)][x+3] == ":large_blue_circle: ")
 							if c4[p2[0]][str(y+1)][x+1] == ":large_blue_circle: " and c4[p2[0]][str(y+2)][x+2] == ":large_blue_circle: " and c4[p2[0]][str(y+3)][x+3] == ":large_blue_circle: ":
-								print('se2')
+								#print('se2')
 								del c4[p2[0]]
 								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 									json.dump(c4, f, indent = 4)
@@ -365,11 +369,11 @@ class games:
 				for j in range(8):
 					c4out += c4[thekey][i][j]
 			c4out += '-----------------------------------\n   **1**      **2**      **3**     **4**      **5**      **6**      **7**'
-			nm = discord.utils.get(self.message.server.members, id = c4[thekey]['turn'])
+			nm = discord.utils.get(msg.server.members, id = c4[thekey]['turn'])
 			if nm.id == thekey.split()[0]:
-				c4out += '\n**CURRENT TURN:** {}'.format(discord.utils.get(self.message.server.members, id = thekey.split()[-1]).name)
+				c4out += '\n**CURRENT TURN:** {}'.format(discord.utils.get(msg.server.members, id = thekey.split()[-1]).name)
 			if nm.id == thekey.split()[-1]:
-				c4out += '\n**CURRENT TURN:** {}'.format(discord.utils.get(self.message.server.members, id = thekey.split()[0]).name)
+				c4out += '\n**CURRENT TURN:** {}'.format(discord.utils.get(msg.server.members, id = thekey.split()[0]).name)
 			with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 				json.dump(c4, f, indent = 4)
 			return c4out
@@ -395,87 +399,95 @@ class games:
 
 			return c4out
 
-	async def c4(self):
+	@commands.command(pass_context=True)
+	async def c4(self, ctx):
+		message = ctx.message
 		c4 = {}
 		with open("C:/DISCORD BOT/Games/connect4.json") as j:
 			c4 = json.load(j)
-		results = self.connect4(self.message)
-		if self.message.author.id not in str(c4.keys()):
-			ms = await self.bot.send_message(self.message.channel, results)
+		results = self.connect4(message)
+		if message.author.id not in str(c4.keys()):
+			ms = await self.bot.say(results)
 			with open("C:/DISCORD BOT/Games/connect4.json") as j:
 				c4 = json.load(j)
 			for i in c4:
-				if self.message.author.id in i:
+				if message.author.id in i:
 					c4[i]['message'] = [ms.channel.id, ms.id]
 			with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 				json.dump(c4, f, indent = 4)
 			return
 		for i in c4:
-			if self.message.author.id in i:
+			if message.author.id in i:
 				if '-----------------------------------\n' in results:
 					ch = await self.bot.get_message(self.bot.get_channel(c4[i]['message'][0]), c4[i]['message'][1])
 					await self.bot.edit_message(ch, results)
-					await self.bot.delete_message(self.message)
+					await self.bot.delete_message(message)
 				elif 'won' in results:
-					await self.bot.send_message(self.message.channel, results)
-					await self.bot.delete_message(self.message)
+					await self.bot.say(results)
+					await self.bot.delete_message(message)
 				else:
-					m = await self.bot.send_message(self.message.channel, results)
+					m = await self.bot.say(results)
 					await asyncio.sleep(10)
-					await self.bot.delete_message(self.message)
+					await self.bot.delete_message(message)
 					await self.bot.delete_message(m)
 
-	async def dntrivia(self):
+	@commands.command(pass_context=True)
+	async def dntrivia(self, ctx):
+		message = ctx.message
 		TriviaQuestions = MainResponses['Trivia']
 		TriviaQuestion = random.choice(list(TriviaQuestions.keys()))
-		await self.bot.send_message(self.message.channel, 'You have started DN Trivia!\n')
+		await self.bot.say('You have started DN Trivia!\n')
 		await asyncio.sleep(1)
-		await self.bot.send_message(self.message.channel, 'You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
+		await self.bot.say('You will recieve a question and everyone has 15 seconds to answer it, so be quick! The question is:\n')
 		await asyncio.sleep(3)
-		await self.bot.send_message(self.message.channel, TriviaQuestion)
+		await self.bot.say(TriviaQuestion)
 		answer = MainResponses['Trivia'][TriviaQuestion]
 		end_time = time.time() + 15
 		while True:
 			time_remaining = end_time - time.time()
 			if time_remaining <= 0:
-				await self.bot.send_message(self.message.channel, 'Sorry, you took too long! The answer was '+answer)
+				await self.bot.say('Sorry, you took too long! The answer was '+answer)
 				return
 			guess = await self.bot.wait_for_message(timeout = time_remaining)
 			if guess and answer in guess.content.lower():
-				await self.bot.send_message(self.message.channel, 'Congratulations {}! You\'ve won!'.format(guess.author.mention))
+				await self.bot.say('Congratulations {}! You\'ve won!'.format(guess.author.mention))
 				return
 
-	async def shoots(self):
+	@commands.command(pass_context=True)
+	async def shoot(self, ctx):
+		message = ctx.message
 		shooting = ['(⌐■_■)--︻╦╤─ -    ','(⌐■_■)--︻╦╤─  -   ','(⌐■_■)--︻╦╤─   -  ','(⌐■_■)--︻╦╤─    - ','(⌐■_■)--︻╦╤─     -']
 		backshooting = ['    - ─╦╤︻--(■_■ㄱ)','   -  ─╦╤︻--(■_■ㄱ)','  -   ─╦╤︻--(■_■ㄱ)',' -    ─╦╤︻--(■_■ㄱ)','-     ─╦╤︻--(■_■ㄱ)']
 		shootrand = random.randint(0,99)
 
-		if len(self.message.mentions) > 0:
+		if len(message.mentions) > 0:
 			if shootrand < 89:
-				shot = await self.bot.send_message(self.message.channel, '{} shoots {}{}'.format(self.message.author.mention,'(⌐■_■)--︻╦╤─-     ',self.message.mentions[0].mention))
+				shot = await self.bot.say('{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',message.mentions[0].mention))
 				for i in shooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{} shoots {}{}'.format(self.message.author.mention,i,self.message.mentions[0].mention))
+					await self.bot.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,message.mentions[0].mention))
 
 			elif shootrand < 98:
-				shot = await self.bot.send_message(self.message.channel, '{}{} the tables have turned! {}'.format(self.message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',self.message.mentions[0].mention))
+				shot = await self.bot.say('{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',message.mentions[0].mention))
 				for i in backshooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(self.message.author.mention,i,self.message.mentions[0].mention))
+					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,message.mentions[0].mention))
 			else:
-				await self.bot.send_message(self.message.channel, '{} and {} make love!'.format(self.message.author.mention,self.message.mentions[0].mention))
-		elif discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members) != None:
+				await self.bot.say('{} and {} make love!'.format(message.author.mention,message.mentions[0].mention))
+		elif discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members) != None:
 			if shootrand < 89:
-				shot = await self.bot.send_message(self.message.channel, '{} shoots {}{}'.format(self.message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
+				shot = await self.bot.say('{} shoots {}{}'.format(message.author.mention,'(⌐■_■)--︻╦╤─-     ',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 				for i in shooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{} shoots {}{}'.format(self.message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
+					await self.bot.edit_message(shot, '{} shoots {}{}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 			elif shootrand < 98:
-				shot = await self.bot.send_message(self.message.channel, '{}{} the tables have turned! {}'.format(self.message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
+				shot = await self.bot.say('{}{} the tables have turned! {}'.format(message.author.mention,'    - ─╦╤︻--(■_■ㄱ)',discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 				for i in backshooting:
 					await asyncio.sleep(0.1)
-					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(self.message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()), self.message.channel.server.members).mention))
+					await self.bot.edit_message(shot, '{}{} the tables have turned! {}'.format(message.author.mention,i,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()), message.channel.server.members).mention))
 			else:
-				await self.bot.send_message(self.message.channel, '{} and {} make love!'.format(self.message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(self.message.content.split()[1].lower()).mention, self.message.channel.server.members)))
+				await self.bot.say('{} and {} make love!'.format(message.author.mention,discord.utils.find(lambda m: m.name.lower().startswith(message.content.split()[1].lower()).mention, message.channel.server.members)))
 
 
+def setup(bot):
+	bot.add_cog(games(bot))
