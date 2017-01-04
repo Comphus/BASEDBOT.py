@@ -23,7 +23,6 @@ class musicbot:
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.musicControls = ["next", "skip", "list", "song","pause", "resume", "help"]
 
 	async def playmusicque(self, queurl, sid):
 		try:
