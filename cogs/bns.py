@@ -3,6 +3,10 @@ import discord
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from .utils import checks
+import io
+
+with open("C:/DISCORD BOT/BladeAndSoul/bnstext.txt") as j:
+	bnsurl = j.read()
 
 class bladeandsoul:
 	"""
@@ -50,7 +54,7 @@ class bladeandsoul:
 				classname = soup.find_all(attrs={"class":"signature"})[0].find_all("ul")[0].li.string
 				level = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].text.split()[1]
 				try:
-					hmlevel = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("Hongmoon Level", "**Hongmoon Level:**")
+					hmlevel = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("Hongmoon Arts Level", "**Hongmoon Arts Level:**")
 				except:
 					hmlevel = "**Dark Arts Level:** 0"
 				classicon = soup.find_all("div", class_="classThumb")[0].img['src']
@@ -107,6 +111,7 @@ class bladeandsoul:
 				embed.add_field(name="__General Info__", value="**Clan:** {}\n**Level:** {}\n{}".format(clan,level,hmlevel), inline = False)
 				embed.add_field(name="__Offensive__", value=lft)
 				embed.add_field(name="__Defensive__", value=rgt)
+				embed.set_thumbnail(url=soup.find_all("div", class_="wrapWeapon")[0].find_all("p", class_="thumb")[0].img['src'])
 				embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src'])
 				embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
 
@@ -147,52 +152,58 @@ class bladeandsoul:
 	@checks.not_lounge()
 	async def bnsmarket(self, *, item : str = None):#whenever i get back from school tomorrow make it so it searches instead of exact
 		if item is None:
-			await self.bot.say("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket` so i can search through <http://www.bnsmarketplace.com/search> for it. Currently i only look for the item exactly as typed, will be upgraded later!")
+			await self.bot.say("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket` so i can search through <http://www.bns.academy/live-marketplace/> for it.")
 			return
-		m = item.lower().replace(' ', '_')
-		async with aiohttp.get('http://www.bnsmarketplace.com/search/{}'.format(m)) as r:
-			soup = BeautifulSoup(await r.text(), 'html.parser')
-			try:
-				NAg = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAGold"})[0].string
-			except:
-				async with aiohttp.get('http://www.bnsmarketplace.com/item/{}'.format(m)) as t:
-					soups = BeautifulSoup(await t.text(), 'html.parser')
-					try:
-						err = soups.find_all(attrs={"id":"textResult"})[0].string
-						if err is None:
-							pass
-						else:
-							top5 = 'Sorry, I cant find exactly what {} is, here are the top results(up to 5) for it:```xl\n'.format(m)
-							try:
-								res = soup.find_all(attrs={"id":"main"})[0].find_all(attrs={"id":"repeaterResult_itemContainer_0"})[0].string
-							except:
-								await self.bot.say("Sorry, I couldnt find any item relating to `{}`.".format(m))
-								return
-							for i in range(5):
-								try:
-									res = soup.find_all(attrs={"id":"main"})[0].find_all(attrs={"id":"repeaterResult_textItemName_{}".format(i)})[0].string
-									top5 += '{}\n'.format(res)
-								except:
-									pass
-							top5 += '```'
-							await self.bot.say(top5)
-							return
-					except:
-						pass
-				async with aiohttp.get('http://www.bnsmarketplace.com/item/{}'.format(m)) as r:
-					soup = BeautifulSoup(await r.text(), 'html.parser')
-
-					NAg = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAGold"})[0].string
-					NAs = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNASilver"})[0].string
-					NAc = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNACopper"})[0].string
-					NAu = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAUpdated"})[0].string
-
-					EUg = soup.find_all(attrs={"id":"EUPanel"})[0].find_all(attrs={"id":"priceEUGold"})[0].string
-					EUs = soup.find_all(attrs={"id":"EUPanel"})[0].find_all(attrs={"id":"priceEUSilver"})[0].string
-					EUc = soup.find_all(attrs={"id":"EUPanel"})[0].find_all(attrs={"id":"priceEUCopper"})[0].string
-					EUu = soup.find_all(attrs={"id":"NAPanel"})[0].find_all(attrs={"id":"priceNAUpdated"})[0].string
-
-					await self.bot.say("**__NA:__**\n<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}** `{}`\n**__EU:__**\n<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}** `{}`".format(NAg,NAs,NAc,NAu,EUg,EUs,EUc,EUu))
+		NAparam = {"region": "na", "q": item}
+		url = bnsurl
+		async with aiohttp.post(url, params=NAparam) as r:
+			NA = await r.json()
+			if r.status != 200:
+				await self.bot.say("http://www.bns.academy/live-marketplace/ returned a {} error".format(r.status))
+				return
+			if "empty" in NA:
+				NAparam = {"region": "na", "q": item, "noexact": "true"}
+				async with aiohttp.post(url, params=NAparam) as rr:
+					NA = await rr.json()
+					if "empty" in NA:
+						await self.bot.say("Sorry, I couldnt find any item relating to `{}`.".format(item))
+		if "noexact" in NAparam.keys():
+			EUparam = {"region": "eu", "q": item, "noexact": "true"}
+		else:
+			EUparam = {"region": "eu", "q": item}
+		async with aiohttp.post(url, params=EUparam) as r:
+			EU = await r.json()
+		NAg, NAs, NAc, EUg, EUs, EUc = 0,0,0,0,0,0#this line doesnt need to be here, but this is just in case the api gets updated with non int numbers
+		embed = discord.Embed()
+		try:
+			iconimg = NA["icon"]#just in case there isnt an icon
+			embed.set_thumbnail(url=iconimg)
+		except:
+			pass
+		try:#incase bot doesnt have embed permissions
+			NAg = NA["gold"]
+			NAs = NA["silver"]
+			NAc = NA["copper"]
+			EUg = EU["gold"]
+			EUs = EU["silver"]
+			EUc = EU["copper"]
+			item = NA["name"]
+			embed.set_author(name="Blade & Soul", icon_url="http://i.imgur.com/a1kk9Tq.png")
+			embed.title = item
+			embed.url = "http://www.bns.academy/live-marketplace/"
+			embed.add_field(name="__NA__", value="<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}**".format(NAg,NAs,NAc), inline=False)
+			embed.add_field(name="__EU__", value="<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}**".format(EUg,EUs,EUc))
+			embed.color = 3325695
+			embed.set_footer(text="Blade & Soul Academy",icon_url="https://cdn.discordapp.com/attachments/275082872203902977/275083108473372673/6.png")
+			await self.bot.say(embed=embed)
+			return
+		except Exception as e:
+			if "400" in str(e):
+				try:#incase bot doesnt have permission to send messages
+					await self.bot.say("This bot needs `Embed` permissions in order to use this function")
+				except:
+					pass
+			pass
 
 	@commands.command()
 	async def mspguide(self):
