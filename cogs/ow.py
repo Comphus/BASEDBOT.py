@@ -15,9 +15,35 @@ class overwatch:
 	def __init__(self, bot):
 		self.bot = bot
 		
+
+	async def ranks(self, r, e):
+		print(r)
+		if r < 1500:
+			e.set_thumbnail(url="http://i.imgur.com/2T4pqKo.png")
+			e.color = 6700326
+		elif r < 2000:
+			e.set_thumbnail(url="http://i.imgur.com/93ZBbro.png")
+			e.color = 12632256
+		elif r < 2500:
+			e.set_thumbnail(url="http://i.imgur.com/smnzdD0.png")
+			e.color = 16766720
+		elif r < 3000:
+			e.set_thumbnail(url="http://i.imgur.com/DgBmFGJ.png")
+			e.color = 15066338
+		elif r < 3500:
+			e.set_thumbnail(url="http://i.imgur.com/aqoNZrp.png")
+			e.color = 9414120
+		elif r < 4000:
+			e.set_thumbnail(url="http://i.imgur.com/32IkIY9.png")
+			e.color = 16768819
+		else:
+			e.set_thumbnail(url="http://i.imgur.com/s8q2Fnp.png")
+			e.color = 16770919
+		return e
+
 	@commands.command()
 	@checks.not_lounge()
-	async def ow(self, m : str = None):
+	async def ow(self, *, m : str = None):
 		if m is None:
 			await self.bot.say("need your battletag to find your Overwatch profile.")
 			return
@@ -26,42 +52,84 @@ class overwatch:
 			return
 		else:
 			newestM = m.replace('#', '-')
-			newerM = 'https://masteroverwatch.com/profile/pc/us/'+newestM
+			newerM = 'https://www.overbuff.com/players/pc/'+newestM
 			async with aiohttp.get(newerM) as r:
 				s = await r.text()
+			if True:
 				soup = BeautifulSoup(s, 'html.parser')
-				test = soup.find_all(attrs={"class":"error"})
+				test = soup.find_all(attrs={"class":"layout-error"})
 				if len(test) > 0:
 					await self.bot.say(newerM +'\nInvalid player name.(you might have to visit the site first so their database can save you)')
 					return
 				elif len(test) == 0:
-					#print(soup.find_all('body')[0].find_all(attrs={"class":"heroes-list"}))
-					heroes = soup.find_all(attrs={"class":"summary-list"})
-					bnet = soup.find_all(attrs={"class":"header-box"})[0].h1.text.split()[0]
-					plevel = soup.find_all(attrs={"class":"header-box"})[0].find_all(attrs={"class":"header-avatar"})[0].span.string
+					bnet = soup.find_all(attrs={"class":"layout-header-primary"})[0].h1.text.replace('"', "")
+					picon = soup.find_all(attrs={"class":"image-with-corner"})[0].img['src']
+					plevel = soup.find_all(attrs={"class":"corner corner-text"})[0].text
 					try:
-						rank = soup.find_all(attrs={"class":"header-stats"})[0].find_all(attrs={"class":"header-stat"})[0].text.splitlines()[3].split()[0]
+						rank = soup.find_all(attrs={"class":"color-stat-rating"})[0].string
 					except:
 						rank = 'No Rank'
-					#print(soup.find_all(attrs={"class":"header-stats"})[0].find_all(attrs={"class":"header-stat"})[0].text.splitlines()[3].split()[0])
-					totg = soup.find_all(attrs={"class":"header-stats"})[0].find_all(attrs={"class":"header-stat"})[2].strong.text.split()[0]
-					wrate = soup.find_all(attrs={"class":"header-stats"})[0].find_all(attrs={"class":"header-stat"})[3].strong.string.split()[0]
-					#print(heroes[0].find_all(attrs={"class":"summary-icon col-xs-5"})[0].strong.span.string)
-					#print(heroes[0].find_all(attrs={"class":"summary-stats-kda"})[0].text)
-					#print(heroes[0].find_all(attrs={"class":"summary-winrate col-xs-3"})[0].strong.text)
-					hero1 = [heroes[0].find_all(attrs={"class":"summary-icon col-xs-5"})[0].strong.span.string, heroes[0].find_all(attrs={"class":"summary-stats-kda"})[0].text, heroes[0].find_all(attrs={"class":"summary-winrate col-xs-3"})[0].strong.text, soup.find_all(attrs={"class":"card-primary-stats"})[0].find_all(attrs={"class":"stat-row stat-playtime"})[0].text]
 					try:
-						hero2 = [heroes[0].find_all(attrs={"class":"summary-icon col-xs-5"})[1].strong.span.string, heroes[0].find_all(attrs={"class":"summary-stats-kda"})[1].text, heroes[0].find_all(attrs={"class":"summary-winrate col-xs-3"})[1].strong.text, soup.find_all(attrs={"class":"card-primary-stats"})[2].find_all(attrs={"class":"stat-row stat-playtime"})[0].text]
+						skrank = soup.find_all(attrs={"rel":"tooltip"})[0].string
+					except:
+						skrank = "No Skill Rank"
+
+					if rank != "No Rank":
+						newerM = 'https://www.overbuff.com/players/pc/'+newestM+'?mode=competitive'
+						async with aiohttp.get(newerM) as r:
+							s = await r.text()
+						soup = BeautifulSoup(s, 'html.parser')
+						print("it did comp")
+
+					win = soup.find_all(attrs={"class":"color-stat-win"})[0].string
+					loss = soup.find_all(attrs={"class":"color-stat-loss"})[0].string
+					wl = "{} - {}".format(win,loss)
+					
+					heroes = soup.find_all(attrs={"class":"player-heroes"})
+					try:
+						hero1 = [heroes[0].find_all(attrs={"class":"name"})[0].a.string, 
+						heroes[0].find_all(attrs={"class":"group special"})[0].find_all(attrs={"rel":"tooltip"})[0].string, 
+						"{} - {}".format(heroes[0].find_all(attrs={"class":"color-stat-win"})[0].string,
+							heroes[0].find_all(attrs={"class":"color-stat-loss"})[0].string), 
+						heroes[0].find_all(attrs={"class":"stat padded"})[0].find_all(attrs={"class":"value"})[0].text,
+						"https://www.overbuff.com{}".format(heroes[0].find_all(attrs={"class":"image-with-corner"})[0].img['src'])]
+					except:
+						hero1 = ["None","None","None","None"]
+					try:
+						hero2 = [heroes[0].find_all(attrs={"class":"name"})[1].a.text, 
+					heroes[0].find_all(attrs={"class":"group special"})[2].find_all(attrs={"rel":"tooltip"})[0].text, 
+					"{} - {}".format(heroes[0].find_all(attrs={"class":"color-stat-win"})[1].string,
+						heroes[0].find_all(attrs={"class":"color-stat-loss"})[1].string), 
+					heroes[0].find_all(attrs={"class":"stat padded"})[3].find_all(attrs={"class":"value"})[0].text,
+					"https://www.overbuff.com{}".format(heroes[0].find_all(attrs={"class":"image-with-corner"})[1].img['src'])]
 					except:
 						hero2 = ["None","None","None","None"]
 					try:
-						hero3 = [heroes[0].find_all(attrs={"class":"summary-icon col-xs-5"})[2].strong.span.string, heroes[0].find_all(attrs={"class":"summary-stats-kda"})[2].text, heroes[0].find_all(attrs={"class":"summary-winrate col-xs-3"})[2].strong.text,soup.find_all(attrs={"class":"card-primary-stats"})[1].find_all(attrs={"class":"stat-row stat-playtime"})[0].text]
+						hero3 = [heroes[0].find_all(attrs={"class":"name"})[2].a.text, 
+					heroes[0].find_all(attrs={"class":"group special"})[4].find_all(attrs={"rel":"tooltip"})[0].text, 
+					"{} - {}".format(heroes[0].find_all(attrs={"class":"color-stat-win"})[2].string,
+						heroes[0].find_all(attrs={"class":"color-stat-loss"})[2].string), 
+					heroes[0].find_all(attrs={"class":"stat padded"})[6].find_all(attrs={"class":"value"})[0].text,
+					"https://www.overbuff.com{}".format(heroes[0].find_all(attrs={"class":"image-with-corner"})[2].img['src'])]
 					except:
 						hero3 = ["None","None","None","None"]
-					h1 = '**{}:** {}               W/L% = {}          Time Played: {}'.format(hero1[0], hero1[1], hero1[2], hero1[3])
-					h2 = '**{}:** {}               W/L% = {}          Time Played: {}'.format(hero2[0], hero2[1], hero2[2], hero3[3])
-					h3 = '**{}:** {}               W/L% = {}          Time Played: {}'.format(hero3[0], hero3[1], hero3[2], hero2[3])
-					await self.bot.say("{}\n```xl\n{}          Level: {}\nRank: {}          Win Rate: {}          Win-Loss: {}```\n**__TOP 3 HEROES__**\n{}\n{}\n{}".format(newerM,bnet,plevel,rank,wrate,totg,h1,h2,h3))
+					totalheroes = [hero1, hero2, hero3]
+					embed = discord.Embed()
+					embed.set_author(name=bnet,icon_url=picon)
+					embed.title = bnet
+					embed.url = newerM
+					embed.add_field(name="__General Info__",value="**Level:** {}\n**Rank:** {}\n**Skill Rank:** {}\n**Win/Loss:** {}".format(plevel,rank,skrank,wl), inline=False)
+					for i in totalheroes:
+						if i[0] != "None":
+							embed.add_field(name="__{}__".format(i[0]),value="**Rank:** {}\n**Win/Loss:** {}\n**Time Played:** {}".format(i[1],i[2],i[3]))
+					if rank != "No Rank":
+						embed.description = "__**COMPETITIVE STATS**__"
+						await self.ranks(int(rank), embed)
+					else:
+						embed.description = "__**QUICK PLAY STATS**__"
+						embed.set_thumbnail(url=picon)
+						embed.color = 6697881
+					await self.bot.say(embed=embed)
 					return
 
 	def tCheck(self, sid):
