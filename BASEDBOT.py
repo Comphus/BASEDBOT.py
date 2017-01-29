@@ -11,13 +11,13 @@ import sys
 bot = commands.Bot(command_prefix='!',description="I am a bot created by Comphus mainly for the Dragon Nest Community Discord server, but I have many other functions!")
 
 startup_ext = [
-	"cogs.BASEDBOTgames",
-	"cogs.BASEDBOTbns",
-	"cogs.BASEDBOTow",
-	"cogs.BASEDBOTdn",
-	"cogs.BASEDBOTetc",
-	"cogs.BASEDBOTmusic",
-	"cogs.BASEDBOTdiscord"
+	"cogs.games",
+	"cogs.bns",
+	"cogs.ow",
+	"cogs.dn",
+	"cogs.etc",
+	"cogs.music",
+	"cogs.discord"
 ]
 
 with open("C:/discordlogin.json") as j:
@@ -36,7 +36,16 @@ async def on_command_error(error, ctx):
 
 @bot.command(hidden=True)
 @checks.is_owner()
-async def reload(extension_name : str):
+async def reload(extension_name : str = None):
+	if extension_name is None:
+		for i in startup_ext:
+			try:
+				bot.unload_extension(i)
+				bot.load_extension(i)
+			except Exception as e:
+				await bot.say('{} cog reloading failed, error is:```\n{}: {}```'.format(i,type(e).__name__, e))
+		await bot.say("Extensions reloaded")
+		return
 	try:
 		bot.unload_extension(extension_name)
 		bot.load_extension(extension_name)
