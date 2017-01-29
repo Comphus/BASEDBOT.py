@@ -149,6 +149,10 @@ class dragonnest:
 		await self.bot.say("http://i.imgur.com/BAAv8F7.png")
 
 	@commands.command()
+	async def reita(self):
+		await self.bot.upload("C:/DISCORD BOT/DragonNest/reita.png")
+
+	@commands.command()
 	async def sa(self, *,skill : str = None):
 		if skill is None:
 			await self.bot.say("https://docs.google.com/spreadsheets/d/1PMrzSRCuqBxOUsSpIUnh70-_uQRIkV3fZdOvaJ0rejc/edit#gid=29")
@@ -216,20 +220,38 @@ class dragonnest:
 			embed.set_footer(text='Dragon Nest Super Armor', icon_url='http://i.imgur.com/0zURV1B.png')
 			await self.bot.say(embed=embed)
 
+	
+	async def emojihance(self, message, m):
+		await self.bot.remove_reaction(m, "🔨", message.author)
+		dotdot = [".",". .",". . ."]
+		for i in range(3):
+			await self.bot.edit_message(m, "Enhancing your LV80 L-Grade weapon **{}**".format(dotdot[i]))
+			await asyncio.sleep(.7)
+		await self.enhanceweapon(message, m)
+		rec = await self.bot.wait_for_reaction("🔨", user=message.author, timeout=60, message=m)
+		if rec is not None and rec.user != self.bot.user:
+			await self.emojihance(message, m)
+		elif rec is None:
+			self.bot.say("reaction timed out!")
+			await self.bot.remove_reaction(m, "🔨", self.bot.user)
+			return
+
+
+
 	@commands.command(pass_context=True)
-	@checks.not_lounge()
+	#@checks.not_lounge()
 	async def enhance(self, ctx):
 		message = ctx.message
 		if 'stop' in message.content.lower():
 			await self.bot.say("I have reset your enhancing progress")
-			enhancing[message.author.id] = [0, 0, 0]
+			enhancing[message.author.id] = [0, 0, 0, message]
 			return
 		if message.author.id not in enhancing:
-			enhancing[message.author.id] = [0, 0, 0]
+			enhancing[message.author.id] = [0, 0, 0, message]
 		if message.author.id in enhancing:
 			if enhancing[message.author.id][0] == 15:
 				await self.bot.say("Your weapon is a +15, you won the game. Resetting progress!")
-				enhancing[message.author.id] = [0, 0, 0]
+				enhancing[message.author.id] = [0, 0, 0, message]
 				return
 			dotdot = [". .",". . ."]
 			m = await self.bot.say("Enhancing your LV80 L-Grade weapon **.**")
@@ -237,69 +259,81 @@ class dragonnest:
 			for i in range(2):
 				await self.bot.edit_message(m, "Enhancing your LV80 L-Grade weapon **{}**".format(dotdot[i]))
 				await asyncio.sleep(.7)
-			tryagain = True
-			while tryagain:
-				a = random.randint(1, 10000)
-				b = random.randint(1, 10000)
-				c = random.randint(1, 10000)
-				d = random.randint(1, 10000)
-				if a <= self.enhancefee[enhancing[message.author.id][0]][1] and b <= self.enhancefee[enhancing[message.author.id][0]][2]:
-					continue
-				if b <= self.enhancefee[enhancing[message.author.id][0]][2] and c <= self.enhancefee[enhancing[message.author.id][0]][3]:
-					if enhancing[message.author.id][0] < 13:
-						degrade = 0
-						if enhancing[message.author.id][0] > 0:
-							degrade = random.randint(1, self.enhancefee[enhancing[message.author.id][0]][4])
+			await self.enhanceweapon(message, m)
+			await self.bot.add_reaction(m, "🔨")
+			rec = await self.bot.wait_for_reaction("🔨", user=message.author, timeout=60, message=m)
+			if rec is not None and rec.user != self.bot.user:
+				await self.emojihance(message, m)
+			elif rec is None:
+				self.bot.say("reaction timed out!")
+				await self.bot.remove_reaction(m, "🔨", self.bot.user)
+				return
+
+	async def enhanceweapon(self, message, m):
+		tryagain = True
+		while tryagain:#just a var to name what the enhance thingy does, can just write True
+			a = random.randint(1, 10000) #the succ
+			b = random.randint(1, 10000) #fail rate rate
+			c = random.randint(1, 10000) #degrade rate
+			d = random.randint(1, 10000)
+			if a <= self.enhancefee[enhancing[message.author.id][0]][1] and b <= self.enhancefee[enhancing[message.author.id][0]][2]:
+				continue
+			if b <= self.enhancefee[enhancing[message.author.id][0]][2] and c <= self.enhancefee[enhancing[message.author.id][0]][3]:
+				if enhancing[message.author.id][0] < 13:
+					degrade = 0
+					if enhancing[message.author.id][0] > 0:
+						degrade = random.randint(1, self.enhancefee[enhancing[message.author.id][0]][4])
+					enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
+					enhancing[message.author.id][0] -= degrade
+					enhancing[message.author.id][2] += 1
+					await self.bot.edit_message(m, "Enhancement __**Failed AND Decreased!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
+					tryagain = False
+					return
+				elif enhancing[message.author.id][0] >= 13:
+					if d <= self.enhancefee[enhancing[message.author.id][0]][2]:
+						enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
+						enhancing[message.author.id][0] = 0
+						enhancing[message.author.id][2] += 1
+						await self.bot.edit_message(m, "__**WEAPON BROKE!**__ Enhancement level is now 0, but gold and attempts will remain! Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
+						tryagain = False
+						return
+					elif d > self.enhancefee[enhancing[message.author.id][0]][2]:
+						degrade = random.randint(0, self.enhancefee[enhancing[message.author.id][0]][4])
 						enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
 						enhancing[message.author.id][0] -= degrade
 						enhancing[message.author.id][2] += 1
 						await self.bot.edit_message(m, "Enhancement __**Failed AND Decreased!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
 						tryagain = False
 						return
-					elif enhancing[message.author.id][0] >= 13:
-						if d <= self.enhancefee[enhancing[message.author.id][0]][2]:
-							enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
-							enhancing[message.author.id][0] = 0
-							enhancing[message.author.id][2] += 1
-							await self.bot.edit_message(m, "__**WEAPON BROKE!**__ Enhancement level is now 0, but gold and attempts will remain! Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
-							tryagain = False
-							return
-						elif d > self.enhancefee[enhancing[message.author.id][0]][2]:
-							degrade = random.randint(0, self.enhancefee[enhancing[message.author.id][0]][4])
-							enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
-							enhancing[message.author.id][0] -= degrade
-							enhancing[message.author.id][2] += 1
-							await self.bot.edit_message(m, "Enhancement __**Failed AND Decreased!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
-							tryagain = False
-							return
-				if b <= self.enhancefee[enhancing[message.author.id][0]][2]:
-					if enhancing[message.author.id][0] < 13:
+			if b <= self.enhancefee[enhancing[message.author.id][0]][2]:
+				if enhancing[message.author.id][0] < 13:
+					enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
+					enhancing[message.author.id][2] += 1
+					await self.bot.edit_message(m, "Enhancement __**Failed!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
+					tryagain = False
+					return
+				elif enhancing[message.author.id][0] >= 13:
+					if d <= self.enhancefee[enhancing[message.author.id][0]][2]:
+						enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
+						enhancing[message.author.id][0] = 0
+						enhancing[message.author.id][2] += 1
+						await self.bot.edit_message(m, "__**WEAPON BROKE!**__ Enhancement level is now 0, but gold and attempts will remain! Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
+						tryagain = False
+						return
+					elif d > self.enhancefee[enhancing[message.author.id][0]][2]:
 						enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
 						enhancing[message.author.id][2] += 1
 						await self.bot.edit_message(m, "Enhancement __**Failed!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
 						tryagain = False
 						return
-					elif enhancing[message.author.id][0] >= 13:
-						if d <= self.enhancefee[enhancing[message.author.id][0]][2]:
-							enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
-							enhancing[message.author.id][0] = 0
-							enhancing[message.author.id][2] += 1
-							await self.bot.edit_message(m, "__**WEAPON BROKE!**__ Enhancement level is now 0, but gold and attempts will remain! Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
-							tryagain = False
-							return
-						elif d > self.enhancefee[enhancing[message.author.id][0]][2]:
-							enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
-							enhancing[message.author.id][2] += 1
-							await self.bot.edit_message(m, "Enhancement __**Failed!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
-							tryagain = False
-							return
-				if a <= self.enhancefee[enhancing[message.author.id][0]][1]:
-					enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
-					enhancing[message.author.id][0] += 1
-					enhancing[message.author.id][2] += 1
-					await self.bot.edit_message(m, "Enhancement __**Successful!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
-					tryagain = False
-					return
+			if a <= self.enhancefee[enhancing[message.author.id][0]][1]:
+				enhancing[message.author.id][1] += self.enhancefee[enhancing[message.author.id][0]][0]
+				enhancing[message.author.id][0] += 1
+				enhancing[message.author.id][2] += 1
+				await self.bot.edit_message(m, "Enhancement __**Successful!**__ Your L-Grade is now **+{}**\nYou have spent a total of **{} {}** with __{}__ attempts.".format(enhancing[message.author.id][0], enhancing[message.author.id][1], '<:VipGold:248714191517646848>', enhancing[message.author.id][2]))
+				tryagain = False
+				return
+
 
 	@commands.command(aliases=['dragonegg'])
 	@checks.not_lounge()
@@ -318,7 +352,7 @@ class dragonnest:
 			await self.bot.edit_message(m,embed=embed)
 		await asyncio.sleep(2)
 		r = random.randint(0,9998)
-		if r <= 6812:
+		if r <= 6812:#these ifs are cases to see how rare of an item they get, following the KR %s
 			while True:
 				r = random.randint(0,len(MainResponses['egg'])-1)
 				if MainResponses['egg'][r][2] == 0 or MainResponses['egg'][r][2] == 4871440:
@@ -370,7 +404,7 @@ class dragonnest:
 			await self.bot.say(embed=embed)
 
 	@commands.command(pass_context=True, aliases = ['krskillbuilds'])
-	async def skillbuilds(self, ctx, build : str = None):
+	async def skillbuilds(self, ctx, *, build : str = None):
 		message = ctx.message
 		if build is None:
 			if '!skillbuilds' == message.content.lower().split()[0]:
