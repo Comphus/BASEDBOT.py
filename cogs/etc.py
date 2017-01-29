@@ -138,6 +138,9 @@ class botetc:
 				await self.bot.add_roles(message.author, discord.utils.get(message.server.roles, name = i))
 				await asyncio.sleep(1)
 				return
+	@commands.command(aliases=['Hyperlul','HYPERLUL'])
+	async def hyperlul(self):
+		await self.bot.say("<:HYPERLUL:266068816528670720>  Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn <:HYPERLUL:266068816528670720>")
 
 	@commands.command(pass_context=True, no_pm=True)
 	async def color(self, ctx):
