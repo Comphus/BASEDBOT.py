@@ -24,7 +24,7 @@ class musicbot:
 	def __init__(self, bot):
 		self.bot = bot
 
-	async def playmusicque(self, queurl, sid):
+	async def playmusicque(self, queurl, sid, message):
 		try:
 			if player[sid] != None:
 				player[sid].stop()
@@ -41,9 +41,9 @@ class musicbot:
 				return
 		except Exception as e:
 			musicQue[sid].pop(0)
-			await self.bot.say(e)
+			await self.bot.send_message(message.channel, str(e))
 			if len(musicQue[sid]) == 0:
-				await self.bot.say("No more songs in queue")
+				await self.bot.send_message(message.channel, "No more songs in queue")
 				await self.complete_stop(sid)
 			return
 
@@ -61,7 +61,7 @@ class musicbot:
 			while len(musicQue[sid]) >= 0:
 				if player[sid] == None:
 					if len(musicQue[sid]) == 1:
-						await self.playmusicque(musicQue[sid][0],sid)
+						await self.playmusicque(musicQue[sid][0],sid, message)
 				await asyncio.sleep(2)
 				try:
 					if player[sid].is_done():
@@ -70,7 +70,7 @@ class musicbot:
 							await self.complete_stop(sid)
 							print('ended in '+sid)
 						elif len(musicQue[sid]) > 0:
-							await self.playmusicque(musicQue[sid][0], sid)
+							await self.playmusicque(musicQue[sid][0], sid, message)
 				except:
 					pass
 				try:
@@ -91,7 +91,7 @@ class musicbot:
 
 		await self.runmusic(message, sid, sToken)
 
-	@commands.group(pass_context=True, invoke_without_command=False)
+	@commands.group(pass_context=True, invoke_without_command=False)#main command
 	async def yt(self, ctx):
 		if ctx.message.author.voice.voice_channel is None:
 			await self.bot.say("You are not in a voice channel, please join a voice channel in order to play music.")
@@ -114,7 +114,7 @@ class musicbot:
 		voice[sid] = None
 		sToken[sid] = False
 
-	@yt.command()
+	@yt.command()#all sub commands from here and below
 	async def help(self):
 		await self.bot.say('How to make the !yt function work, type in \'!yt \', then whatever url you want afterwards to make it play its audio, will not play from ALL links.\n__Commands you can put in after !yt for !yt are:__\n**next/skip** - goes to the next song, if there isnt one then the bot leaves\n**list** - a list of songs in queue\n**song** - current song playing\n**pause/resume** - pauses or resumes the song\n**stop** - stops the music bot and removes it from the channel, use this incase it breaks, or to end the session\n**volume** - can change volume of bot to either 0 or 200%, ex: !yt volume 50\n**help** - pulls up this text')
 
