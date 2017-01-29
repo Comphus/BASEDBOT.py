@@ -6,12 +6,13 @@ import inspect
 import io
 import time
 import logging
+import codecs
 from datetime import datetime, date, timedelta
 logging.basicConfig()
 
 sm = {'dncd':[False, 0]}
 karaoke = [[], False]
-
+memeList = {}
 class bbDiscord:
 	"""
 	discord functions for BASEDBOT
@@ -56,6 +57,37 @@ class bbDiscord:
 				await self.bot.say("slow mode is on! Since no time interval was stated, the default of 15 seconds has been applied!")
 				sm['dncd'][1] = 15
 			sm['dncd'][0] = True
+
+	@commands.command(pass_context=True)
+	@checks.dncd_mod_or_admin()
+	async def meme(self, ctx):
+		message = ctx.message
+		if message.channel.id not in memeList:
+			memeList[message.channel.id] = True
+			await self.bot.say("meme mode is on!")
+			return
+		if memeList[message.channel.id] == True:
+			memeList[message.channel.id] = False
+			await self.bot.say("meme mode is off!")
+		else:
+			memeList[message.channel.id] = True
+			await self.bot.say("meme mode is on!")
+
+	async def memecheck(self, message):
+		if memeList[message.channel.id] == True:
+			c = len(message.content.split())
+			d = 0
+			for m in message.content.split():
+				if m.startswith('<') and m.endswith('>') and m.count(':') == 2:
+					d += 1
+				else:
+					try:
+						print(m)
+					except Exception:
+						d += 1
+			if d != c:
+				await self.bot.delete_message(message)
+
 
 	@commands.command(pass_context=True, hidden=True, no_pm=True)
 	@checks.dncd_mod_or_admin()
@@ -157,6 +189,9 @@ class bbDiscord:
 			return
 		await self.bot.say(member.id)
 
+	@commands.command()
+	async def emojichecks(self, em : discord.Emoji = None):
+		await self.bot.say(em)
 	@commands.command(name='stats')
 	async def _stats(self):
 		owner = await self.bot.get_user_info('90886475373109248')
@@ -220,10 +255,9 @@ class bbDiscord:
 
 	@commands.command(pass_context=True, enabled=False)
 	@checks.in_dncd()
+	@checks.dncd_mod()
 	async def kskip(self, ctx):
 		message = ctx.message
-		if message.author.id not in dMods:
-			return
 		mrole = discord.utils.get(message.server.roles, name = 'Karaoke-Hand Raised')
 		srole = discord.utils.get(message.server.roles, name = 'Karaoke-Spotlight')
 		await self.bot.remove_roles(karaoke[0][0], mrole)
@@ -296,6 +330,8 @@ class bbDiscord:
 			await self.logmessage(message)
 			if self.slowM():
 				await self.startslowmode(message)
+			if message.channel.id in memeList:
+				await self.memecheck(message)
 
 
 class newmem():
