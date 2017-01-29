@@ -33,7 +33,7 @@ class games:
 		people[n[0]] = [10,0] #test fixed status, make it [10,0]
 		people[n[1]] = [10,0]
 		a = len(duelingInfo)
-		if random.randint(0,1) == 0:#checks to see if a random number is either 1 or 0, if its 0, it switches the start order
+		if random.randint(0,1) == 0:#checks to see if a random number is either 1 or 0, if its 0, it switches the start order. this is the coin flip
 			p1 = 1
 			p2 = 0
 		status = ''
@@ -265,42 +265,31 @@ class games:
 			for y in range(6):
 				for x in range(7):
 					if c4[p1[0]][str(y)][x] == ":red_circle: ":
-						print('hello2')
+
 						#horizontal check
 						if 0 <= y <= 5 and 0 <= x+3 <= 6:
-							print('h1')
 							if c4[p1[0]][str(y)][x+1] == ":red_circle: " and c4[p1[0]][str(y)][x+2] == ":red_circle: " and c4[p1[0]][str(y)][x+3] == ":red_circle: ":
-								print('h2')
 								del c4[p1[0]]
 								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 									json.dump(c4, f, indent = 4)
 								return 'Congratulations! <@{}> has won with 4 going horizontally!\nThe game is now over!'.format(p1[2])
 						#vertical check
 						if 0 <= y+3 <= 5 and 0 <= x <= 6:
-							print('v1')
 							if c4[p1[0]][str(y+1)][x] == ":red_circle: " and c4[p1[0]][str(y+2)][x] == ":red_circle: " and c4[p1[0]][str(y+3)][x] == ":red_circle: ":
-								print('v2')
 								del c4[p1[0]]
 								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 									json.dump(c4, f, indent = 4)
 								return 'Congratulations! <@{}> has won with 4 going vertically!\nThe game is now over!'.format(p1[2])
 						#north east check
 						if 0 <= y+3 <= 5 and 0 <= x+3 <= 6:
-							print('ne1')
 							if c4[p1[0]][str(y+1)][x+1] == ":red_circle: " and c4[p1[0]][str(y+2)][x+2] == ":red_circle: " and c4[p1[0]][str(y+3)][x+3] == ":red_circle: ":
-								print('ne2')
 								del c4[p1[0]]
 								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 									json.dump(c4, f, indent = 4)
 								return 'Congratulations! <@{}> has won with 4 going across!\nThe game is now over!'.format(p1[2])
 						#south east check
 						if 0 <= y-3 <= 5 and 0 <= x+3 <= 6:
-							print('se1')
-							print(c4[p1[0]][str(y-1)][x+1] == ":red_circle: ")
-							print(c4[p1[0]][str(y-2)][x+2] == ":red_circle: ")
-							print(c4[p1[0]][str(y-3)][x+3] == ":red_circle: ")
 							if c4[p1[0]][str(y-1)][x+1] == ":red_circle: " and c4[p1[0]][str(y-2)][x+2] == ":red_circle: " and c4[p1[0]][str(y-3)][x+3] == ":red_circle: ":
-								print('se2')
 								del c4[p1[0]]
 								with open('C:/DISCORD BOT/Games/connect4.json', 'w') as f:
 									json.dump(c4, f, indent = 4)
@@ -582,10 +571,10 @@ class games:
 
 	async def hanging(self, m, sid):
 		faces = [
-		['<:gachiSANTA:252651283901710336>','/','|','\\','/','\\'],
-		['<:dncdDonkay:210492557308723200>','/','|',':ok_hand:','/','\\'],
-		[':joy:','/','|',':ok_hand:','/','\\'],
-		['<:gachiPRIDE:218901944197054464>','/','|','\\','/','\\']
+		['<:gachiGASM:266068765979049984>','/','|','\\',':mans_shoe: ',':mans_shoe: '],
+		['<:dncdDonkay:210492557308723200>','/','|',':ok_hand:',':mans_shoe: ',':mans_shoe: '],
+		[':joy:','/','|',':ok_hand:',':mans_shoe: ',':mans_shoe: '],
+		['<:gachiPRIDE:218901944197054464>','/','|','\\',':mans_shoe: ',':mans_shoe: ']
 
 		]
 		fmt = """\_\_\_\_\_\_
@@ -643,7 +632,6 @@ class games:
 			except Exception as e:
 				print("{}: {}".format(type(e),e))
 
-
 		with open("C:/DISCORD BOT/Games/hangman.json") as j:
 			h = json.load(j)
 		if h[sid][1].count('{}') == 0:
@@ -656,6 +644,18 @@ class games:
 			del h[sid]
 			with open('C:/DISCORD BOT/Games/hangman.json', 'w') as f:
 				json.dump(h, f, indent = 4)
+
+	@commands.command()
+	async def myd(self):
+		r = random.randint(1,5050)
+		d = r/100
+		await self.bot.say("your d is... **{} inches!**".format(d))
+
+	@commands.command()
+	async def myv(self):
+		r = random.randint(1,5050)
+		d = r/100
+		await self.bot.say("your v is... **{} inches!**".format(d))
 
 	@commands.command(pass_context=True, aliases=['hang'])
 	@checks.not_lounge()
@@ -670,7 +670,6 @@ class games:
 		embed.add_field(name='__Stats__', value='LVL: 1\nHP: 10\nMP: 10\nSTR: 4\nINT: 4\nLUK: 4\nWIL: 4\nSTAM: 4')
 		embed.set_footer(text='0 remaining skill points',icon_url='http://i.imgur.com/2NzJYy0.png')
 		await self.bot.say(embed=embed)
-
 	async def invt(self):
 		embed = discord.Embed()
 		embed.set_thumbnail(url='http://i.imgur.com/70Bv5Gs.png')
