@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 from discord.ext import commands
 from .utils import checks
 import io
+import json
+import random
 
 with open("C:/DISCORD BOT/BladeAndSoul/bnstext.txt") as j:
 	bnsurl = j.read()
@@ -16,13 +18,38 @@ class bladeandsoul:
 	def __init__(self, bot):
 		self.bot = bot
 
-	@commands.command(pass_context=True)
+	@commands.command(pass_context=True,aliases=["bnsEU","BNSEU","BNSeu"])
 	@checks.not_lounge()
-	async def bns(self, ctx, *, person : str = None):
-		try:
-			print(person)
-		except:
-			pass
+	async def bnseu(self, ctx, *, person : str = None):
+		await self.bns(ctx, person, "eu")
+
+	@commands.command(pass_context=True,aliases=["bnsNA","BNSNA","BNSna","bns","BNS","Bns"])#default region is NA
+	@checks.not_lounge()
+	async def bnsna(self, ctx, *, person : str = None):
+		await self.bns(ctx, person, "na")
+
+	def bnscolor(self, classname):
+		if classname == 'Blade Master':
+			return 16718105
+		if classname == 'Kung Fu Master':
+			return 3325695
+		if classname == 'Assassin':
+			return 2123412
+		if classname == 'Destroyer':
+			return 10038562
+		if classname == 'Blade Dancer':
+			return 7419530
+		if classname == 'Soul Fighter':
+			return 3066993
+		if classname == 'Warlock':
+			return 15620599
+		if classname == 'Force Master':
+			return 15105570
+		if classname == 'Summoner':
+			return 15844367
+
+	async def bns(self, ctx, person, region):
+		link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c=".format(region)
 		if person is None:
 			await self.bot.say('the format for seeing a players bns info is \'!bns (player ign)\'')
 			return
@@ -33,89 +60,73 @@ class bladeandsoul:
 			newestM = newerM
 		if "faggot" in newestM.lower():
 			await self.bot.say('http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain\nhttp://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
-		async with aiohttp.get('http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM) as r:
-			print(r.status)
+		async with aiohttp.get(link+newestM) as r:
 			if r.status == 400:
 				await self.bot.say("For some reason the BNS website returned a status code of `400` for {}. Most likely due to Elemental Accessories.".format(person))
 				return
 			if r.status == 200:
-				finalmessage = 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c={}&s=101'.format(newestM)
 				if "unavailable" in await r.text():
-					await self.bot.say("NCSoft says this character information is unavailable\n"+finalmessage)
+					await self.bot.say("NCSoft says this character information is unavailable\n"+link+'{}&s=101'.format(newestM))
 					return
 
 				soup = BeautifulSoup(await r.text(), 'html.parser')
-				#print(soup.find_all("div", class_="charaterView")[0].img['src'])
-				#print(soup.find_all(attrs={"class":"signature"})[0].find_all(attrs={"href":"#"})[0].string)#.find_all(attrs={"class":"desc"})[0])
+				sig = soup.find_all(attrs={"class":"signature"})
+				stat = soup.find_all(attrs={"class":"stat-define"})
 				try:
-					clan = soup.find_all(attrs={"class":"signature"})[0].find_all(attrs={"class":"guild"})[0].text
+					clan = sig[0].find_all(attrs={"class":"guild"})[0].text
 				except:
 					clan = 'None'
-				classname = soup.find_all(attrs={"class":"signature"})[0].find_all("ul")[0].li.string
-				level = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].text.split()[1]
+				classname = sig[0].find_all("ul")[0].li.string
+				server = sig[0].find_all("ul")[0].find_all("li")[2].string
+				level = sig[0].find_all("li")[1].text.split()[1]
 				try:
-					hmlevel = soup.find_all(attrs={"class":"signature"})[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("Hongmoon Arts Level", "**Hongmoon Arts Level:**")
+					hmlevel = sig[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("Level", "**HM:**")
 				except:
-					hmlevel = "**Dark Arts Level:** 0"
+					hmlevel = "**HM:** 0"
 				classicon = soup.find_all("div", class_="classThumb")[0].img['src']
-				#accname = soup.find_all("a", href="#")[0].string
-				name = soup.find_all("span", attrs={'class':"name"})[0].string
+				name = "{}{}".format(soup.find_all("a", href="#")[0].string, soup.find_all("span", attrs={'class':"name"})[0].string)
+
+				#all the main offensive and defensive stats
 				att = soup.find_all("div", class_="attack")[0].span.string
-				hp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[0].find(class_="stat-point").string
-				pierce = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[2].find(class_="stat-point").string
-				piercep = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[2].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
-				defense = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[1].find(class_="stat-point").string
-				defensep = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[1].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
-				acc = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[3].find(class_="stat-point").string
-				accp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[3].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
-				eva = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[3].find(class_="stat-point").string
-				evap = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[3].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
-				chit = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
-				chitp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
-				block = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[4].find(class_="stat-point").string
-				blockp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[4].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[4].string
-				cdmg = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-title"})[6].find(class_="stat-point").string
-				cdmgp = soup.find_all(attrs={"class":"stat-define"})[0].find_all(attrs={"class":"stat-description"})[6].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
-				critd = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
-				critdp = soup.find_all(attrs={"class":"stat-define"})[1].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[1].string
-				finalmessage += "\n**Clan:** {}\n**Class:** {}\n**Level:** {}\n{}\n**Attack:** {}                                                        **HP:** {}\n**Pierce:** {}({})                                          **Defense:** {}({})\n**Accuracy:** {}({})                                 **Evasion:** {}({})\n**Critical Hit:** {}({})                              **Block:** {}({})\n**Critical Damage** {}({})                    **Crit Defense:** {}({})\n".format(clan,classname,level,hmlevel,att,hp,pierce,piercep,defense,defensep,acc,accp,eva,evap,chit,chitp,block,blockp,cdmg,cdmgp,critd,critdp)
-				try:
-					finalmessage += soup.find_all("div", class_="charaterView")[0].img['src']
-				except:
-					pass
+				hp = stat[1].find_all(attrs={"class":"stat-title"})[0].find(class_="stat-point").string
+				pierce = stat[0].find_all(attrs={"class":"stat-title"})[2].find(class_="stat-point").string
+				piercep = stat[0].find_all(attrs={"class":"stat-description"})[2].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+				defense = stat[1].find_all(attrs={"class":"stat-title"})[1].find(class_="stat-point").string
+				defensep = stat[1].find_all(attrs={"class":"stat-description"})[1].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+				acc = stat[0].find_all(attrs={"class":"stat-title"})[3].find(class_="stat-point").string
+				accp = stat[0].find_all(attrs={"class":"stat-description"})[3].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+				eva = stat[1].find_all(attrs={"class":"stat-title"})[3].find(class_="stat-point").string
+				evap = stat[1].find_all(attrs={"class":"stat-description"})[3].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+				chit = stat[0].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
+				chitp = stat[0].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+				block = stat[1].find_all(attrs={"class":"stat-title"})[4].find(class_="stat-point").string
+				blockp = stat[1].find_all(attrs={"class":"stat-description"})[4].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[4].string
+				cdmg = stat[0].find_all(attrs={"class":"stat-title"})[6].find(class_="stat-point").string
+				cdmgp = stat[0].find_all(attrs={"class":"stat-description"})[6].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[2].string
+				critd = stat[1].find_all(attrs={"class":"stat-title"})[5].find(class_="stat-point").string
+				critdp = stat[1].find_all(attrs={"class":"stat-description"})[5].find_all(attrs={"class":"ratio"})[0].find_all(class_="stat-point")[1].string
 
 				lft = "**Attack:** {}\n**Pierce:** {}({})\n**Accuracy:** {}({})\n**Critical Hit:** {}({})\n**Critical Damage** {}({})".format(att,pierce,piercep,acc,accp,chit,chitp,cdmg,cdmgp)
 				rgt = "**HP:** {}\n**Defense:** {}({})\n**Evasion:** {}({})\n**Block:** {}({})\n**Crit Defense:** {}({})\n".format(hp,defense,defensep,eva,evap,block,blockp,critd,critdp)
 				embed = discord.Embed()
 				embed.set_author(name=classname, icon_url=classicon)
-				embed.title = name.replace('[','').replace(']','')
-				embed.url = 'http://na-bns.ncsoft.com/ingame/bs/character/profile?c='+newestM
-				if classname == 'Blade Master':
-					embed.color = 16718105
-				if classname == 'Kung Fu Master':
-					embed.color = 3325695
-				if classname == 'Assassin':
-					embed.color = 2123412
-				if classname == 'Destroyer':
-					embed.color = 10038562
-				if classname == 'Blade Dancer':
-					embed.color = 7419530
-				if classname == 'Soul Fighter':
-					embed.color = 3066993
-				if classname == 'Warlock':
-					embed.color = 15620599
-				if classname == 'Force Master':
-					embed.color = 15105570
-				if classname == 'Summoner':
-					embed.color = 15844367
-				embed.add_field(name="__General Info__", value="**Clan:** {}\n**Level:** {}\n{}".format(clan,level,hmlevel), inline = False)
+				embed.title = name
+				embed.url = link+newestM
+				embed.color = self.bnscolor(classname)
+				embed.add_field(name="__General Info__", value="**Server:** {}\n**Clan:** {}\n**Level:** {} \⭐ {}".format(server,clan,level,hmlevel), inline = False)
 				embed.add_field(name="__Offensive__", value=lft)
 				embed.add_field(name="__Defensive__", value=rgt)
-				embed.set_thumbnail(url=soup.find_all("div", class_="wrapWeapon")[0].find_all("p", class_="thumb")[0].img['src'])
-				embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src'])
+				try:
+					weap = soup.find_all("div", class_="wrapWeapon")[0].find_all("p", class_="thumb")[0].img['src']
+					embed.set_thumbnail(url=weap)
+				except:
+					pass
+				embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src']+"?="+str(random.randint(0,5000)))
 				embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
-
-				await self.bot.say(embed=embed)
+				try:
+					await self.bot.say(embed=embed)
+				except:#this is a lazy way to check for embeds, since this would also catch other errors
+					await self.bot.say("Bot needs embed permissions to display BNS stats")
 			else:
 				await self.bot.say('Character name does not exist')
 
@@ -123,7 +134,7 @@ class bladeandsoul:
 	async def bnstree(self, ctx):
 		await self.bot.say(self.bnst(ctx.message))
 
-	def bnst(self, message):
+	def bnst(self, message):#this needs to be updated but too lazy
 		bnsClass = message.content.replace('!bnstree ', '').lower()
 		if '!bnstree' == message.content:
 			return 'https://bnstree.com/'
@@ -148,24 +159,30 @@ class bladeandsoul:
 		else:
 			return '2nd argument not recognised'
 
-	@commands.command()
+	@commands.command(aliases=['bnsm','BNSmarket','BNSm'])
 	@checks.not_lounge()
-	async def bnsmarket(self, *, item : str = None):#whenever i get back from school tomorrow make it so it searches instead of exact
+	async def bnsmarket(self, *, item : str = None):
+		#await self.bot.say("BNSmarket functions will not work for the time being. This bot used BNSAcademy's live market, and recently NCSoft did something, here is their message ```It seems that due to recent activities of BnSBazaar, NCSOFT has made some changes to how the Marketplace works. Currently, we are unable to keep a working account to push Live Prices. We are actively trying to work on a fix, but sadly, at this time, we have no ETA on when that might be pushed through.```")
+		#return
 		if item is None:
-			await self.bot.say("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket` so i can search through <http://www.bns.academy/live-marketplace/> for it.")
+			await self.bot.say("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket` or `!bnsm` so i can search through <http://www.bns.academy/live-marketplace/> for it.")
 			return
 		NAparam = {"region": "na", "q": item}
 		url = bnsurl
 		async with aiohttp.post(url, params=NAparam) as r:
-			NA = await r.json()
+			try:
+				NA = await r.json()
+			except Exception:
+				await self.bot.say("live market website is currently down")
+				return
 			if r.status != 200:
 				await self.bot.say("http://www.bns.academy/live-marketplace/ returned a {} error".format(r.status))
 				return
-			if "empty" in NA:
+			if "empty" in NA.keys():
 				NAparam = {"region": "na", "q": item, "noexact": "true"}
 				async with aiohttp.post(url, params=NAparam) as rr:
 					NA = await rr.json()
-					if "empty" in NA:
+					if "empty" in NA.keys():
 						await self.bot.say("Sorry, I couldnt find any item relating to `{}`.".format(item))
 		if "noexact" in NAparam.keys():
 			EUparam = {"region": "eu", "q": item, "noexact": "true"}
@@ -180,7 +197,7 @@ class bladeandsoul:
 			embed.set_thumbnail(url=iconimg)
 		except:
 			pass
-		try:#incase bot doesnt have embed permissions
+		try:#trying incase bot doesnt have embed permissions
 			NAg = NA["gold"]
 			NAs = NA["silver"]
 			NAc = NA["copper"]
@@ -201,6 +218,7 @@ class bladeandsoul:
 			if "400" in str(e):
 				try:#incase bot doesnt have permission to send messages
 					await self.bot.say("This bot needs `Embed` permissions in order to use this function")
+					return
 				except:
 					pass
 			pass
