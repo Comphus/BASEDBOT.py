@@ -2,20 +2,6 @@ import discord
 from discord.ext import commands
 import asyncio
 
-player = {}
-musicQue = {}
-voice = {}
-sToken = {}
-
-
-def player_exists():
-	def predicate(ctx):
-		try:
-			return player[ctx.message.server.id] is not None
-		except Exception:
-			return False
-	return commands.check(predicate)
-
 class musicbot:
 	"""
 	makes music
@@ -23,96 +9,111 @@ class musicbot:
 
 	def __init__(self, bot):
 		self.bot = bot
+		self.opts = {
+			'default_search': 'auto',
+			'quiet': True,
+		}
+		self.player = {}
+		self.musicQue = {}
+		self.voice = {}
+		self.chan = {}
+		self.nexts = {}
 
-	async def playmusicque(self, queurl, sid, message):
-		try:
-			if player[sid] != None:
-				player[sid].stop()
-				player[sid] = await voice[sid].create_ytdl_player(queurl)
-				player[sid].start()
-				musicQue[sid].pop(0)
-				await self.bot.say('**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player[sid].title, player[sid].views, player[sid].likes, player[sid].dislikes))
-				return
-			else:
-				player[sid] = await voice[sid].create_ytdl_player(queurl)
-				player[sid].start()
-				musicQue[sid].pop(0)
-				await self.bot.say('**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(player[sid].title, player[sid].views, player[sid].likes, player[sid].dislikes))
-				return
-		except Exception as e:
-			musicQue[sid].pop(0)
-			await self.bot.send_message(message.channel, str(e))
-			if len(musicQue[sid]) == 0:
-				await self.bot.send_message(message.channel, "No more songs in queue")
-				await self.complete_stop(sid)
+	async def runmusic(self, sid):
+		if len(self.musicQue[sid]) == 0:
+			await self.bot.send_message(self.chan[sid], "No more songs in queue")
+			await self.complete_stop(sid)
 			return
+		try:
+			if self.player[sid] != None:
+				self.player[sid].stop()
+			self.player[sid] = await self.voice[sid].create_ytdl_player(self.musicQue[sid][0], ytdl_options=self.opts)
+			self.player[sid].start()
+			await self.bot.send_message(self.chan[sid], '**Playing:** __**{}**__\n**Views:** {}\n:thumbsup: : {}   :thumbsdown: : {}'.format(self.player[sid].title, self.player[sid].views, self.player[sid].likes, self.player[sid].dislikes))
+		except Exception as e:
+			await self.bot.send_message(self.chan[sid], str(e))
+		del self.musicQue[sid][0]
+		while True:
+			if self.player[sid].is_done():
+				await self.runmusic(sid)
+				break
+			await asyncio.sleep(1)
 
-	async def runmusic(self, message, sid, sToken):
-		endurl = message.content.split()[1]
-		musicQue[sid].append(endurl)
-		#the loop
-		if sToken[sid] == False:
-			sToken[sid] = True
-			print('started in '+ sid)
+	def __unload(self):
+		for voice in self.bot.voice_clients:
 			try:
-				print('server name is: '+ message.server.name)
+				self.bot.voice.disconnect()
 			except:
 				pass
-			while len(musicQue[sid]) >= 0:
-				if player[sid] == None:
-					if len(musicQue[sid]) == 1:
-						await self.playmusicque(musicQue[sid][0],sid, message)
-				await asyncio.sleep(2)
-				try:
-					if player[sid].is_done():
-						if len(musicQue[sid]) == 0:
-							await self.bot.say("No more songs in queue")
-							await self.complete_stop(sid)
-							print('ended in '+sid)
-						elif len(musicQue[sid]) > 0:
-							await self.playmusicque(musicQue[sid][0], sid, message)
-				except:
-					pass
-				try:
-					if len(musicQue[sid]) == 0 and player[sid].is_done():
-						break
-				except:
-					pass
-				if len(musicQue[sid]) == 0 and player[sid] == None:
-					break
 
-	async def playmusic(self, message, sid):
-		if sid not in voice or voice[sid] == None:
-			await self.complete_stop(sid)#just in case i happened to restart bot manually and its still in voice
-			voice[sid] = await self.bot.join_voice_channel(message.author.voice_channel)
-			musicQue[sid] = []
-			player[sid] = None
-			sToken[sid] = False
+	def create_music_setting(self, message):
+		self.player[message.server.id] = None
+		self.musicQue[message.server.id] = []
+		self.nexts[message.server.id] = False
+		self.chan[message.server.id] = message.channel
 
-		await self.runmusic(message, sid, sToken)
+	@commands.group(pass_context=True, invoke_without_command=True)#main command
+	async def yt(self, ctx, *, song : str):
+		if self.voice.get(ctx.message.server.id) is None:
+			success = await ctx.invoke(self.summon)
+			if not success:
+				await self.bot.say("You are not in a voice channel, please join a voice channel in order to play music.")
+				return
 
-	@commands.group(pass_context=True, invoke_without_command=False)#main command
-	async def yt(self, ctx):
-		if ctx.message.author.voice.voice_channel is None:
-			await self.bot.say("You are not in a voice channel, please join a voice channel in order to play music.")
-			return
-		elif ctx.invoked_subcommand is not None:
-			return
-		elif len(ctx.message.content.split()) != 2:
-			await self.bot.say('You must have a link to show after !yt. It can be almost anything, youtube, soundcloud, even pornhub!')
+		if ctx.message.server.id not in self.player:
+			self.create_music_setting(ctx.message)
+			self.musicQue[ctx.message.server.id].append(song)
+			print('started in '+ ctx.message.server.id)
+			try:
+				print('server name is: '+ ctx.message.server.name)
+			except:
+				pass
+			await self.runmusic(ctx.message.server.id)
 			return
 
-		await self.playmusic(ctx.message, ctx.message.server.id)
+		if self.player[ctx.message.server.id] is None:
+			self.create_music_setting(ctx.message)
+		await self.bot.say('Enqueued **{}**'.format(song))
+		self.musicQue[ctx.message.server.id].append(song)
 
 	async def complete_stop(self, sid):
 		try:
-			await voice[sid].disconnect()
+			self.player[sid].stop()	
+		except:
+			pass
+		try:
+			await self.voice[sid].disconnect()
 		except Exception:
 			pass
-		player[sid] = None
-		musicQue[sid] = []
-		voice[sid] = None
-		sToken[sid] = False
+		try:
+			await self.bot.voice_client_in(self.bot.get_server(sid)).disconnect()
+		except:
+			pass
+		self.player[sid] = None
+		self.musicQue[sid] = None
+		self.voice[sid] = None
+		self.chan[sid] = None
+		del self.player[sid]
+		del self.musicQue[sid]
+		del self.voice[sid]
+		del self.chan[sid]
+
+	@yt.command(pass_context=True, no_pm=True)
+	async def summon(self, ctx):
+		"""Summons the bot to join your voice channel."""
+		sid = ctx.message.server.id
+		summoned_channel = ctx.message.author.voice_channel
+		if summoned_channel is None:
+			await self.bot.say('You are not in a voice channel.')
+			return False
+
+		state = self.voice.get(sid)
+		if state is None:
+			self.voice[sid] = await self.bot.join_voice_channel(summoned_channel)
+		else:
+			await self.voice[sid].move_to(summoned_channel)
+
+		return True
 
 	@yt.command()#all sub commands from here and below
 	async def help(self):
@@ -124,55 +125,49 @@ class musicbot:
 		print('Used !stop in: ' + ctx.message.server.id)
 
 	@yt.command(aliases=['next'], pass_context=True)
-	@player_exists()
 	async def skip(self, ctx):
 		sid = ctx.message.server.id
-		if voice[sid].is_connected():
-			player[sid].stop()
-			if len(musicQue[sid]) == 0:
-				await voice[sid].disconnect()
-				musicQue[sid] = []
+		if self.voice[sid].is_connected():
+			self.player[sid].stop()
 
 	@yt.command(pass_context=True)
-	@player_exists()
 	async def pause(self, ctx):
 		sid = ctx.message.server.id
-		if voice[sid].is_connected():
-				player[sid].pause()
+		if self.voice[sid].is_connected():
+				self.player[sid].pause()
 
 	@yt.command(pass_context=True)
-	@player_exists()
 	async def resume(self, ctx):
 		sid = ctx.message.server.id
-		if voice[sid].is_connected():
-				player[sid].resume()
+		if self.voice[sid].is_connected():
+				self.player[sid].resume()
 
 	@yt.command(pass_context=True, aliases=['vol'])
-	@player_exists()
 	async def volume(self, ctx, vol : int = None):
 		sid = ctx.message.server.id
 		if vol is None or vol > 200 or vol < 0:
 			await self.bot.say('volume number must be between 0 and 200')
 		else:
 			v = (vol/100.0)
-			player[sid].volume = v
+			self.player[sid].volume = v
 
 	@yt.command(pass_context=True)
-	@player_exists()
 	async def list(self, ctx):
 		sid = ctx.message.server.id
-		if len(musicQue[sid]) > 0:
+		if len(self.musicQue[sid]) > 0:
 			returnS = '```xl\n'
-			for i in musicQue[sid]:
-				returnS += (i+'\n')
+			for i, name in enumerate(self.musicQue[sid]):
+				returnS += ("{}. {}\n".format(i+1,name))
 			returnS += '```'
 			await self.bot.say('Current list of music in queue\n'+returnS)
 
-	@yt.command(pass_context=True)
-	@player_exists()
+	@yt.command(pass_context=True, aliases=["playing"])
 	async def song(self, ctx):
 		sid = ctx.message.server.id
-		await self.bot.say('Current song playing: **'+ player[sid].title+'**')
+		if self.player.get(sid) is None:
+			await self.bot.say('Not playing anything.')
+		else:
+			await self.bot.say('Current song playing: **'+ self.player[sid].title+'**')
 
 
 def setup(bot):
