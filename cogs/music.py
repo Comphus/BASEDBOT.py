@@ -42,7 +42,7 @@ class musicbot:
 	def __unload(self):
 		for voice in self.bot.voice_clients:
 			try:
-				self.bot.voice.disconnect()
+				await voice.disconnect()
 			except:
 				pass
 
