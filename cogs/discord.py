@@ -7,9 +7,18 @@ import io
 import time
 import logging
 import codecs
+import json
 from datetime import datetime, date, timedelta
 logging.basicConfig()
 
+dMods = []
+with open('C:/DISCORD BOT/DiscordStuff/Mods.txt','r') as f:
+	for i in f:
+		dMods.append(i.strip('\n'))
+with open('C:/DISCORD BOT/DiscordStuff/joins.json') as f:
+	joins = json.load(f)
+with open('C:/DISCORD BOT/DiscordStuff/leaves.json') as f:
+	leaves = json.load(f)
 sm = {'dncd':[False, 0]}
 karaoke = [[], False]
 memeList = {}
@@ -88,6 +97,11 @@ class bbDiscord:
 			if d != c:
 				await self.bot.delete_message(message)
 
+	@commands.command(pass_context=True, hidden=True, no_pm=True)
+	@checks.dncd_mod_or_admin()
+	async def purge(self, ctx, num : int = 50):
+		await self.bot.purge_from(ctx.message.channel, limit=num)
+
 
 	@commands.command(pass_context=True, hidden=True, no_pm=True)
 	@checks.dncd_mod_or_admin()
@@ -132,6 +146,13 @@ class bbDiscord:
 		logs = self.bot.logs_from(ctx.message.channel)
 		async for log in logs:
 			await self.bot.delete_message(log)
+
+	@commands.command()
+	async def invite(self):
+		try:
+			await self.bot.say("https://discordapp.com/oauth2/authorize?&client_id=175432572271198208&scope=bot")
+		except:
+			await self.bot.whisper("https://discordapp.com/oauth2/authorize?&client_id=175432572271198208&scope=bot")
 
 	@commands.command(pass_context=True)
 	async def avatar(self, ctx):
@@ -190,15 +211,15 @@ class bbDiscord:
 		await self.bot.say(member.id)
 
 	@commands.command()
-	async def emojichecks(self, em : discord.Emoji = None):
-		await self.bot.say(em)
+	async def emojibig(self, em : discord.Emoji = None):
+		await self.bot.say(em.url)
 	@commands.command(name='stats')
 	async def _stats(self):
 		owner = await self.bot.get_user_info('90886475373109248')
 		embed = discord.Embed()
 		embed.title = "Official BASEDBOT Discord Server"
 		embed.url = "https://discord.gg/Gvt3Ks8"
-		embed.set_author(name=str(owner), icon_url=owner.avatar_url)
+		embed.set_author(name=str(owner), icon_url=owner.avatar_url.replace(".gif",".png"))
 
 		s = str(len(self.bot.servers))
 		m = str(len(list(self.bot.get_all_members())))
@@ -333,30 +354,188 @@ class bbDiscord:
 			if message.channel.id in memeList:
 				await self.memecheck(message)
 
+	@commands.group(pass_context=True)
+	@checks.is_admin()
+	async def welcome(self, ctx):
+		print("check")
+		if ctx.invoked_subcommand is None:
+			await self.bot.say("the `!welcome` command lets you customize/remove and relocate your welcome channel(only usable by admins)\n`!welcome off` < turns welcome message off\n`!welcome on` < turns on welcome channel and applies default settings, unless you had something previously saved\n`!welcome edit` < makes your custom welcome message, limit of 1.5k characters. type `!welcome edit` to see the format!\n`!welcome this` < allocates the welcome text to the text channel you invoked the command in\n`!welcome check` < shows your saved or default welcome message")
+
+	@welcome.command(pass_context=True, aliases=["off","disable"])
+	async def W_off(self, ctx):
+		sid = ctx.message.server.id
+		print("hello")
+		if sid not in joins['disabled']:
+			joins['disabled'].append(sid)
+			with open('C:/DISCORD BOT/DiscordStuff/joins.json', 'w') as f:
+				json.dump(joins, f, indent = 4)
+			await self.bot.say("Welcome message disabled")
+		else:
+			await self.bot.say("Welcome message is already disabled")
+
+	@welcome.command(pass_context=True, aliases=["on","enable"])
+	async def W_on(self, ctx):
+		sid = ctx.message.server.id
+		if sid in joins['disabled']:
+			joins['disabled'].remove(sid)
+			with open('C:/DISCORD BOT/DiscordStuff/joins.json', 'w') as f:
+				json.dump(joins, f, indent = 4)
+			await self.bot.say("Welcome message enabled")
+		else:
+			await self.bot.say("Welcome message is already enabled")
+
+	@welcome.command(pass_context=True, aliases=["this","here"])
+	async def W_this(self, ctx):
+		sid = ctx.message.server.id
+		mid = ctx.message.channel.id
+		if joins.get(sid) is None:
+			joins[sid] = {}
+		if joins[sid].get("channel") == mid:
+			await self.bot.say("The welcome channel is already set to this channel.")
+		else:
+			joins[sid]["channel"] = mid
+			with open('C:/DISCORD BOT/DiscordStuff/joins.json', 'w') as f:
+				json.dump(joins, f, indent = 4)
+			await self.bot.say("Welcome message allocated to {}".format(ctx.message.channel.name))
+
+	@welcome.command(pass_context=True, aliases=["edit","modify","change"])
+	async def W_edit(self, ctx, *, wm = None):
+		sid = ctx.message.server.id
+		if joins.get(sid) is None:
+			joins[sid] = {}
+		if wm == None:
+			await self.bot.say("You must give me input for the kind of welcome message you want.\n\nYou can have it include the person who joined's name with either `{name}` or `{mention}` and use `{server}` for the server name, or none.\n\nexample input if i joined a server named 'IMHUNGRY': `welcome new person named {name}, you have joined my great server named {server}!` would spit out \"welcome new person named BASEDBOT, you have joined my great server named IMHUNGRY!\"\n**Make sure to type the words encased in brackets in all lowercase**")
+		elif len(wm) > 1500:
+			await self.bot.say("This message is greater than 1500 characters, make it smaller!")
+		else:
+			w = wm.replace("{name}", "{0.name}#{0.discriminator}").replace("{mention}", "{0.mention}").replace("{server}", "{0.server.name}")
+			joins[sid]["message"] = w
+			with open('C:/DISCORD BOT/DiscordStuff/joins.json', 'w') as f:
+				json.dump(joins, f, indent = 4)
+			await self.bot.say("Your welcome message ```\n{}```has been saved!".format(wm))
+
+	@welcome.command(pass_context=True, aliases=["show","check","message"])
+	async def W_message(self, ctx):
+		sid = ctx.message.server.id
+		if joins.get(sid) is not None:
+			if joins[sid].get("message") is not None:
+				await self.bot.say("Your saved message is ```\n{}```".format(joins[sid]['message']))
+				return
+		await self.bot.say("Currently the default message is```\nWelcome {mention} to {server}!```")
+
+
+	#LEAVE MESSAGES
+	@commands.group(pass_context=True)
+	@checks.is_admin()
+	async def leave(self, ctx):
+		if ctx.invoked_subcommand is None:#default help message
+			await self.bot.say("the `!leave` command lets you customize/remove and relocate your leave channel(only usable by admins)\n`!leave off` < turns leave message off\n`!leave on` < turns on leave channel and applies default settings, unless you had something previously saved\n`!leave edit` < makes your custom leave message, limit of 1.5k characters. type `!leave edit` to see the format!\n`!leave this` < allocates the leave text to the text channel you invoked the command in\n`!leave check` < shows your saved or default leave message")
+
+	@leave.command(pass_context=True, aliases=["off","disable"])
+	async def _off(self, ctx):
+		sid = ctx.message.server.id
+		if sid in leaves['enabled']:
+			leaves['enabled'].append(sid)
+			with open('C:/DISCORD BOT/DiscordStuff/leaves.json', 'w') as f:
+				json.dump(leaves, f, indent = 4)
+			await self.bot.say("leave message disabled")
+		else:
+			await self.bot.say("leave message is already disabled")
+
+	@leave.command(pass_context=True, aliases=["on","enable"])
+	async def _on(self, ctx):
+		sid = ctx.message.server.id
+		if sid not in leaves['enabled']:
+			leaves['enabled'].append(sid)
+			with open('C:/DISCORD BOT/DiscordStuff/leaves.json', 'w') as f:
+				json.dump(leaves, f, indent = 4)
+			await self.bot.say("leave message enabled")
+		else:
+			await self.bot.say("leave message is already enabled")
+
+	@leave.command(pass_context=True, aliases=["this","here"])
+	async def _this(self, ctx):
+		sid = ctx.message.server.id
+		mid = ctx.message.channel.id
+		if leaves.get(sid) is None:
+			leaves[sid] = {}
+		if leaves[sid].get("channel") == mid:
+			await self.bot.say("The leave channel is already set to this channel.")
+		else:
+			leaves[sid]["channel"] = mid
+			with open('C:/DISCORD BOT/DiscordStuff/leaves.json', 'w') as f:
+				json.dump(leaves, f, indent = 4)
+			await self.bot.say("leave message allocated to {}".format(ctx.message.channel.name))
+
+	@leave.command(pass_context=True, aliases=["edit","modify","change"])
+	async def _edit(self, ctx, *, lm = None):
+		sid = ctx.message.server.id
+		if leaves.get(sid) is None:
+			leaves[sid] = {}
+		if lm == None:
+			await self.bot.say("You must give me input for the kind of leave message you want.\n\nYou can have it include the person who left's name with either `{name}` or `{mention}` and use `{server}` for the server name, or none.\n\nexample input if i left a server named 'IMHUNGRY': `bye bye new person named {name}, you have left my great server named {server}!` would spit out \"bye bye new person named BASEDBOT, you have left my great server named IMHUNGRY!\"\n**Make sure to type the words encased in brackets in all lowercase**")
+		elif len(lm) > 1500:
+			await self.bot.say("This message is greater than 1500 characters, make it smaller!")
+		else:
+			l = lm.replace("{name}", "{0.name}#{0.discriminator}").replace("{mention}", "{0.mention}").replace("{server}", "{0.server.name}")
+			leaves[sid]["message"] = l
+			with open('C:/DISCORD BOT/DiscordStuff/leaves.json', 'w') as f:
+				json.dump(leaves, f, indent = 4)
+			await self.bot.say("Your leave message ```\n{}```has been saved!".format(lm))
+
+	@leave.command(pass_context=True, aliases=["show","message","check"])
+	async def _message(self, ctx):
+		sid = ctx.message.server.id
+		if leaves.get(sid) is not None:
+			if leaves[sid].get("message") is not None:
+				await self.bot.say("Your saved message is ```\n{}```".format(leaves[sid]['message']))
+				return
+		await self.bot.say("Currently the default message is```\nGoodbye {name}!```")
+
 
 class newmem():
 	def __init__(self, bot):
 		self.bot = bot
 
 	async def newmember(self, member):
-		if member.server.id not in '82210263440306176 110373943822540800':
+		if member.server.id not in joins['disabled']:
+			welcome_message = 'Welcome {0.mention} to {0.server.name}!'
+			welcome_channel = member.server
+			if joins.get(member.server.id) is not None:
+				welcome_message = joins[member.server.id].get("message", welcome_message)
+				welcome_channel = self.bot.get_channel(joins[member.server.id].get("channel", welcome_channel.id))
+			if welcome_message.count("{") == welcome_message.count("}") and welcome_message.count("{") != 0:
+				welcome_message = welcome_message.format(member)
 			try:
-				if member.server.id not in '106293726271246336 148358898024316928':
-					await self.bot.send_message(member.server, 'Welcome {} to the server!'.format(member.mention))
-			except:
-				pass
-			try:
-				print(member)
+				await self.bot.send_message(welcome_channel, welcome_message)
 			except:
 				pass
 			t = datetime.now()
-			if str(member.server.id) == '106293726271246336':
+			if member.server.id == '106293726271246336':
 				with io.open('C:/DISCORD BOT/DiscordStuff/joinLog.txt','a',encoding='utf-8') as f:
 					retS = "Name: {} ID: {} Time joined: {} EST\n".format(member.name, member.id, str(t))
 					f.write(retS)
 
 	async def on_member_join(self, member):
 		await self.newmember(member)
+
+
+	async def removemember(self, member):
+		if member.server.id in leaves['enabled']:
+			leave_message = "Goodbye {0.name}#{0.discriminator}"
+			leave_channel = member.server
+			if leaves.get(member.server.id) is not None:
+				leave_message = leaves[member.server.id].get("message", leave_message)
+				leave_channel = self.bot.get_channel(leaves[member.server.id].get("channel", leave_channel.id))
+			if leave_message.count("{") == leave_message.count("}") and leave_message.count("{") != 0:
+				leave_message = leave_message.format(member)
+			try:
+				await self.bot.send_message(leave_channel, leave_message)
+			except:
+				pass
+
+	async def on_member_remove(self, member):
+		await self.removemember(member)
 
 def setup(bot):
 	bot.add_cog(bbDiscord(bot))
