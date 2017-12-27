@@ -20,12 +20,12 @@ class bladeandsoul:
 	def __init__(self, bot):
 		self.bot = bot
 
-	@commands.command(pass_context=True,aliases=["bnsEU","BNSEU","BNSeu"])
+	@commands.command(aliases=["bnsEU","BNSEU","BNSeu"])
 	@checks.not_lounge()
 	async def bnseu(self, ctx, *, person : str = None):
 		await self.bns(ctx, person, "eu")
 
-	@commands.command(pass_context=True,aliases=["bnsNA","BNSNA","BNSna","bns","BNS","Bns"])#default region is NA
+	@commands.command(aliases=["bnsNA","BNSNA","BNSna","bns","BNS","Bns"])#default region is NA
 	@checks.not_lounge()
 	async def bnsna(self, ctx, *, person : str = None):
 		await self.bns(ctx, person, "na")
@@ -49,14 +49,17 @@ class bladeandsoul:
 			return [15105570, "❄: {p[frost]}({p[frostp]}%)\n🔥: {p[fire]}({p[firep]}%)"]
 		if classname == 'Summoner':
 			return [15844367, "💨: {p[wind]}({p[windp]}%) \n⛰: {p[earth]}({p[earthp]}%)"]
+		if classname == 'Gunslinger':
+			return [0xffa500, "🔥: {p[fire]}({p[firep]}%)\n🌙: {p[shadow]}({p[shadowp]}%)"]
+		return [0,"Element not known for this class"]
 
 	async def bns(self, ctx, person, region):
 		if person is None:
-			if ctx.message.author.id in bns_people:
-				person = bns_people[ctx.message.author.id]["ign"]
-				region = bns_people[ctx.message.author.id]["region"]
+			if str(ctx.message.author.id) in bns_people:
+				person = bns_people[str(ctx.message.author.id)]["ign"]
+				region = bns_people[str(ctx.message.author.id)]["region"]
 			else:
-				await self.bot.say('the format for seeing a players bns info is \'!bns (player ign)\'')
+				await ctx.send('the format for seeing a players bns info is \'!bns (player ign)\'')
 				return
 		newerM = person.lower()
 		if len(newerM.split()) > 1:
@@ -64,146 +67,155 @@ class bladeandsoul:
 		else:
 			newestM = newerM
 		if "faggot" in newestM.lower():
-			await self.bot.say('http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain\nhttp://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
+			await ctx.send('http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain\nhttp://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
 		link = "http://{}-bns.ncsoft.com/ingame/bs/character/data/abilities.json?c={}".format(region,newestM)
-		async with aiohttp.get(link) as r:
-			#await self.bot.say("currently working on the bns command since NCsoft changed the site")
-			if r.status == 400:
-				await self.bot.say("For some reason the BNS website returned a status code of `400` for {}. Most likely due to Elemental Accessories.".format(person))
-				return
-			if r.status == 200:
-				#if "unavailable" in await r.text():
-				#	await self.bot.say("NCSoft says this character information is unavailable\n"+link+'{}&s=101'.format(newestM))
-				#	return
-
-				all_stats = await r.json()
-				if all_stats["result"] != "success":
-					await self.bot.say("NCSoft says this character information is unavailable\nhttp://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region, newestM))
+		async with aiohttp.ClientSession() as session:
+			async with session.get(link) as r:
+				#await ctx.send("currently working on the bns command since NCsoft changed the site")
+				if r.status == 400:
+					await ctx.send("For some reason the BNS website returned a status code of `400` for {}. Most likely due to Elemental Accessories.".format(person))
 					return
+				if r.status == 200:
+					#if "unavailable" in await r.text():
+					#	await ctx.send("NCSoft says this character information is unavailable\n"+link+'{}&s=101'.format(newestM))
+					#	return
 
-				stat = all_stats["records"]["total_ability"]
-				HMstat = all_stats["records"]["point_ability"]
-				
-				sLink = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region, newestM)
-				async with aiohttp.get(sLink) as r:
-					soup = BeautifulSoup(await r.text(), 'html.parser')
-				sig = soup.find_all(attrs={"class":"signature"})
-				try:
-					clan = sig[0].find_all(attrs={"class":"guild"})[0].text
-				except:
-					clan = 'None'
-				classname = sig[0].find_all("ul")[0].li.string
-				server = sig[0].find_all("ul")[0].find_all("li")[2].string
-				level = sig[0].find_all("li")[1].text.split()[1]
-				try:
-					hmlevel = sig[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("HongmoonLevel", "**HM:**")
-				except:
-					hmlevel = "**HM:** 0"
-				classicon = soup.find_all("div", class_="classThumb")[0].img['src']
-				name = "{}{}".format(soup.find_all("a", href="#")[0].string, soup.find_all("span", attrs={'class':"name"})[0].string)
+					all_stats = await r.json()
+					if all_stats["result"] != "success":
+						await ctx.send("NCSoft says this character information is unavailable\nhttp://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region, newestM))
+						return
 
-				#HM stat stuff
-				hmA = HMstat["offense_point"]
-				hmD = HMstat["defense_point"]
+					stat = all_stats["records"]["total_ability"]
+					HMstat = all_stats["records"]["point_ability"]
+					
+					sLink = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region, newestM)
+					async with aiohttp.ClientSession() as session:
+						async with session.get(sLink) as r:
+							soup = BeautifulSoup(await r.text(), 'html.parser')
+					sig = soup.find_all(attrs={"class":"signature"})
+					try:
+						clan = sig[0].find_all(attrs={"class":"guild"})[0].text
+					except:
+						clan = 'None'
+					classname = sig[0].find_all("ul")[0].li.string
+					server = sig[0].find_all("ul")[0].find_all("li")[2].string
+					level = sig[0].find_all("li")[1].text.split()[1]
+					try:
+						hmlevel = sig[0].find_all("li")[1].find_all(attrs={"class":"masteryLv"})[0].string.replace("HongmoonLevel", "**HM:**")
+					except:
+						hmlevel = "**HM:** 0"
+					classicon = soup.find_all("div", class_="classThumb")[0].img['src']
+					name = "{}{}".format(soup.find_all("a", href="#")[0].string, soup.find_all("span", attrs={'class':"name"})[0].string)
 
-				#ATTACK STATS
-				att = stat["attack_power_value"]
-				pierce = stat["attack_pierce_value"]
-				piercep = stat["attack_defend_pierce_rate"]
-				acc = stat["attack_hit_value"]
-				accp = stat["attack_hit_rate"]
-				chit =stat["attack_critical_value"] 
-				chitp = stat["attack_critical_rate"]
-				cdmg = stat["attack_critical_damage_value"]
-				cdmgp = stat["attack_critical_damage_rate"]
+					#HM stat stuff
+					hmA = HMstat["offense_point"]
+					hmD = HMstat["defense_point"]
 
-				#DEFENSE STATS
-				hp = int(stat["max_hp"])
-				defense = stat["defend_power_value"]
-				defensep = stat["defend_physical_damage_reduce_rate"]
-				eva = stat["defend_dodge_value"]
-				evap = stat["defend_dodge_rate"]
-				block = stat["defend_parry_value"]
-				blockp = stat["defend_parry_rate"]
-				critd = stat["defend_critical_value"]
-				critdp = stat["defend_critical_value"]
+					#ATTACK STATS
+					att = stat["attack_power_value"]
+					pierce = stat["attack_pierce_value"]
+					piercep = stat["attack_defend_pierce_rate"]
+					acc = stat["attack_hit_value"]
+					accp = stat["attack_hit_rate"]
+					chit =stat["attack_critical_value"] 
+					chitp = stat["attack_critical_rate"]
+					cdmg = stat["attack_critical_damage_value"]
+					cdmgp = stat["attack_critical_damage_rate"]
 
-				#ELE DAMAGE
-				eles = {
-					"fire":stat["attack_attribute_fire_value"],
-					"firep":stat["attack_attribute_fire_rate"],
-					"frost":stat["attack_attribute_ice_value"],
-					"frostp":stat["attack_attribute_ice_rate"],
-					"wind":stat["attack_attribute_wind_value"],
-					"windp":stat["attack_attribute_wind_rate"],
-					"earth":stat["attack_attribute_earth_value"],
-					"earthp":stat["attack_attribute_earth_rate"],
-					"light":stat["attack_attribute_lightning_value"],
-					"lightp":stat["attack_attribute_lightning_rate"],
-					"shadow":stat["attack_attribute_void_value"],
-					"shadowp":stat["attack_attribute_void_rate"]
-				}
+					#DEFENSE STATS
+					hp = int(stat["max_hp"])
+					defense = stat["defend_power_value"]
+					defensep = stat["defend_physical_damage_reduce_rate"]
+					eva = stat["defend_dodge_value"]
+					evap = stat["defend_dodge_rate"]
+					block = stat["defend_parry_value"]
+					blockp = stat["defend_parry_rate"]
+					critd = stat["defend_critical_value"]
+					critdp = stat["defend_critical_value"]
 
-				#EMBED stuff
-				lft = "**Attack:** {} \⭐ {}P\n**Pierce:** {}({}%)\n**Accuracy:** {}({}%)\n**Critical Hit:** {}({}%)\n**Critical Damage** {}({}%)".format(att,hmA,pierce,piercep,acc,accp,chit,chitp,cdmg,cdmgp)
-				rgt = "**HP:** {} \⭐ {}P\n**Defense:** {}({}%)\n**Evasion:** {}({}%)\n**Block:** {}({}%)\n**Crit Defense:** {}({}%)\n".format(hp,hmD,defense,defensep,eva,evap,block,blockp,critd,critdp)
-				embed = discord.Embed()
-				embed.set_author(name=classname, icon_url=classicon)
-				embed.title = name
-				embed.url = sLink
-				cl = self.bnscolor(classname)
-				embed.color = cl[0]
-				embed.add_field(name="__General Info__", value="**Server:** {}\n**Clan:** {}\n**Level:** {} \⭐ {}".format(server,clan,level,hmlevel))
-				#embed.add_field(name='​', value="​")#dummy zero width character field, use this to move the fields around
-				embed.add_field(name="__Elemental Damage__", value=cl[1].format(p=eles))
-				embed.add_field(name="__Offensive__", value=lft)
-				embed.add_field(name="__Defensive__", value=rgt)
-				try:
-					async with aiohttp.get("http://{}-bns.ncsoft.com/ingame/bs/character/data/equipments.json?c={}".format(region,newestM)) as r:
-						gear = await r.json()
-					weap = gear["equipments"]["hand"]["equip"]["item"]["icon"]
-					embed.set_thumbnail(url=weap)
-				except:
-					embed.set_thumbnail(url="http://i.imgur.com/yfzrHiy.png")
-				if newestM == "rezorector":
-					embed.set_image(url="https://cdn.discordapp.com/attachments/204813384888090626/307026647209476101/rezgay.png")
-				else:
-					embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src']+"?="+str(random.randint(0,5000)))
-				embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
-				try:
-					if int(att) >= 1000:
-						embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
-					m = await self.bot.say(embed=embed)
-					if int(att) >= 1000:
-						try:
+					#ELE DAMAGE
+					eles = {
+						"fire":stat["attack_attribute_fire_value"],
+						"firep":stat["attack_attribute_fire_rate"],
+						"frost":stat["attack_attribute_ice_value"],
+						"frostp":stat["attack_attribute_ice_rate"],
+						"wind":stat["attack_attribute_wind_value"],
+						"windp":stat["attack_attribute_wind_rate"],
+						"earth":stat["attack_attribute_earth_value"],
+						"earthp":stat["attack_attribute_earth_rate"],
+						"light":stat["attack_attribute_lightning_value"],
+						"lightp":stat["attack_attribute_lightning_rate"],
+						"shadow":stat["attack_attribute_void_value"],
+						"shadowp":stat["attack_attribute_void_rate"]
+					}
+
+					#EMBED stuff
+					lft = "**Attack:** {} \⭐ {}P\n**Pierce:** {}({}%)\n**Accuracy:** {}({}%)\n**Critical Hit:** {}({}%)\n**Critical Damage** {}({}%)".format(att,hmA,pierce,piercep,acc,accp,chit,chitp,cdmg,cdmgp)
+					rgt = "**HP:** {} \⭐ {}P\n**Defense:** {}({}%)\n**Evasion:** {}({}%)\n**Block:** {}({}%)\n**Crit Defense:** {}({}%)\n".format(hp,hmD,defense,defensep,eva,evap,block,blockp,critd,critdp)
+					embed = discord.Embed()
+					embed.set_author(name=classname, icon_url=classicon)
+					embed.title = name
+					embed.url = sLink
+					cl = self.bnscolor(classname)
+					embed.color = cl[0]
+					embed.add_field(name="__General Info__", value="**Server:** {}\n**Clan:** {}\n**Level:** {} \⭐ {}".format(server,clan,level,hmlevel))
+					embed.add_field(name="__Elemental Damage__", value=cl[1].format(p=eles))
+					embed.add_field(name="__Offensive__", value=lft)
+					embed.add_field(name="__Defensive__", value=rgt)
+					embed.add_field(name='​', value="​<a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472>", inline=False)#dummy zero width character field, use this to move the fields around
+					try:
+						async with aiohttp.ClientSession() as session:
+							async with session.get("http://{}-bns.ncsoft.com/ingame/bs/character/data/equipments?c={}".format(region,newestM)) as r:
+								soup2 = BeautifulSoup(await r.text(), 'html.parser')
+						#		gear = await r.json()
+						#weap = gear["equipments"]["hand"]["equip"]["item"]["icon"]
+						weap = soup2.find_all("div", class_="wrapWeapon")[0].find_all("p", class_="thumb")[0].img['src']
+						embed.set_thumbnail(url=weap)
+					except Exception as e:
+						print(e)
+						embed.set_thumbnail(url="http://i.imgur.com/yfzrHiy.png")
+					if newestM == "rezorector" or newestM == "not%20rezo":
+						embed.set_image(url="https://cdn.discordapp.com/attachments/204813384888090626/307026647209476101/rezgay.png")
+					else:
+						embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src']+"?="+str(random.randint(0,5000)))
+					embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
+					try:
+						if int(att) >= 1200:
 							embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
-							await self.bot.add_reaction(m, "🐋")
-						except:
-							pass
-				except:#this is a lazy way to check for embeds, since this would also catch other errors
-					await self.bot.say("Bot needs embed permissions to display BNS stats")
-			else:
-				await self.bot.say('Character name does not exist')
+						m = await ctx.send(embed=embed)
+						if int(att) >= 1200:
+							try:
+								embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
+								await m.add_reaction("🐋")
+							except:
+								pass
+					except:#this is a lazy way to check for embeds, since this would also catch other errors
+						await ctx.send("Bot needs embed permissions to display BNS stats")
+				else:
+					await ctx.send('Character name does not exist')
 
-	@commands.command(pass_context=True, aliases=["bnsl"])
+	@commands.command(aliases=["bnsl"])
 	async def bnslookup(self, ctx, *, member : discord.Member = None):
 		if member is None:
-			await self.bot.say("Write or mention the name of a person in order to look them up!")
-			return
-		p = bns_people.get(member.id)
+			if str(ctx.message.author.id) in bns_people:
+				member = ctx.message.author
+			else:
+				await ctx.send("Write or mention the name of a person in order to look them up!")
+				return
+		p = bns_people.get(str(member.id))
 		if p is None:
-			await self.bot.say("That person is not in the database")
+			await ctx.send("That person is not in the database")
 		else:
 			regions = {
 				"na":"North America 💵",
 				"eu":"Europe 💶"
 			}
-			newerM = bns_people[member.id]["ign"].lower()
+			newerM = bns_people[str(member.id)]["ign"].lower()
 			if len(newerM.split()) > 1:
 				newestM = '%20'.join(newerM.split())
 			else:
 				newestM = newerM
-			link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(bns_people[member.id]["region"],newestM)
+			link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(bns_people[str(member.id)]["region"],newestM)
 			embed = discord.Embed()
 			embed.color = 0xFF0000
 			embed.set_footer(text="Not Verified! Type !verify to see.",icon_url="http://i.imgur.com/6bdro4H.png")
@@ -217,47 +229,45 @@ class bladeandsoul:
 			embed.add_field(name="__Character name:__",value=p["ign"])
 			embed.add_field(name="__BNS Account Name:__",value=p["acc"])
 			embed.add_field(name="__Region:__",value=regions[p["region"].lower()])
-			#embed.add_field(name="__Verification Status:__",value=v)
-			#embed.description = "__Registered Character name:__ {}\n__BNS Account Name:__ {}\n__Region:__ {}\n__Verification Status:__ {}".format(p["ign"],p["acc"],p["region"],v)
-			await self.bot.say(embed=embed)
+			await ctx.send(embed=embed)
 
-	@commands.command(pass_context=True,brief="This command tells you how you can get verified")
+	@commands.command(brief="This command tells you how you can get verified")
 	async def verify(self, ctx, *,id : str = None):
-		if ctx.message.author.id == "90886475373109248" and id is not None:
+		if ctx.message.author.id == 90886475373109248 and id is not None:
 			try:
 				bns_people[id]["verif"] = 1
 				with open('C:/DISCORD BOT/BladeAndSoul/people.json', 'w') as f:
 					json.dump(bns_people, f, indent = 4)
-					await self.bot.say("Account has been verified!☑")
+					await ctx.send("Account has been verified!☑")
 			except:
-				await self.bot.say("Verification failed!❌")
+				await ctx.send("Verification failed!❌")
 			return
 		embed = discord.Embed()
 		embed.description = "In order to get verified with `!bnslookup`, **you will need to contact Comphus#4981 with proof**. Sending a screenshot of you timestamping ingame with your char name next to it, a timestamp somewhere, and the words \"BASEDBOT\" shown ingame should be fine.\n\n__**Do not**__ friend request Comphus#4981 as he already has too many requests and doesnt know who is who.\n**If you do not have a way to contact him, you may [join the bot server by clicking here to get in contact](https://discord.gg/Gvt3Ks8)**"
 		embed.color = 0x0066CC
-		await self.bot.say(embed=embed)
+		await ctx.send(embed=embed)
 
-	@commands.command(pass_context=True, aliases=["bnss"])
+	@commands.command(aliases=["bnss"])
 	async def bnssave(self, ctx, region : str = None, *,person : str = None):
 		if region is None:
-			await self.bot.say("In order to use `!bnssave`, you must provide a region and a main character to save like so `!bnssave region yourchar`, where region is either na or eu.\nOnce saved, you can use `!bns` or `!bnspvp` without having to use your name to pull up the info with the character you saved. In order to remove yourself from the list, type `!bnssave remove`. **This can be used to verify people with `!bnslookup` or aliased `!bnsl` to prevent identity fraud and such.** Type !verify to find out how to get verified\n**If you think someone stole your name, contact Comphus#4981 with !verify**")
+			await ctx.send("In order to use `!bnssave`, you must provide a region and a main character to save like so `!bnssave region yourchar`, where region is either na or eu.\nOnce saved, you can use `!bns` or `!bnspvp` without having to use your name to pull up the info with the character you saved. In order to remove yourself from the list, type `!bnssave remove`. **This can be used to verify people with `!bnslookup` or aliased `!bnsl` to prevent identity fraud and such.** Type !verify to find out how to get verified\n**If you think someone stole your name, contact Comphus#4981 with !verify**")
 			return
 		if region.lower() in ("remove","reset"):
-			if bns_people.get(ctx.message.author.id) is not None:
-				del bns_people[ctx.message.author.id]
+			if bns_people.get(str(ctx.message.author.id)) is not None:
+				del bns_people[str(ctx.message.author.id)]
 				with open('C:/DISCORD BOT/BladeAndSoul/people.json', 'w') as f:
 					json.dump(bns_people, f, indent = 4)
-					await self.bot.say("You have removed yourself from the list.")
+					await ctx.send("You have removed yourself from the list.")
 			else:
-				await self.bot.say("You are not registered")
+				await ctx.send("You are not registered")
 			return
 		if person is None:
-			await self.bot.say("Must provide a character to save/edit")
+			await ctx.send("Must provide a character to save/edit")
 			return
 		if region.lower() == "edit":
-			id = ctx.message.author.id
+			id = str(ctx.message.author.id)
 			if bns_people.get(id) is None:
-				await self.bot.say("Your are not registered.")
+				await ctx.send("Your are not registered.")
 				return
 			if True:
 				newerM = person.lower()
@@ -267,29 +277,30 @@ class bladeandsoul:
 					newestM = newerM
 				link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(bns_people[id]["region"],newestM)
 				print(link)
-				async with aiohttp.get(link) as r:
-					if r.status != 200:
-						await self.bot.say("I could not get the info from the BNS website")
-						return
-					soup = BeautifulSoup(await r.text(), 'html.parser')
+				async with aiohttp.ClientSession() as session:
+					async with session.get(link) as r:
+						if r.status != 200:
+							await ctx.send("I could not get the info from the BNS website")
+							return
+						soup = BeautifulSoup(await r.text(), 'html.parser')
 				acc = soup.find_all("a", href="#")[0].string
 				name = soup.find_all("span", attrs={'class':"name"})[0].string
 				if acc != bns_people[id]["acc"]	:
-					await self.bot.say("The account names do not match")
+					await ctx.send("The account names do not match")
 					return
 				bns_people[id]["ign"] = name[1:-1]
 				with open('C:/DISCORD BOT/BladeAndSoul/people.json', 'w') as f:
 					json.dump(bns_people, f, indent = 4)
-					await self.bot.say("Character successfully edited")
+					await ctx.send("Character successfully edited")
 				return
 			try:
 				pass
 			except:
-				await self.bot.say("I could not find the account associated with this character or the website may be down.")
+				await ctx.send("I could not find the account associated with this character or the website may be down.")
 				return
 
 		if region.lower() not in ("na","eu"):
-			await self.bot.say("Invalid region, I can only save NA or EU")
+			await ctx.send("Invalid region, I can only save NA or EU")
 			return
 		try:
 			newerM = person.lower()
@@ -297,17 +308,19 @@ class bladeandsoul:
 				newestM = '%20'.join(newerM.split())
 			else:
 				newestM = newerM
-			async with aiohttp.get("http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region,newestM)) as r:
-				soup = BeautifulSoup(await r.text(), 'html.parser')
-			id = ctx.message.author.id
+			async with aiohttp.ClientSession() as session:
+				async with session.get("http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region,newestM)) as r:
+					soup = BeautifulSoup(await r.text(), 'html.parser')
+			id = str(ctx.message.author.id)
 			acc = soup.find_all("a", href="#")[0].string
 			name = soup.find_all("span", attrs={'class':"name"})[0].string
 			if bns_people.get(id) is not None:
-				await self.bot.say("Your discord id is already registered.")
+				await ctx.send("Your discord id is already registered.")
 				return
-			if acc in str(bns_people):
-				await self.bot.say("That name is already registered")
-				return
+			for i in bns_people:
+				if acc in bns_people[i].get("acc"):
+					await ctx.send("That name is already registered")
+					return
 			bns_people[id] = {
 				"acc":acc,
 				"ign":name[1:-1],
@@ -316,17 +329,17 @@ class bladeandsoul:
 			}
 			with open('C:/DISCORD BOT/BladeAndSoul/people.json', 'w') as f:
 				json.dump(bns_people, f, indent = 4)
-				await self.bot.say("Character successfully saved")
+				await ctx.send("Character successfully saved")
 		except:
-			await self.bot.say("I could not find the account associated with this character or the website may be down.")
+			await ctx.send("I could not find the account associated with this character or the website may be down.")
 			return
 
 
-	@commands.command(pass_context=True, aliases=["bnspvpNA","BNSPVPNA","BNSpvpna","BNSPVPna","bnsp","bnspna","BNSP","Bnsp"])
+	@commands.command(aliases=["bnspvpNA","BNSPVPNA","BNSpvpna","BNSPVPna","bnsp","bnspna","BNSP","Bnsp"])
 	async def bnspvp(self, ctx, *, person : str = None):
 		await self.pvp(ctx, person, "na")
 
-	@commands.command(pass_context=True, aliases=["bnspvpEU","BNSPVPEU","BNSpvpeu","BNSPVPeu","bnspeu","BNSPEU","Bnspeu"])
+	@commands.command(aliases=["bnspvpEU","BNSPVPEU","BNSpvpeu","BNSPVPeu","bnspeu","BNSPEU","Bnspeu"])
 	async def bnspvpeu(self, ctx, *, person : str = None):
 		await self.pvp(ctx, person, "eu")
 
@@ -344,11 +357,11 @@ class bladeandsoul:
 	
 	async def pvp(self, ctx, person, region):
 		if person is None:
-			if ctx.message.author.id in bns_people:
-				person = bns_people[ctx.message.author.id]["ign"]
-				region = bns_people[ctx.message.author.id]["region"]
+			if str(ctx.message.author.id) in bns_people:
+				person = bns_people[str(ctx.message.author.id)]["ign"]
+				region = bns_people[str(ctx.message.author.id)]["region"]
 			else:
-				await self.bot.say('the format for seeing a player\'s pvp info is \'!bnspvp (player ign)\'')
+				await ctx.send('the format for seeing a player\'s pvp info is \'!bnspvp (player ign)\'')
 				return
 		newerM = person.lower()
 		if len(newerM.split()) > 1:
@@ -356,11 +369,12 @@ class bladeandsoul:
 		else:
 			newestM = newerM
 		link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(region, newestM)
-		async with aiohttp.get(link) as r:
-			if r.status != 200:
-				await self.bot.say("Character name does not exist")
-				return
-			soup = BeautifulSoup(await r.text(), 'html.parser')
+		async with aiohttp.ClientSession() as session:
+			async with session.get(link) as r:
+				if r.status != 200:
+					await ctx.send("Character name does not exist")
+					return
+				soup = BeautifulSoup(await r.text(), 'html.parser')
 		try:
 			classicon = soup.find_all("div", class_="classThumb")[0].img['src']
 		except:
@@ -378,7 +392,7 @@ class bladeandsoul:
 		oneW= soup.find_all(class_="win-point")[0].string
 		threeP = soup.find_all(class_="rank-point")[1].string
 		threeW= soup.find_all(class_="win-point")[1].string
-		#await self.bot.say("{}\n1v1 rank:{}    wins:{}\n3v3 rank:{}          wins{}".format(p,oneP,oneW,threeP,threeW))
+		#await ctx.send("{}\n1v1 rank:{}    wins:{}\n3v3 rank:{}          wins{}".format(p,oneP,oneW,threeP,threeW))
 
 
 		embed = discord.Embed()
@@ -392,111 +406,156 @@ class bladeandsoul:
 		embed.add_field(name="1v1 Games",value="Rank:{}\nWins:{}".format(oneP,oneW.replace("Victories ", "")))
 		embed.add_field(name="3v3 Games",value="Rank:{}\nWins:{}".format(threeP,threeW.replace("Victories ", "")))
 
-		await self.bot.say(embed=embed)
+		await ctx.send(embed=embed)
 
 
 		#print(soup.find_all(text=lambda text:isinstance(text, Comment)))
 
-	@commands.command(pass_context=True)
-	async def bnstree(self, ctx):
-		await self.bot.say(self.bnst(ctx.message))
+	@commands.command()
+	async def bnstree(self, ctx, *, name : str = None):
+		await ctx.send(self.bnst(name))
 
-	def bnst(self, message):#this needs to be updated but too lazy
-		bnsClass = message.content.replace('!bnstree ', '').lower()
-		if '!bnstree' == message.content:
+	def bnst(self, name):#this needs to be updated and put into a dict but too lazy
+		if name is None:
 			return 'https://bnstree.com/'
-		elif 'blade master' == bnsClass or 'bm' == bnsClass:
-			return 'https://bnstree.com/tree/BM'
-		elif 'kfm' == bnsClass or 'kungfu master' == bnsClass or 'kung fu master' == bnsClass or 'kungfumaster' == bnsClass or 'kf' == bnsClass:
-			return 'https://bnstree.com/tree/KF'
-		elif 'destroyer' == bnsClass or 'des' == bnsClass or 'de' == bnsClass or 'destro' == bnsClass or 'dest' == bnsClass:
-			return 'https://bnstree.com/tree/DE'
-		elif 'force master' == bnsClass or 'fm' == bnsClass or 'forcemaster' == bnsClass or 'force user' == bnsClass:
-			return 'https://bnstree.com/tree/FM'
-		elif 'assassin' == bnsClass or 'as' == bnsClass or 'sin' == bnsClass:
-			return 'https://bnstree.com/tree/AS'
-		elif 'summoner' == bnsClass or 'su' == bnsClass or 'summ' == bnsClass or 'sum' == bnsClass:
-			return 'https://bnstree.com/tree/SU'
-		elif 'blade dancer' == bnsClass or 'bd' == bnsClass or 'bladedancer' == bnsClass or 'lbm' == bnsClass or 'lyn blade master' == bnsClass or 'lynblade master' == bnsClass or 'lyn blademaster' == bnsClass:
-			return 'https://bnstree.com/tree/BD'
-		elif 'warlock' == bnsClass or 'wl' == bnsClass or 'lock' == bnsClass:
-			return 'https://bnstree.com/tree/WL'
-		elif 'soul fighter' == bnsClass or 'sf' == bnsClass or 'soulfighter' in bnsClass or 'chi master' in bnsClass or 'chimaster' in bnsClass:
-			return 'https://bnstree.com/tree/SF'
+		name = name.lower()
+		if 'blade master' == name or 'bm' == name:
+			return 'https://bnstree.com/classes/blade-master'
+		elif 'kfm' == name or 'kungfu master' == name or 'kung fu master' == name or 'kungfumaster' == name or 'kf' == name:
+			return 'https://bnstree.com/classes/kung-fu-master'
+		elif 'destroyer' == name or 'des' == name or 'de' == name or 'destro' == name or 'dest' == name:
+			return 'https://bnstree.com/classes/destroyer'
+		elif 'force master' == name or 'fm' == name or 'forcemaster' == name or 'force user' == name:
+			return 'https://bnstree.com/classes/force-master'
+		elif 'assassin' == name or 'as' == name or 'sin' == name:
+			return 'https://bnstree.com/classes/assassin'
+		elif 'summoner' == name or 'su' == name or 'summ' == name or 'sum' == name:
+			return 'https://bnstree.com/classes/summoner'
+		elif 'blade dancer' == name or 'bd' == name or 'bladedancer' == name or 'lbm' == name or 'lyn blade master' == name or 'lynblade master' == name or 'lyn blademaster' == name:
+			return 'https://bnstree.com/classes/blade-dancer'
+		elif 'warlock' == name or 'wl' == name or 'lock' == name:
+			return 'https://bnstree.com/classes/warlock'
+		elif 'soul fighter' == name or 'sf' == name or 'soulfighter' in name or 'chi master' in name or 'chimaster' in name:
+			return 'https://bnstree.com/classes/soul-fighter'
+		elif 'gun slinger' == name or 'gs' == name or 'gunslinger' in name or 'gunner' in name:
+			return 'https://bnstree.com/classes/gunslinger'
 		else:
 			return '2nd argument not recognised'
 
 	@commands.command(aliases=['bnsm','BNSmarket','BNSm',"smp","SMP","Smp"])
 	@checks.not_lounge()
-	async def bnsmarket(self, *, item : str = None):
-		#await self.bot.say("BNSmarket functions will not work for the time being. This bot used BNSAcademy's live market, and recently NCSoft did something, here is their message ```It seems that due to recent activities of BnSBazaar, NCSOFT has made some changes to how the Marketplace works. Currently, we are unable to keep a working account to push Live Prices. We are actively trying to work on a fix, but sadly, at this time, we have no ETA on when that might be pushed through.```")
-		#return
+	async def bnsmarket(self, ctx, *, item : str = None):
 		if item is None:
-			await self.bot.say("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket`,`!bnsm` or `!smp` so i can search through <http://www.bns.academy/live-marketplace/> for it.")
+			await ctx.send("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket`,`!bnsm` or `!smp` so i can search through <https://bnstree.com/market> for it.")
 			return
-		NAparam = {"region": "na", "q": item}
-		url = bnsurl
-		try:
-			async with aiohttp.post(url, params=NAparam) as r:
-				try:
-					NA = await r.json()
-				except Exception:
-					await self.bot.say("live market website is currently down")
-					return
-				if r.status != 200:
-					await self.bot.say("http://www.bns.academy/live-marketplace/ returned a {} error".format(r.status))
-					return
-				if "empty" in NA.keys():
-					NAparam = {"region": "na", "q": item, "noexact": "true"}
-					async with aiohttp.post(url, params=NAparam) as rr:
-						NA = await rr.json()
-						if "empty" in NA.keys():
-							await self.bot.say("Sorry, I couldnt find any item relating to `{}`.".format(item))
-		except Exception:
-			await self.bot.say("live market website is currently down")
+		nB = "na"
+		eB = "eu"
+		schema = {}
+		BNSschema = """{{
+		    Market {{
+		        na: search(query: "{}", region: "na", exact: true) {{
+		            item {{
+		                name
+		                icon
+		            }}
+		            priceData: price {{
+		                items
+		            }}
+		        }}
+		        naF: search(query: "{}", region: "na", exact: false) {{
+		        	item {{
+		                name
+		                icon
+		            }}
+		            priceData: price {{
+		                items
+		            }}
+		        }}
+		        eu: search(query: "{}", region: "eu", exact: true) {{
+		            priceData: price {{
+		                items
+		            }}
+		        }}
+		        euF: search(query: "{}", region: "eu", exact: false) {{
+		            priceData: price {{
+		                items
+		            }}
+		        }}
+		    }}
+		}}"""
+		try: # can optimize this later
+			schema["query"] = BNSschema.format(item,item,item,item)
+			async with aiohttp.ClientSession() as session:
+				async with session.post("api website here", data=schema) as r:
+					try:
+						NA = await r.json()
+					except Exception as e:
+						print(e)
+						await ctx.send("live market website is currently down")
+						return
+					if r.status != 200:
+						await ctx.send("https://bnstree.com/market returned a {} error".format(r.status))
+						return
+					if not NA["data"]["Market"][nB].get("item"):
+						nB = "naF"
+						eB = "euF"
+						if not NA["data"]["Market"][nB].get("item"):
+							await ctx.send("Sorry, I couldnt find any item relating to `{}`.".format(item))
+							return
+			
+		except Exception as e:
+			print(e)
+			await ctx.send("live market website is currently down")
 			return
-		if "noexact" in NAparam.keys():
-			EUparam = {"region": "eu", "q": item, "noexact": "true"}
-		else:
-			EUparam = {"region": "eu", "q": item}
-		async with aiohttp.post(url, params=EUparam) as r:
-			EU = await r.json()
-		NAg, NAs, NAc, EUg, EUs, EUc = 0,0,0,0,0,0#this line doesnt need to be here, but this is just in case the api gets updated with non int numbers
+		def getPrice(region):
+			priceIndex = -1
+			freqIndex = 0
+			while freqIndex < 3:#list always contains 3 elements
+				if not NA["data"]["Market"][region]["priceData"][freqIndex].get("items"):
+					freqIndex += 1
+					continue
+				elif priceIndex*-1 == len(NA["data"]["Market"][region]["priceData"][freqIndex]["items"]):
+					break
+				if NA["data"]["Market"][region]["priceData"][freqIndex]["items"][priceIndex][1] == 0:
+					priceIndex += -1
+				else:
+					return str(NA["data"]["Market"][region]["priceData"][freqIndex]["items"][priceIndex][1])
+		def fmtPrice(r):
+			try:
+				r = r[:-2] + " " + r[-2:]
+				r = r[:-5] + " " + r[-5:]
+			except:
+				pass
+			r = r.split()
+			while len(r) < 3:
+				r.insert(0,"00")
+			return r
+		NAg, NAs, NAc = fmtPrice(getPrice(nB))
+		EUg, EUs, EUc = fmtPrice(getPrice(eB))
 		embed = discord.Embed()
-		try:
-			iconimg = NA["icon"]#just in case there isnt an icon
-			embed.set_thumbnail(url=iconimg)
-		except:
-			pass
+		embed.set_thumbnail(url=NA["data"]["Market"][nB]["item"].get("icon", "http://i.imgur.com/yfzrHiy.png"))#just in case there isnt an icon
+		embed.set_author(name="Blade & Soul", icon_url="http://i.imgur.com/a1kk9Tq.png")
+		embed.title = NA["data"]["Market"][nB]["item"]["name"]
+		embed.url = "https://bnstree.com/market"
+		embed.add_field(name="__NA__", value="<:bnsgold:358757497605062676>** {} **<:bnssilver:358757506769747968>** {}  **<:bnscopper:358757522321965058>** {}**".format(NAg,NAs,NAc), inline=False)
+		embed.add_field(name="__EU__", value="<:bnsgold:358757497605062676>** {} **<:bnssilver:358757506769747968>** {}  **<:bnscopper:358757522321965058>** {}**".format(EUg,EUs,EUc))
+		embed.color = 3325695
+		embed.set_footer(text="BnSTree Market",icon_url="https://i.imgur.com/3onsQoR.png")
 		try:#trying incase bot doesnt have embed permissions
-			NAg = NA["gold"]
-			NAs = NA["silver"]
-			NAc = NA["copper"]
-			EUg = EU["gold"]
-			EUs = EU["silver"]
-			EUc = EU["copper"]
-			item = NA["name"]
-			embed.set_author(name="Blade & Soul", icon_url="http://i.imgur.com/a1kk9Tq.png")
-			embed.title = item
-			embed.url = "http://www.bns.academy/live-marketplace/"
-			embed.add_field(name="__NA__", value="<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}**".format(NAg,NAs,NAc), inline=False)
-			embed.add_field(name="__EU__", value="<:VipGold:248714191517646848>** {} **<:VipSilver:248714227877937152>** {}  **<:VipBronze:248714357792440320>** {}**".format(EUg,EUs,EUc))
-			embed.color = 3325695
-			embed.set_footer(text="Blade & Soul Academy",icon_url="http://i.imgur.com/5epeMm5.png	")
-			await self.bot.say(embed=embed)
+			await ctx.send(embed=embed)
 			return
 		except Exception as e:
 			if "400" in str(e):
 				try:#incase bot doesnt have permission to send messages
-					await self.bot.say("This bot needs `Embed` permissions in order to use this function")
+					await ctx.send("This bot needs `Embed` permissions in order to use this function")
 					return
 				except:
 					pass
 			pass
 
 	@commands.command()
-	async def mspguide(self):
-		await self.bot.say('https://drive.google.com/file/d/0Bx5A-bjrg1p1aVlJZElJV3JoWk0/view')
+	async def mspguide(self, ctx):
+		await ctx.send('https://drive.google.com/file/d/0Bx5A-bjrg1p1aVlJZElJV3JoWk0/view')
 
 def setup(bot):
 	bot.add_cog(bladeandsoul(bot))
