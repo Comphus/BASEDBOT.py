@@ -486,7 +486,7 @@ class bladeandsoul:
 		try: # can optimize this later
 			schema["query"] = BNSschema.format(item,item,item,item)
 			async with aiohttp.ClientSession() as session:
-				async with session.post("api website here", data=schema) as r:
+				async with session.post("bns api website here", data=schema) as r:
 					try:
 						NA = await r.json()
 					except Exception as e:
