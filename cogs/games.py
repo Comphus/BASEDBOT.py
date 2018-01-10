@@ -72,7 +72,7 @@ class games:
 				})
 		return returnInfo
 
-	def dueling(self, entrees, hp):#this is designed to take 2 or more entrees, and returns a simulation of a duel between all participants, specifically only for duels and royale
+	async def dueling(self, entrees, hp):#this is designed to take 2 or more entrees, and returns a simulation of a duel between all participants, specifically only for duels and royale
 		with open('C:/DISCORD BOT/Games/duel.json') as f:
 			duelingInfo = json.load(f)
 		players = self.init_players(entrees, hp)
@@ -88,19 +88,21 @@ class games:
 		prettyPlayers = {}
 		for i, j in enumerate(players):
 			prettyPlayers[j["player"]] = i
-		def checkHP(p):
+		async def checkHP(p):
 			c = 0
 			for i in p:
 				if i["hp"] > 0:
 					c += 1
 			return c
-		while checkHP(players) > 1:#makes sure that there are enough players alive to duel
-			duelists["p1"] = players[p1]["player"]#initialize the attacking player
+		while await checkHP(players) > 1:#makes sure that there are enough players alive to duel
+			pLen = len(players)
+			duelists["p1"] = players[0]["player"]#initialize the attacking player
 			for i in range(len(players)):
 				prettyPlayers[players[i]["player"]] = i
+			p1 = 0
+			p2 = random.randint(1,len(players)-1)#assigns next target, in the case of royale, this is a random other person, in duel its just the other person
+			duelists["p2"] = players[p2]["player"]
 			if players[0]["stun"] == 0 and players[0]["hp"] > 1:#if player is not stunned or dead, goes on
-				p2 = random.randint(1,len(players)-1)#assigns next target
-				duelists["p2"] = players[p2]["player"]
 				d = str(random.randint(0,a-1))#gets a random attack
 				aoe = False if duelingInfo[d]["aoe"] == "f" else True
 				attack, stunned, immune = duelingInfo[d]["name"], int(duelingInfo[d]["stun"]), int(duelingInfo[d]["immune"])
@@ -112,10 +114,10 @@ class games:
 					crit = 2
 				if godAttack == 0:
 					crit *= 10
-					z.append("🌟 {} transforms into a supreme being, making their next move have a 10x multiplier! 🌟".format(players[p1]["player"]))
+					z.append("🌟 {} transforms into a supreme being (2% proc), making their next move have a 10x multiplier! 🌟".format(players[p1]["player"]))
 				if actualgodAttack == 0:
 					crit *= 100
-					z.append("<a:gachiHYPER:393580622439776258> {} became a God, making their next move have a 100x multiplier! <a:gachiHYPER:393580622439776258>".format(players[p1]["player"]))
+					z.append("<a:gachiHYPER:393580622439776258> {} became a God (0.33% proc), making their next move have a 100x multiplier! <a:gachiHYPER:393580622439776258>".format(players[p1]["player"]))
 
 				if aoe:#this if else writes down the attack that the player did, if the attack is an aoe, EVERYONE is written instead of just 1 person
 					tmp, duelists["p2"] = duelists["p2"], "**EVERYONE**"
@@ -249,7 +251,7 @@ class games:
 			await ctx.send('Must have two distinct mentions, or someone else that isnt you duel!')
 			return
 		if p1 != p2 and p2 is not None:
-			results = self.dueling([p1,p2], hp)
+			results = await self.dueling([p1,p2], hp)
 		await ctx.send("right now im changing fight a bit to look prettier, so expect it to look weird for now. Also, LF> better gifs, looking for a sword swinging/shield pulsing/shield breaking and maybe some more gifs.\n**in order for this new game to work, bot must have embed permissions**")
 		embed = discord.Embed()
 		embed.color = 0x000000
@@ -293,7 +295,8 @@ class games:
 		if len(players) > 10:
 			await ctx.send('Cannot have a royale with more than 10 people')
 			return
-		results = self.dueling(players, hp)
+		await ctx.send('```Royale may still have some bugs in it, please report them to me in the BASEDBOT discord server which you can find by doing !discord```')
+		results = await self.dueling(players, hp)
 
 		m = await ctx.send(results[1])
 		for i in players:
@@ -329,7 +332,7 @@ class games:
 	@checks.not_lounge()
 	async def duel(self, ctx, p1 : discord.Member = None, p2 : discord.Member = None, hp : int = 10):
 		print("started duel")
-		await ctx.send('`!duel` may not work as i am applying finishing touches to `!duel` code so a FFA mode called `!royale` can be implemented')
+		await ctx.send('```Duel may have some bugs due to !royale mode being added in, which is a FFA duel for 3-10 people. If any bugs occur, please report them to me in the BASEDBOT discord server which you can find by doing !discord```')
 		if hp > 5000:
 			await ctx.send('The HP value cannot be greater than 5000')
 			return
@@ -344,7 +347,7 @@ class games:
 			await ctx.send('Must have two distinct mentions, or someone else that isnt you duel!')
 			return
 		if p1 != p2 and p2 is not None:
-			results = self.dueling([p1,p2], hp)
+			results = await self.dueling([p1,p2], hp)
 		#what it spits out
 		m = await ctx.send(results[1])
 		self.duelCache[p1.id] = False
@@ -785,7 +788,7 @@ class games:
 		if p1 is None or p2 is None:
 			await ctx.send("need to mention two people")
 			return
-		results = self.dueling([p1,p2], 10)
+		results = await self.dueling([p1,p2], 10)
 		hp = ['10', '10']
 		hpform = "__**{}** VS **{}**__\nHP: {}  {}HP: {}".format(str(p1),str(p2), hp[0], ' '*len(str(p1))*2,hp[1])
 		t = ['','',results[1]]
