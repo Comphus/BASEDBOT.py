@@ -90,10 +90,13 @@ class games:
 			prettyPlayers[j["player"]] = i
 		async def checkHP(p):
 			c = 0
-			for i in p:
-				if i["hp"] > 0:
-					c += 1
-			return c
+			try:
+				for i in p:
+					if i["hp"] > 0:
+						c += 1
+				return c
+			except:
+				return False
 		while await checkHP(players) > 1:#makes sure that there are enough players alive to duel
 			pLen = len(players)
 			duelists["p1"] = players[0]["player"]#initialize the attacking player
@@ -210,7 +213,7 @@ class games:
 					players.remove(pl)
 					pLen = len(players)
 					del prettyPlayers[pl["player"]]
-			if len(players) == 0:
+			if len(players) < 2:#if theres only 1 or 0 people left alive, game is finished
 				break
 			turnCounter = 1
 			for i in range(1, len(players)):#this lets the next turn happen, only going if the next person is not stunned
@@ -218,11 +221,11 @@ class games:
 				#	print(players)
 				#except:
 				#	pass
-				if players[i]["stun"] == 0:#if whoever is next is not stunned, break out of loop to commence their turn # this takes the first player, and puts him in the back of the list/queue
+				if players[i]["stun"] == 0:#if whoever is next is not stunned, break out of loop to commence their turn
 					break
-				elif players[0]["stun"] != 0:
+				elif players[i]["stun"] != 0:#if the person who is next IS stunned, then we add to the counter
 					turnCounter += 1
-			for i in range(turnCounter):
+			for i in range(turnCounter):#this loop puts the first person in the list to the back by the value of turnCounter
 				players.append(players.pop(0))
 			
 
