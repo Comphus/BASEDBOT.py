@@ -30,7 +30,7 @@ class bladeandsoul:
 	async def bnsna(self, ctx, *, person : str = None):
 		await self.bns(ctx, person, "na")
 
-	def bnscolor(self, classname):
+	def bnscolor(self, classname): #can just have a json with key:value pairs for this
 		if classname == 'Blade Master':
 			return [16718105, "🔥: {p[fire]}({p[firep]}%)\n⚡: {p[light]}({p[lightp]}%)"]
 		if classname == 'Kung Fu Master':
@@ -51,6 +51,8 @@ class bladeandsoul:
 			return [15844367, "💨: {p[wind]}({p[windp]}%) \n⛰: {p[earth]}({p[earthp]}%)"]
 		if classname == 'Gunslinger':
 			return [0xffa500, "🔥: {p[fire]}({p[firep]}%)\n🌙: {p[shadow]}({p[shadowp]}%)"]
+		if classname == 'Warden':
+			return [0x800020, "⚡: {p[light]}({p[lightp]}%)\n❄: {p[frost]}({p[frostp]}%)"]
 		return [0,"Element not known for this class"]
 
 	async def bns(self, ctx, person, region):
@@ -162,7 +164,6 @@ class bladeandsoul:
 					embed.add_field(name="__Elemental Damage__", value=cl[1].format(p=eles))
 					embed.add_field(name="__Offensive__", value=lft)
 					embed.add_field(name="__Defensive__", value=rgt)
-					embed.add_field(name='​', value="​<a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472>", inline=False)#dummy zero width character field, use this to move the fields around
 					try:
 						async with aiohttp.ClientSession() as session:
 							async with session.get("http://{}-bns.ncsoft.com/ingame/bs/character/data/equipments?c={}".format(region,newestM)) as r:
@@ -180,10 +181,11 @@ class bladeandsoul:
 						embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src']+"?="+str(random.randint(0,5000)))
 					embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
 					try:
-						if int(att) >= 1200:
+						if int(att) >= 1350:
+							embed.add_field(name='​', value="​<a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472>", inline=False)#dummy zero width character field, use this to move the fields around
 							embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
 						m = await ctx.send(embed=embed)
-						if int(att) >= 1200:
+						if int(att) >= 1350:
 							try:
 								embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
 								await m.add_reaction("🐋")
@@ -442,7 +444,7 @@ class bladeandsoul:
 		else:
 			return '2nd argument not recognised'
 
-	@commands.command(aliases=['bnsm','BNSmarket','BNSm',"smp","SMP","Smp"])
+	@commands.command(aliases=['bnsm','BNSmarket','BNSm',"smp","SMP","Smp","mp","m"])
 	@checks.not_lounge()
 	async def bnsmarket(self, ctx, *, item : str = None):
 		if item is None:
@@ -486,7 +488,7 @@ class bladeandsoul:
 		try: # can optimize this later
 			schema["query"] = BNSschema.format(item,item,item,item)
 			async with aiohttp.ClientSession() as session:
-				async with session.post("bns api website here", data=schema) as r:
+				async with session.post("https://api.bnstree.com/graphql", data=schema) as r:
 					try:
 						NA = await r.json()
 					except Exception as e:
@@ -553,9 +555,6 @@ class bladeandsoul:
 					pass
 			pass
 
-	@commands.command()
-	async def mspguide(self, ctx):
-		await ctx.send('https://drive.google.com/file/d/0Bx5A-bjrg1p1aVlJZElJV3JoWk0/view')
 
 def setup(bot):
 	bot.add_cog(bladeandsoul(bot))
