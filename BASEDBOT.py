@@ -2,70 +2,86 @@ import discord
 from cogs.utils import checks
 from discord.ext import commands
 import asyncio
+import aiohttp
+import logging
+from bs4 import BeautifulSoup
 import json
 import datetime
 import random
 import traceback
 import sys
+import re
 
-bot = commands.Bot(command_prefix='!',description="I am a bot created by Comphus mainly for the Dragon Nest Community Discord server, but I have many other functions!")
+
+bot = commands.AutoShardedBot(shard_count=2, command_prefix='!',description="I am a bot created by Comphus mainly for the Dragon Nest Community Discord server, but I have many other functions!")
+logger = logging.getLogger('discord')
 
 startup_ext = [
 	"cogs.games",
 	"cogs.bns",
 	"cogs.ow",
 	"cogs.dn",
-	"cogs.etc",
+	"cogs.etc",	
 	"cogs.music",
-	"cogs.discord"
+	"cogs.discord",
+	"cogs.backgrounds"
 ]
 
 with open("C:/discordlogin.json") as j:
 	dLogin = json.load(j)
 
 @bot.event
-async def on_command_error(error, ctx):
+async def on_command_error(ctx, error):
+	try:
+		if ctx.message.guild.id == 110373943822540800:
+			return
+	except:
+		pass
 	if isinstance(error, commands.NoPrivateMessage):
-		await bot.send_message(ctx.message.author, 'This command cannot be used in private messages.')
+		await ctx.message.author.send('This command cannot be used in private messages.')
 	elif isinstance(error, commands.DisabledCommand):
-		await bot.send_message(ctx.message.author, 'Sorry. This command is disabled and cannot be used.')
+		await ctx.message.author.send('Sorry. This command is disabled and cannot be used.')
 	elif isinstance(error, commands.CommandInvokeError):
-		print('In {0.command.qualified_name}:'.format(ctx), file=sys.stderr)
-		traceback.print_tb(error.original.__traceback__)
-		print('{0.__class__.__name__}: {0}'.format(error.original), file=sys.stderr)
+		if "Missing Permissions" in str(error.original):
+			try:
+				await ctx.message.author.send('BASEDBOT does not have the required permissions to execute `!{}`.'.format(ctx.command.qualified_name))
+			except:
+				pass
+		else:
+			print('In {0.command.qualified_name}:'.format(ctx), file=sys.stderr)
+			traceback.print_tb(error.original.__traceback__)
+			print('{0.__class__.__name__}: {0}'.format(error.original), file=sys.stderr)
 
 @bot.command(hidden=True)
 @checks.is_owner()
-async def reload(extension_name : str = None):
+async def reload(ctx, extension_name : str = None):
 	if extension_name is None:
 		for i in startup_ext:
 			try:
-				bot.unload_extension(i)
-				bot.load_extension(i)
+				bot.reload_extension(i)
 			except Exception as e:
-				await bot.say('{} cog reloading failed, error is:```\n{}: {}```'.format(i,type(e).__name__, e))
-		await bot.say("Extensions reloaded")
+				await ctx.send('{} cog reloading failed, error is:```\n{}: {}```'.format(i,type(e).__name__, e))
+		await ctx.send("Extensions reloaded")
 		return
 	try:
-		bot.unload_extension(extension_name)
-		bot.load_extension(extension_name)
-		await bot.say('module {} reloaded'.format(extension_name))
+		bot.reload_extension(extension_name)
+		await ctx.send('module {} reloaded'.format(extension_name))
 	except Exception as e:
-		await bot.say('reloading failed, error is:```\n{}: {}```'.format(type(e).__name__, e))
+		await ctx.send('reloading failed, error is:```\n{}: {}```'.format(type(e).__name__, e))
 
 @bot.event
 async def on_message(message):
-	if bot.user == message.author or message.channel.id == '168949939118800896' or message.author.id in '128044950024617984':
+	if bot.user == message.author or message.channel.id == 168949939118800896 or message.author.id == 128044950024617984:
 		return
 	await bot.process_commands(message)
 
-@bot.async_event
-def on_ready():
+@bot.event
+async def on_ready():
 	print('Logged in as')
 	print(bot.user.name)
 	print(bot.user.id)
 	print('------')
-	yield from bot.change_presence(game=discord.Game(name='you like a fiddle'))
+	await bot.change_presence(activity=discord.Activity(name='you like a fiddle'))
 	if not hasattr(bot, 'uptime'):
 		bot.uptime = datetime.datetime.now()
 
