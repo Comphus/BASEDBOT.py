@@ -37,16 +37,18 @@
 		"!peoplewithpower":"Owner:Comphus\nAdmins: Aelphaeis, Arman, Donkay, Hatsune Mikeu, Integration, Voidian\nChat Moderators: Aggrieved, Maracantress, Marcello, aston, grey, Shs, toto, vara\nForum moderators: Manu, SaitoHikari\nif your name is not on the list but you have one of these roles, PM comphus",
 		"!currentdnupdate":"12/9\nhttp://dragonnest.nexon.net/news/update/00Inz/",
 		"!currentkdnupdate":"12/9\nhttp://dn.pupugame.com/news/notice.html?mode=read&no=415&cate=",
-		"!donkaysucks":"Yes, donkay does suck",
 		"!dncdcommands":"!pug/!trade/!pvp < gives or removes each respective role if you already have it or not\n!colors/!colorlist < PMs you a list of available colors\n!color (nameofcolor) replace (nameofcolor) with the color you want from the list of colors\n\n**MODERATORS AND ABOVE ONLY**\n\n!slowmode (optional number between 0-30) < activates slowmode, similar to twitch slowmode. type !slowmode again to stop slowmode\n!vanish (mention) (number of messages) < vanishes a number of messages for a person",
 		"!games":"!duel (2 mentions) < makes the two people mentioned duel!\n!rps (2 mentions) < rock paper scissors\n!shoot < shoots someone\n!trivia < pulls up dn trivia\n!c4 (2 mentions) < connect 4, use numbers on bottom of board to put pieces, ex: !c4 4\n|trivia < pulls up overwatch trivia\n|points < shows how many points everyone currently has for overwatch trivia\n|stop < stops overwatch trivia\n!hang < starts up a hangman game, can also do !hangman",
-		"!market":"**__FAQ:__**\nFor trading system in discord: think of it like the dn marketplace, but using B> and S> as ways to list and search through it. you can also search through the marketplace by typing 'search market'. this only works in <#106301265817931776> \n\nif you start your sentence with '** S>**'(case insensitive) , the bot will prompt you with some things to do if you choose to register your item in the discord marketplace. read and follow the steps given and it will be ez. it will automatically detect the item youre selling from your first sentence.\n\nif you start your sentence with '**B>**'(case insensitive), the bot will detect what you want to buy by your sentence, then ask permission for it to PM you with everything registered under that category\n\nif you type in '**search market**' the bot will give you all the categories in the discord market, and will ask you to choose one so it can pm you everything in that category",
 		"!vladphantom":"Hey I want to make a Phantom mule but I'm confused about the skill build. Should I max skill swipe like how you swiped away the account earlier? Loadout like how you loaded your main account out then deleted it? Or To the Skies like how you dissapeared earlier when we were wondering what happened to the account?",
 		"!whatdarrendid":"What darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWGlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowWWhat darren did on DN. GlowA, GlowB, GlowC all the way to Z, except for W... someone already had GlowW",
 		"!vladme":"because a lot of the girls are forgettable as fuck. There's a reason she has SO many fans and supporters. She's working her ass off and has a very positive, charming aura about her. Despite being emberassed in front of everyone, she never once cried in a negative light (only cries after she overcomes achievements). To improve from absolute garbage to completely average in one night (having no prior dancing expirience) is such an admirable feat. She's a magnet for GENUINE positive energy and affection. At the end of the day, being an idol is all about personality. There are TONS of groups who excel at dancing and singing but FLOP hardcore due to no presence and/or not having lovable characteristics.(edited) You have to remember that Korea MASS produces \"talent\" that turns these girls into psuedo humans (robots). Giving off such a genuine aura is what fans kill to see when it comes to Kpop groups Exactly why the toughest trainer who hasn't shown affection to ANYONE throughout the whole show fucking BALLED her damn eyes out seeing how genuine and hardworking Sohye is. If she can bring those emotions to someone that hardboiled, image how many fans' hearts she has captured; hence contributing a huge part to the group's success. She's 100% landing a spot in the top 11, if not top 6(edited) There's this one girl group called Spica that is arguably the most talented girl group in Kpop, every single girl in that group has a HEAVENLY voice, but yet they hardcore flop because there's no charisma to go with it. Talent by itself simply doesn't sell in Korea",
 		"!xd":"\nX               X      DDDDD\n   X         X         D            D\n       X X             D              D\n       X X             D              D\n    X        X         D             D\nX                X     DDDDD\n",
 		"!bnsbuild":"https://docs.google.com/document/d/1kCNNIdKcyXL6kgrXPLJdPk-yy1oqNPrunNc8x0PP7D4/edit?pref=2&pli=1",
 		"!consent":"<:consent1:240311076120559629><:consent2:240311096504877056>\n<:consent3:240311110845202433><:consent4:240311125340585984>",
+		"!raven":"https://i.imgur.com/hMhcX4C.png",
+		"!cancer":"<a:fidgetspinner_red:393577365323907082> <a:fidgetspinner_yellow:393577364996751361> <a:fidgetspinner_green:393577365185495041> <a:fidgetspinner_blue:393577364753350656> <a:fidgetspinner_pink:393577365051277313>",
+		"!mspguide":"https://drive.google.com/file/d/0Bx5A-bjrg1p1aVlJZElJV3JoWk0/view",
+		"!discord":"https://discord.gg/Gvt3Ks8",
 		"!hi":"hi",
 		"!hello":"hi"
 		},
@@ -82,9 +84,15 @@
 		"abyss walker":"abysswalker","abysswalker":"abysswalker","aw":"abysswalker",
 		"flurry":"flurry","dragoon":"flurry",
 		"sting breezer":"stingbreezer","stingbreezer":"stingbreezer","sb":"stingbreezer","valkyrie":"stingbreezer",
+		"avalanche":"avalanche","aval":"avalanche",
+		"randgrid":"randgrid","rand":"randgrid",
 		"ruina":"ruina",
-		"defensio":"defensio"
-
+		"defensio":"defensio",
+		"arch heretic":"archheretic","archheretic":"archheretic","heretic":"archheretic",
+		"black mara":"blackmara","blackmara":"blackmara","mara":"blackmara",
+		"ray mechanic":"raymechanic","raymechanic":"raymechanic","raymech":"raymechanic",
+		"oracle elder":"oracleelder","oracleelder":"oracleelder","elder":"oracleelder","elderoracle":"oracleelder",
+		"bleed phantom":"bleedphantom","bleedphantom":"bleedphantom"
 		},
 	"t5dnskillbuilds":{
 		"gladiator":"gladiator","glad":"gladiator",
@@ -118,12 +126,19 @@
 		"abyss walker":"abysswalker","abysswalker":"abysswalker",
 		"flurry":"flurry","dragoon":"flurry",
 		"sting breezer":"stingbreezer","stingbreezer":"stingbreezer","sb":"stingbreezer","valkyrie":"stingbreezer",
+		"avalanche":"avalanche","aval":"avalanche",
+		"randgrid":"randgrid","rand":"randgrid",
 		"ruina":"ruina",
 		"lunar knight":"moonlord","moonlord":"moonlord","lunarknight":"moonlord","moon lord":"moonlord",
-		"defensio":"defensio"
+		"defensio":"defensio",
+		"arch heretic":"archheretic","archheretic":"archheretic","heretic":"archheretic",
+		"black mara":"blackmara","blackmara":"blackmara","mara":"blackmara",
+		"ray mechanic":"raymechanic","raymechanic":"raymechanic","raymech":"raymechanic",
+		"oracle elder":"oracleelder","oracleelder":"oracleelder","elder":"oracleelder","elderoracle":"oracleelder",
+		"bleed phantom":"bleedphantom","bleedphantom":"bleedphantom"
 		},
 	"regions":[
-		"NA", "EU", "SEA", "KR", "JP", "CN"
+		"NA", "EU", "SEA", "KR", "JP", "CN", "TURKEY","BANNED"
 	],
 	"qQuestion":[
 		"should","can","will","may","are","might","is","do","would","was","am","?","did","how"
