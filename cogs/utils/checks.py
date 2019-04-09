@@ -41,12 +41,16 @@ def is_admin():
 	def predicate(ctx):
 		if isinstance(ctx.message.channel, discord.abc.PrivateChannel):
 			return False
+		if isinstance(ctx.message.author, discord.User):
+			return False
 		return ctx.message.author.guild_permissions.administrator
 	return commands.check(predicate)
 
 def dncd_admin():
 	def predicate(ctx):
 		if isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+			return False
+		if isinstance(ctx.message.author, discord.User):
 			return False
 		return (ctx.message.author.guild_permissions.administrator and ctx.message.guild.id == 106293726271246336)
 	return commands.check(predicate)
@@ -61,6 +65,8 @@ def dncd_mod():
 def dncd_mod_or_admin():
 	def predicate(ctx):
 		if isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+			return False
+		if isinstance(ctx.message.author, discord.User):
 			return False
 		return (ctx.message.author.id in DNCDmods or ctx.message.author.guild_permissions.administrator)
 	return commands.check(predicate)
