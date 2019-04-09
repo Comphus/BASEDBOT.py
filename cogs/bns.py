@@ -11,14 +11,62 @@ with open("C:/DISCORD BOT/BladeAndSoul/bnstext.txt") as j:
 	bnsurl = j.read()
 with open("C:/DISCORD BOT/BladeAndSoul/people.json") as j:
 	bns_people = json.load(j)
+with open("C:/DISCORD BOT/BladeAndSoul/bnstree.json") as j:
+	bns_tree = json.load(j)
 
-class bladeandsoul:
+class bladeandsoul(commands.Cog):
 	"""
 	blade and soul related commands
 	in the future if possible, try to reinvent the save build functions to make them more useful
 	"""
 	def __init__(self, bot):
 		self.bot = bot
+		self.colors = {
+			"Blade Master": [
+				16718105,
+				"🔥: {p[fire]}({p[firep]}%)\n⚡: {p[light]}({p[lightp]}%)"
+			],
+			"Kung Fu Master": [
+				3325695,
+				"🔥: {p[fire]}({p[firep]}%)\n💨: {p[wind]}({p[windp]}%)"
+			],
+			"Assassin": [
+				2123412,
+				"🌙: {p[shadow]}({p[shadowp]}%)\n⚡: {p[light]}({p[lightp]}%)"
+			],
+			"Destroyer": [
+				10038562,
+				"🌙: {p[shadow]}({p[shadowp]}%)\n⛰: {p[earth]}({p[earthp]}%)"
+			],
+			"Blade Dancer": [
+				7419530,
+				"⚡: {p[light]}({p[lightp]}%)\n💨: {p[wind]}({p[windp]}%)"
+			],
+			"Soul Fighter": [
+				3066993,
+				"❄: {p[frost]}({p[frostp]}%)\n⛰: {p[earth]}({p[earthp]}%)"
+			],
+			"Warlock": [
+				15620599,
+				"❄: {p[frost]}({p[frostp]}%)\n🌙: {p[shadow]}({p[shadowp]}%)"
+			],
+			"Force Master": [
+				15105570,
+				"❄: {p[frost]}({p[frostp]}%)\n🔥: {p[fire]}({p[firep]}%)"
+			],
+			"Summoner": [
+				15844367,
+				"💨: {p[wind]}({p[windp]}%) \n⛰: {p[earth]}({p[earthp]}%)"
+			],
+			"Gunslinger": [
+				0xffa500,
+				"🔥: {p[fire]}({p[firep]}%)\n🌙: {p[shadow]}({p[shadowp]}%)"
+			],
+			"Warden": [
+				0x800020,
+				"⚡: {p[light]}({p[lightp]}%)\n❄: {p[frost]}({p[frostp]}%)"
+			]
+		}
 
 	@commands.command(aliases=["bnsEU","BNSEU","BNSeu"])
 	@checks.not_lounge()
@@ -30,46 +78,14 @@ class bladeandsoul:
 	async def bnsna(self, ctx, *, person : str = None):
 		await self.bns(ctx, person, "na")
 
-	def bnscolor(self, classname): #can just have a json with key:value pairs for this
-		if classname == 'Blade Master':
-			return [16718105, "🔥: {p[fire]}({p[firep]}%)\n⚡: {p[light]}({p[lightp]}%)"]
-		if classname == 'Kung Fu Master':
-			return [3325695, "🔥: {p[fire]}({p[firep]}%)\n💨: {p[wind]}({p[windp]}%)"]
-		if classname == 'Assassin':
-			return [2123412, "🌙: {p[shadow]}({p[shadowp]}%)\n⚡: {p[light]}({p[lightp]}%)"]
-		if classname == 'Destroyer':
-			return [10038562, "🌙: {p[shadow]}({p[shadowp]}%)\n⛰: {p[earth]}({p[earthp]}%)"]
-		if classname == 'Blade Dancer':
-			return [7419530, "⚡: {p[light]}({p[lightp]}%)\n💨: {p[wind]}({p[windp]}%)"]
-		if classname == 'Soul Fighter':
-			return [3066993, "❄: {p[frost]}({p[frostp]}%)\n⛰: {p[earth]}({p[earthp]}%)"]
-		if classname == 'Warlock':
-			return [15620599, "❄: {p[frost]}({p[frostp]}%)\n🌙: {p[shadow]}({p[shadowp]}%)"]
-		if classname == 'Force Master':
-			return [15105570, "❄: {p[frost]}({p[frostp]}%)\n🔥: {p[fire]}({p[firep]}%)"]
-		if classname == 'Summoner':
-			return [15844367, "💨: {p[wind]}({p[windp]}%) \n⛰: {p[earth]}({p[earthp]}%)"]
-		if classname == 'Gunslinger':
-			return [0xffa500, "🔥: {p[fire]}({p[firep]}%)\n🌙: {p[shadow]}({p[shadowp]}%)"]
-		if classname == 'Warden':
-			return [0x800020, "⚡: {p[light]}({p[lightp]}%)\n❄: {p[frost]}({p[frostp]}%)"]
-		return [0,"Element not known for this class"]
-
 	async def bns(self, ctx, person, region):
 		if person is None:
 			if str(ctx.message.author.id) in bns_people:
-				person = bns_people[str(ctx.message.author.id)]["ign"]
-				region = bns_people[str(ctx.message.author.id)]["region"]
+				person, region = bns_people[str(ctx.message.author.id)]["ign"], bns_people[str(ctx.message.author.id)]["region"]
 			else:
 				await ctx.send('the format for seeing a players bns info is \'!bns (player ign)\'')
 				return
-		newerM = person.lower()
-		if len(newerM.split()) > 1:
-			newestM = '%20'.join(newerM.split())
-		else:
-			newestM = newerM
-		if "faggot" in newestM.lower():
-			await ctx.send('http://na-bns.ncsoft.com/ingame/bs/character/profile?c=Rain\nhttp://na-bns.ncsoft.com/ingame/bs/character/profile?c=Minko')
+		newestM = "%20".join(person.lower().split())
 		link = "http://{}-bns.ncsoft.com/ingame/bs/character/data/abilities.json?c={}".format(region,newestM)
 		async with aiohttp.ClientSession() as session:
 			async with session.get(link) as r:
@@ -111,7 +127,13 @@ class bladeandsoul:
 
 					#HM stat stuff
 					hmA = HMstat["offense_point"]
+					hmT = HMstat["picks"][0]["point"]
+					hmF = HMstat["picks"][3]["point"]
+
 					hmD = HMstat["defense_point"]
+					hmH = HMstat["picks"][1]["point"]
+					hmM = HMstat["picks"][2]["point"]
+					hmDB = HMstat["picks"][4]["point"]
 
 					#ATTACK STATS
 					att = stat["attack_power_value"]
@@ -152,14 +174,15 @@ class bladeandsoul:
 					}
 
 					#EMBED stuff
-					lft = "**Attack:** {} \⭐ {}P\n**Pierce:** {}({}%)\n**Accuracy:** {}({}%)\n**Critical Hit:** {}({}%)\n**Critical Damage** {}({}%)".format(att,hmA,pierce,piercep,acc,accp,chit,chitp,cdmg,cdmgp)
-					rgt = "**HP:** {} \⭐ {}P\n**Defense:** {}({}%)\n**Evasion:** {}({}%)\n**Block:** {}({}%)\n**Crit Defense:** {}({}%)\n".format(hp,hmD,defense,defensep,eva,evap,block,blockp,critd,critdp)
+					lft = "**Attack:** {} <:offense:532077802338385942> {}P\n<:threat:532077802501963777>:{}P <:HM_focus:532077802338516995>:{}P\n**Pierce:** {}({}%)\n**Accuracy:** {}({}%)\n**Critical Hit:** {}({}%)\n**Critical Damage** {}({}%)".format(att,hmA,hmT,hmF,pierce,piercep,acc,accp,chit,chitp,cdmg,cdmgp)
+					rgt = "**HP:** {} <:defense:532077802355294209> {}P\n<:HealthRegen:532077802279927820>{}P <:MoveSpeed:532077802271408139>:{}P <:Debuff:532077802867130388>:{}P\n**Defense:** {}({}%)\n**Evasion:** {}({}%)\n**Block:** {}({}%)\n**Crit Defense:** {}({}%)\n".format(hp,hmD,hmH,hmM,hmDB,defense,defensep,eva,evap,block,blockp,critd,critdp)
 					embed = discord.Embed()
 					embed.set_author(name=classname, icon_url=classicon)
 					embed.title = name
 					embed.url = sLink
-					cl = self.bnscolor(classname)
-					embed.color = cl[0]
+					#cl = self.bnscolor(classname)
+					cl = self.colors.get(classname, [0,"Element not known for this class"])
+					embed.color = int(cl[0])
 					embed.add_field(name="__General Info__", value="**Server:** {}\n**Clan:** {}\n**Level:** {} \⭐ {}".format(server,clan,level,hmlevel))
 					embed.add_field(name="__Elemental Damage__", value=cl[1].format(p=eles))
 					embed.add_field(name="__Offensive__", value=lft)
@@ -181,11 +204,11 @@ class bladeandsoul:
 						embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src']+"?="+str(random.randint(0,5000)))
 					embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
 					try:
-						if int(att) >= 1350:
+						if int(att) >= 1550:
 							embed.add_field(name='​', value="​<a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472>", inline=False)#dummy zero width character field, use this to move the fields around
 							embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
 						m = await ctx.send(embed=embed)
-						if int(att) >= 1350:
+						if int(att) >= 1550:
 							try:
 								embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
 								await m.add_reaction("🐋")
@@ -218,6 +241,7 @@ class bladeandsoul:
 			else:
 				newestM = newerM
 			link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(bns_people[str(member.id)]["region"],newestM)
+
 			embed = discord.Embed()
 			embed.color = 0xFF0000
 			embed.set_footer(text="Not Verified! Type !verify to see.",icon_url="http://i.imgur.com/6bdro4H.png")
@@ -360,8 +384,7 @@ class bladeandsoul:
 	async def pvp(self, ctx, person, region):
 		if person is None:
 			if str(ctx.message.author.id) in bns_people:
-				person = bns_people[str(ctx.message.author.id)]["ign"]
-				region = bns_people[str(ctx.message.author.id)]["region"]
+				person, region = bns_people[str(ctx.message.author.id)]["ign"], bns_people[str(ctx.message.author.id)]["region"]
 			else:
 				await ctx.send('the format for seeing a player\'s pvp info is \'!bnspvp (player ign)\'')
 				return
@@ -381,7 +404,10 @@ class bladeandsoul:
 			classicon = soup.find_all("div", class_="classThumb")[0].img['src']
 		except:
 			pass
-		classname = soup.find_all(attrs={"class":"signature"})[0].find_all("ul")[0].li.string
+		try:
+			classname = soup.find_all(attrs={"class":"signature"})[0].find_all("ul")[0].li.string
+		except:
+			classname = "Could not retrieve class name."
 		name = "{}{}".format(soup.find_all("a", href="#")[0].string, soup.find_all("span", attrs={'class':"name"})[0].string)
 
 
@@ -389,13 +415,13 @@ class bladeandsoul:
 		soup = BeautifulSoup(testing1, 'html.parser')
 		p = soup.find_all(class_="season-title")[0].span.string.replace("\n","")
 		oneP = int(soup.find_all(class_="rank-point")[0].string)
-		if person == "comphus":
-			oneP = 2300
 		oneW= soup.find_all(class_="win-point")[0].string
 		threeP = soup.find_all(class_="rank-point")[1].string
 		threeW= soup.find_all(class_="win-point")[1].string
+		if person == "comphus":
+			oneP = 6969
+			threeP = 6969
 		#await ctx.send("{}\n1v1 rank:{}    wins:{}\n3v3 rank:{}          wins{}".format(p,oneP,oneW,threeP,threeW))
-
 
 		embed = discord.Embed()
 		embed.set_author(name=classname, icon_url=classicon)
@@ -413,36 +439,10 @@ class bladeandsoul:
 
 		#print(soup.find_all(text=lambda text:isinstance(text, Comment)))
 
-	@commands.command()
-	async def bnstree(self, ctx, *, name : str = None):
-		await ctx.send(self.bnst(name))
+	@commands.command(aliases=['bnst'])
+	async def bnstree(self, ctx, *, name : str = "none"):
+		await ctx.send(bns_tree.get(name.lower(), "2nd argument not recognised"))
 
-	def bnst(self, name):#this needs to be updated and put into a dict but too lazy
-		if name is None:
-			return 'https://bnstree.com/'
-		name = name.lower()
-		if 'blade master' == name or 'bm' == name:
-			return 'https://bnstree.com/classes/blade-master'
-		elif 'kfm' == name or 'kungfu master' == name or 'kung fu master' == name or 'kungfumaster' == name or 'kf' == name:
-			return 'https://bnstree.com/classes/kung-fu-master'
-		elif 'destroyer' == name or 'des' == name or 'de' == name or 'destro' == name or 'dest' == name:
-			return 'https://bnstree.com/classes/destroyer'
-		elif 'force master' == name or 'fm' == name or 'forcemaster' == name or 'force user' == name:
-			return 'https://bnstree.com/classes/force-master'
-		elif 'assassin' == name or 'as' == name or 'sin' == name:
-			return 'https://bnstree.com/classes/assassin'
-		elif 'summoner' == name or 'su' == name or 'summ' == name or 'sum' == name:
-			return 'https://bnstree.com/classes/summoner'
-		elif 'blade dancer' == name or 'bd' == name or 'bladedancer' == name or 'lbm' == name or 'lyn blade master' == name or 'lynblade master' == name or 'lyn blademaster' == name:
-			return 'https://bnstree.com/classes/blade-dancer'
-		elif 'warlock' == name or 'wl' == name or 'lock' == name:
-			return 'https://bnstree.com/classes/warlock'
-		elif 'soul fighter' == name or 'sf' == name or 'soulfighter' in name or 'chi master' in name or 'chimaster' in name:
-			return 'https://bnstree.com/classes/soul-fighter'
-		elif 'gun slinger' == name or 'gs' == name or 'gunslinger' in name or 'gunner' in name:
-			return 'https://bnstree.com/classes/gunslinger'
-		else:
-			return '2nd argument not recognised'
 
 	@commands.command(aliases=['bnsm','BNSmarket','BNSm',"smp","SMP","Smp","mp","m"])
 	@checks.not_lounge()
