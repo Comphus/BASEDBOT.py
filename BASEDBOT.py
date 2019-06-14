@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+"""
+BASEDBOT is a Discordapp chat bot written in python using the Discord.py library and the discord.py commands extension
+discord.py library: https://github.com/Rapptz/discord.py
+
+Mainly written for the DNCD server, and has been rewritten and expanded over the years to accomidate use on multiple servers.
+This is essentially a jack of all trades chat bot that can do a multitude of tasks.
+ctx is used the invocation context when calling a command
+BASEDBOT.py is a modified version of basic_bot.py (https://github.com/Rapptz/discord.py/blob/master/examples/basic_bot.py)
+"""
 import discord
 from cogs.utils import checks
 from discord.ext import commands
