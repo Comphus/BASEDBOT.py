@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+The Blade and Soul module for BASEDBOT.
+"""
 import aiohttp
 import discord
 from bs4 import BeautifulSoup, Comment
@@ -67,18 +71,37 @@ class bladeandsoul(commands.Cog):
 				"⚡: {p[light]}({p[lightp]}%)\n❄: {p[frost]}({p[frostp]}%)"
 			]
 		}
+		self.na = ["bnsNA","BNSNA","BNSna","bns","BNS","Bns"]
+		self.eu = ["bnsEU","BNSEU","BNSeu"]
 
-	@commands.command(aliases=["bnsEU","BNSEU","BNSeu"])
-	@checks.not_lounge()
-	async def bnseu(self, ctx, *, person : str = None):
-		await self.bns(ctx, person, "eu")
-
-	@commands.command(aliases=["bnsNA","BNSNA","BNSna","bns","BNS","Bns"])#default region is NA
+	@commands.command(aliases=self.na)#default region is NA
 	@checks.not_lounge()
 	async def bnsna(self, ctx, *, person : str = None):
+		"""
+		The command to look up a character in Blade and Soul located in North America
+		"""
 		await self.bns(ctx, person, "na")
 
+	@commands.command(aliases=self.eu)
+	@checks.not_lounge()
+	async def bnseu(self, ctx, *, person : str = None):
+		"""
+		The command to look up a character in Blade and Soul located in Europe
+		"""
+		await self.bns(ctx, person, "eu")
+
 	async def bns(self, ctx, person, region):
+		"""
+		A pretty way to display to users on discord a BNS player's ingame character information
+		Uses NCSofts own "API" to look up the person's information.
+
+		Args:
+			person: The ingame character to look up
+			region: The region that the character is located in
+
+		Returns:
+			A pretty display of all of the characters relevant ingame stats
+		"""
 		if person is None:
 			if str(ctx.message.author.id) in bns_people:
 				person, region = bns_people[str(ctx.message.author.id)]["ign"], bns_people[str(ctx.message.author.id)]["region"]
@@ -204,11 +227,11 @@ class bladeandsoul(commands.Cog):
 						embed.set_image(url=soup.find_all("div", class_="charaterView")[0].img['src']+"?="+str(random.randint(0,5000)))
 					embed.set_footer(text='Blade and Soul', icon_url='http://i.imgur.com/a1kk9Tq.png')
 					try:
-						if int(att) >= 1550:
+						if int(att) >= 1900:
 							embed.add_field(name='​', value="​<a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472><a:whale:395488421717737472>", inline=False)#dummy zero width character field, use this to move the fields around
 							embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
 						m = await ctx.send(embed=embed)
-						if int(att) >= 1550:
+						if int(att) >= 1900:
 							try:
 								embed.set_footer(text="Whale and Soul", icon_url="http://i.imgur.com/T6MP5xX.png")
 								await m.add_reaction("🐋")
@@ -221,6 +244,15 @@ class bladeandsoul(commands.Cog):
 
 	@commands.command(aliases=["bnsl"])
 	async def bnslookup(self, ctx, *, member : discord.Member = None):
+		"""
+		Looks up a Discord user to see if they have saved a character to their name and if they are verified
+
+		Args:
+			member: The discord member to lookup
+
+		Returns:
+			Information about that user in relation to their BNS info
+		"""
 		if member is None:
 			if str(ctx.message.author.id) in bns_people:
 				member = ctx.message.author
@@ -259,6 +291,17 @@ class bladeandsoul(commands.Cog):
 
 	@commands.command(brief="This command tells you how you can get verified")
 	async def verify(self, ctx, *,id : str = None):
+		"""
+		A BASEDBOT exclusive command that was made in order to combat scammers and identity theives.
+		The only one that can verify players is the bot owner (Comphus).
+
+		Args:
+			id: Only used by bot owner, used to give verification status to a discord user id
+
+		Returns:
+			If not the bot owner, returns a message telling the user how to get verified.
+			If the bot owner, returns whether or not the ID has been verified successfully
+		"""
 		if ctx.message.author.id == 90886475373109248 and id is not None:
 			try:
 				bns_people[id]["verif"] = 1
@@ -275,6 +318,17 @@ class bladeandsoul(commands.Cog):
 
 	@commands.command(aliases=["bnss"])
 	async def bnssave(self, ctx, region : str = None, *,person : str = None):
+		"""
+		A BASEDBOT exclusive command that is used to save a discord id to a BNS character.
+		This command is used to to make it easier for a user to look up their own character information faster for any of the BNS commands
+
+		Args:
+			region: The region that the person plays on
+			person: The character name to save to the event user
+
+		Returns:
+			Whether or not the save was successful, can fail if a person tries to save a character that is already in the system, or if the character doesnt exist.
+		"""
 		if region is None:
 			await ctx.send("In order to use `!bnssave`, you must provide a region and a main character to save like so `!bnssave region yourchar`, where region is either na or eu.\nOnce saved, you can use `!bns` or `!bnspvp` without having to use your name to pull up the info with the character you saved. In order to remove yourself from the list, type `!bnssave remove`. **This can be used to verify people with `!bnslookup` or aliased `!bnsl` to prevent identity fraud and such.** Type !verify to find out how to get verified\n**If you think someone stole your name, contact Comphus#4981 with !verify**")
 			return
@@ -302,7 +356,6 @@ class bladeandsoul(commands.Cog):
 				else:
 					newestM = newerM
 				link = "http://{}-bns.ncsoft.com/ingame/bs/character/profile?c={}".format(bns_people[id]["region"],newestM)
-				print(link)
 				async with aiohttp.ClientSession() as session:
 					async with session.get(link) as r:
 						if r.status != 200:
@@ -363,10 +416,16 @@ class bladeandsoul(commands.Cog):
 
 	@commands.command(aliases=["bnspvpNA","BNSPVPNA","BNSpvpna","BNSPVPna","bnsp","bnspna","BNSP","Bnsp"])
 	async def bnspvp(self, ctx, *, person : str = None):
+		"""
+		The NA version of the BNS PVP rank lookup
+		"""
 		await self.pvp(ctx, person, "na")
 
 	@commands.command(aliases=["bnspvpEU","BNSPVPEU","BNSpvpeu","BNSPVPeu","bnspeu","BNSPEU","Bnspeu"])
 	async def bnspvpeu(self, ctx, *, person : str = None):
+		"""
+		The EU version of the BNS PVP rank lookup
+		"""
 		await self.pvp(ctx, person, "eu")
 
 	def rRank(self, rank):
@@ -382,6 +441,16 @@ class bladeandsoul(commands.Cog):
 			return ["http://i.imgur.com/GC4KKXH.png",6700326]
 	
 	async def pvp(self, ctx, person, region):
+		"""
+		Looks up the PVP rank of an ingame character.
+
+		Args:
+			person: The person to look up for rank information
+			region: The region where the lookup is taking place
+
+		Returns:
+			A pretty embed with relevant ranking information, including both 1v1 and 3v3 information.
+		"""
 		if person is None:
 			if str(ctx.message.author.id) in bns_people:
 				person, region = bns_people[str(ctx.message.author.id)]["ign"], bns_people[str(ctx.message.author.id)]["region"]
@@ -441,12 +510,32 @@ class bladeandsoul(commands.Cog):
 
 	@commands.command(aliases=['bnst'])
 	async def bnstree(self, ctx, *, name : str = "none"):
+		"""
+		Gets the class skill simulator from BNSTree
+
+		Args:
+			name: Name of the class to look up
+
+		Returns:
+			Link to the requested class if it exists. If no argument is given, gives a link to the BNSTree website.
+		"""
 		await ctx.send(bns_tree.get(name.lower(), "2nd argument not recognised"))
 
 
 	@commands.command(aliases=['bnsm','BNSmarket','BNSm',"smp","SMP","Smp","mp","m"])
 	@checks.not_lounge()
 	async def bnsmarket(self, ctx, *, item : str = None):
+		"""
+		Accesses the Blade and Soul market using BNSTree's market REST api
+		Currently does not work as BNSTree no longer updates their market data.
+
+		Args:
+			item: the name of the BNS item to search up in the market place
+
+		Returns:
+			Both EU and NA average prices of the provided item
+
+		"""
 		if item is None:
 			await ctx.send("In order to use the BNS market search function, type in whatever item after you type `!bnsmarket`,`!bnsm` or `!smp` so i can search through <https://bnstree.com/market> for it.")
 			return
