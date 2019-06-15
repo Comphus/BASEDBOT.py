@@ -71,10 +71,8 @@ class bladeandsoul(commands.Cog):
 				"⚡: {p[light]}({p[lightp]}%)\n❄: {p[frost]}({p[frostp]}%)"
 			]
 		}
-		self.na = ["bnsNA","BNSNA","BNSna","bns","BNS","Bns"]
-		self.eu = ["bnsEU","BNSEU","BNSeu"]
 
-	@commands.command(aliases=self.na)#default region is NA
+	@commands.command(aliases=["bnsNA","BNSNA","BNSna","bns","BNS","Bns"])#default region is NA
 	@checks.not_lounge()
 	async def bnsna(self, ctx, *, person : str = None):
 		"""
@@ -82,7 +80,7 @@ class bladeandsoul(commands.Cog):
 		"""
 		await self.bns(ctx, person, "na")
 
-	@commands.command(aliases=self.eu)
+	@commands.command(aliases=["bnsEU","BNSEU","BNSeu"])
 	@checks.not_lounge()
 	async def bnseu(self, ctx, *, person : str = None):
 		"""
