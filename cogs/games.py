@@ -76,6 +76,7 @@ class games(commands.Cog):
 	def dueling(self, entrees, hp):#this is designed to take 2 or more entrees, and returns a simulation of a duel between all participants, specifically only for duels and royale
 		with open('C:/DISCORD BOT/Games/duel.json') as f:
 			duelingInfo = json.load(f)
+		timeouts = time.time() + 10
 		players = self.init_players(entrees, hp)
 		pLen = len(players)
 		p1, p2 = 0, random.randint(1,pLen-1) #p1 is the attacker, p2 is either the other person, or a random other person if more than 2 players
@@ -99,6 +100,10 @@ class games(commands.Cog):
 			except:
 				return False
 		while checkHP(players) > 1:#makes sure that there are enough players alive to duel
+			if time.time() > timeouts:
+				print("-------------------------DUEL TIMED OUT DUE TO LONG LOOP----------------.")
+				z = ["The duel timed out due to it lasting too long internally."]
+				break
 			pLen = len(players)
 			duelists["p1"] = players[0]["player"]#initialize the attacking player
 			for i in range(len(players)):
