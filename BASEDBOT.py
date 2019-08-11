@@ -101,8 +101,4 @@ for extension in startup_ext:
 	except Exception as e:
 		print('Failed to load extension {}\n{}'.format(extension, e))
 
-<<<<<<< HEAD
 bot.run(dLogin['username'])
-=======
-bot.run(dLogin['username'])
->>>>>>> 90290d0b95fdc3b5742fd50fa73669b3c427d6bd
