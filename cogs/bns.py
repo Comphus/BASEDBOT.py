@@ -478,11 +478,7 @@ class bladeandsoul(commands.Cog):
 		name = "{}{}".format(soup.find_all("a", href="#")[0].string, soup.find_all("span", attrs={'class':"name"})[0].string)
 
 
-<<<<<<< HEAD
 		testing1 = soup.find_all(class_="characterArea")[0].find_all(text = lambda text:isinstance(text, Comment))[3]
-=======
-		testing1 = soup.find_all(class_="characterArea")[0].find_all(text=lambda text:isinstance(text, Comment))[3]
->>>>>>> 90290d0b95fdc3b5742fd50fa73669b3c427d6bd
 		soup = BeautifulSoup(testing1, 'html.parser')
 		p = soup.find_all(class_="season-title")[0].span.string.replace("\n","")
 		oneP = int(soup.find_all(class_="rank-point")[0].string)
@@ -648,8 +644,4 @@ class bladeandsoul(commands.Cog):
 
 
 def setup(bot):
-<<<<<<< HEAD
 	bot.add_cog(bladeandsoul(bot))
-=======
-	bot.add_cog(bladeandsoul(bot))
->>>>>>> 90290d0b95fdc3b5742fd50fa73669b3c427d6bd
